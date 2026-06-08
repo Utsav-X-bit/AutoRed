@@ -51,7 +51,7 @@ tqdm.pandas()
 LLAMA_PATH = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 # Phase 1 (Generator): Replace T5 with LLaMA-2-7B-Chat
-GENERATOR_PATH = "meta-llama/Llama-2-7b-chat-hf"
+GENERATOR_PATH = "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
 
 DISTILBERT_CKPT = "/nlsasfs/home/isea/isea11/slurmJobs/AutoRed/pre_trained/pi_reward_model"
 
@@ -1399,9 +1399,7 @@ Previous Response:
 
         print(f"\n  📥 LLAMA-3 RESPONSE ({len(response)} chars):")
         print(f"  {'─' * 66}")
-        print(f"  \033[96m{response[:300] if response else '[NONE]'}\033[0m")
-        if len(response) > 300:
-            print(f"  \033[90m... ({len(response) - 300} more chars)\033[0m")
+        print(f"  \033[96m{response if response else '[NONE]'}\033[0m")
         print(f"  {'─' * 66}")
 
         iteration_log["llm_response"] = {
