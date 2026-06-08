@@ -1,11 +1,13 @@
+import gymnasium as gym
+from gymnasium import spaces
 import time
 from collections import deque
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
-import gym
+import gymnasium as gym
 import numpy as np
 import torch as th
-from gym import spaces
+from gymnasium import spaces
 from stable_baselines3.common import utils
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, ConvertCallback
@@ -114,7 +116,6 @@ class NLPO(OnPolicyAlgorithm):
             use_sde=False,
             sde_sample_freq=-1,
             tensorboard_log=tensorboard_log,
-            create_eval_env=create_eval_env,
             policy_kwargs=policy_kwargs,
             verbose=verbose,
             seed=seed,
@@ -275,7 +276,7 @@ class NLPO(OnPolicyAlgorithm):
         if eval_env is not None and self.seed is not None:
             eval_env.seed(self.seed)
 
-        eval_env = self._get_eval_env(eval_env)
+        # eval_env = self._get_eval_env(eval_env)
 
         # Configure logger's outputs if no logger was passed
         if not self._custom_logger:

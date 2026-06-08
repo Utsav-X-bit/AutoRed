@@ -1,3 +1,5 @@
+import gym as old_gym
+import gymnasium as gym
 """
 Code adapted from https://github.com/DLR-RM/stable-baselines3
 """
@@ -53,11 +55,11 @@ class MaskableRolloutBuffer(RolloutBuffer):
         super().__init__(*args, **kwargs)
 
     def reset(self) -> None:
-        if isinstance(self.action_space, spaces.Discrete):
+        if self.action_space.__class__.__name__ == "Discrete" or isinstance(self.action_space, old_gym.spaces.Discrete):
             mask_dims = self.action_space.n
-        elif isinstance(self.action_space, spaces.MultiDiscrete):
+        elif self.action_space.__class__.__name__ == "MultiDiscrete" or isinstance(self.action_space, old_gym.spaces.MultiDiscrete):
             mask_dims = sum(self.action_space.nvec)
-        elif isinstance(self.action_space, spaces.MultiBinary):
+        elif self.action_space.__class__.__name__ == "MultiBinary":
             mask_dims = 2 * self.action_space.n  # One mask per binary outcome
         else:
             raise ValueError(
@@ -159,11 +161,11 @@ class MaskableDictRolloutBuffer(DictRolloutBuffer):
                          action_space, device, gae_lambda, gamma, n_envs=n_envs)
 
     def reset(self) -> None:
-        if isinstance(self.action_space, spaces.Discrete):
+        if self.action_space.__class__.__name__ == "Discrete" or isinstance(self.action_space, old_gym.spaces.Discrete):
             mask_dims = self.action_space.n
-        elif isinstance(self.action_space, spaces.MultiDiscrete):
+        elif self.action_space.__class__.__name__ == "MultiDiscrete" or isinstance(self.action_space, old_gym.spaces.MultiDiscrete):
             mask_dims = sum(self.action_space.nvec)
-        elif isinstance(self.action_space, spaces.MultiBinary):
+        elif self.action_space.__class__.__name__ == "MultiBinary":
             mask_dims = 2 * self.action_space.n  # One mask per binary outcome
         else:
             raise ValueError(

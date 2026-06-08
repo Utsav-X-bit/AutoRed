@@ -107,7 +107,7 @@ class LearnedRewardMetric(BaseMetric):
 class MeteorMetric(BaseMetric):
     def __init__(self) -> None:
         super().__init__()
-        self._metric = load_metric("meteor")
+        self._metric = load_metric("meteor", trust_remote_code=True)
 
     def compute(
         self,

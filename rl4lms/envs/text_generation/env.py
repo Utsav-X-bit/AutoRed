@@ -13,6 +13,8 @@ from rl4lms.core_components.sampler import PrioritySampler
 
 
 class TextGenEnv(Env):
+    def seed(self, seed=None):
+        pass
     def __init__(
         self,
         tokenizer: AutoTokenizer,

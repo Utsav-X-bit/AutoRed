@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, Type, Union
 
 import torch as th
-from gym import spaces
+from gymnasium import spaces
 from torch.nn import functional as F
 import numpy as np
 
@@ -101,7 +101,6 @@ class A2C(OnPolicyAlgorithm):
             policy_kwargs=policy_kwargs,
             verbose=verbose,
             device=device,
-            create_eval_env=create_eval_env,
             seed=seed,
             _init_setup_model=False,
             supported_action_spaces=(

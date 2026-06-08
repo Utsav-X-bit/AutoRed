@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 import torch as th
-from gym import spaces
+from gymnasium import spaces
 from torch.nn import functional as F
 
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
@@ -118,7 +118,6 @@ class PPO(OnPolicyAlgorithm):
             policy_kwargs=policy_kwargs,
             verbose=verbose,
             device=device,
-            create_eval_env=create_eval_env,
             seed=seed,
             _init_setup_model=False,
             supported_action_spaces=(
