@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ScenarioTab from './ScenarioTab';
 import AttackEvolutionTab from './AttackEvolutionTab';
 import StrategyHeatmapTab from './StrategyHeatmapTab';
+import ModelHeatmapTab from './ModelHeatmapTab';
 import ExtractorDebuggerTab from './ExtractorDebuggerTab';
 import VerificationTraceTab from './VerificationTraceTab';
 import TokenAnalyticsTab from './TokenAnalyticsTab';
@@ -10,6 +11,7 @@ const tabs = [
   { id: 'scenario', label: 'Scenario' },
   { id: 'evolution', label: 'Attack Evolution' },
   { id: 'heatmap', label: 'Strategy Heatmap' },
+  { id: 'model', label: 'Model Perf' },
   { id: 'extractor', label: 'Extractor Debugger' },
   { id: 'verification', label: 'Verification' },
   { id: 'tokens', label: 'Token Analytics' },
@@ -39,6 +41,7 @@ export default function InvestigationTabs() {
         {activeTab === 'scenario' && <ScenarioTab />}
         {activeTab === 'evolution' && <AttackEvolutionTab />}
         {activeTab === 'heatmap' && <StrategyHeatmapTab />}
+        {activeTab === 'model' && <ModelHeatmapTab />}
         {activeTab === 'extractor' && <ExtractorDebuggerTab />}
         {activeTab === 'verification' && <VerificationTraceTab />}
         {activeTab === 'tokens' && <TokenAnalyticsTab />}
