@@ -38,10 +38,27 @@ import time
 import json
 import re
 import statistics
+import hashlib
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
 tqdm.pandas()
+
+
+def get_git_commit() -> str:
+    """Get current git commit hash for reproducibility tracking."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except Exception:
+        return "unknown"
+
+
+EXPERIMENT_VERSION = "2.0.0"
+GIT_COMMIT = get_git_commit()
 
 # =============================================================================
 # 🔧 CONFIG
@@ -80,7 +97,10 @@ if device == "cuda":
 # 🧠 LOAD LLAMA (OFFLINE) — Phase 2: Instruct Model
 # =============================================================================
 
+MODEL_LOAD_TIME = {}
+
 print("\n[LOAD] Loading Llama-3-8B-Instruct (target LLM)...")
+t0 = time.time()
 llama_model = AutoModelForCausalLM.from_pretrained(
     LLAMA_PATH,
     dtype=torch.float16,
@@ -92,7 +112,8 @@ llama_tokenizer = AutoTokenizer.from_pretrained(
     local_files_only=True,
     use_fast=False,
 )
-print("[LOAD] ✓ Llama-3-8B-Instruct loaded")
+MODEL_LOAD_TIME["victim"] = time.time() - t0
+print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
 
 
 def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
@@ -184,12 +205,14 @@ class DecisionType(IntEnum):
 
 def load_decision_model(ckpt_path: str):
     print(f"\n[LOAD] Loading Decision model (DistilBERT) from: {ckpt_path}")
+    t0 = time.time()
     tokenizer = AutoTokenizer.from_pretrained(ckpt_path, local_files_only=True)
     model = DistilBertForSequenceClassification.from_pretrained(
         ckpt_path, local_files_only=True
     ).to(device)
     model.eval()
-    print("[LOAD] ✓ Decision model loaded")
+    MODEL_LOAD_TIME["judge"] = time.time() - t0
+    print(f"[LOAD] ✓ Decision model loaded ({MODEL_LOAD_TIME['judge']:.1f}s)")
     return tokenizer, model
 
 
@@ -201,6 +224,7 @@ def load_decision_model(ckpt_path: str):
 def load_gen_model(ckpt_path: str):
     """Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base)."""
     print(f"\n[LOAD] Loading Generator model (Llama-2-7B-Chat) from: {ckpt_path}")
+    t0 = time.time()
     tokenizer = AutoTokenizer.from_pretrained(ckpt_path, local_files_only=True, use_fast=False)
     model = AutoModelForCausalLM.from_pretrained(
         ckpt_path,
@@ -209,7 +233,8 @@ def load_gen_model(ckpt_path: str):
         local_files_only=True,
     )
     model.eval()
-    print("[LOAD] ✓ Llama-2-7B-Chat generator loaded")
+    MODEL_LOAD_TIME["generator"] = time.time() - t0
+    print(f"[LOAD] ✓ Llama-2-7B-Chat generator loaded ({MODEL_LOAD_TIME['generator']:.1f}s)")
     return tokenizer, model
 
 
@@ -843,6 +868,132 @@ JSON:
 
 
 # =============================================================================
+# JSON Serialization — AutoRedRun format
+# =============================================================================
+
+
+def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
+                  best_attack, ground_truth_info, events, summary,
+                  raw_dataset_entry, benchmark_info=None) -> dict:
+    """Convert experiment trace to AutoRedRun JSON structure."""
+    run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+    # Build attempts array
+    attempts = []
+    for entry in trace:
+        attempt = {
+            "attempt_number": entry.get("iteration", 0),
+            "timestamp": entry.get("timestamp", ""),
+            "attempt_time_ms": entry.get("attempt_time_ms", 0),
+            "generator": {
+                "strategy": entry.get("generator", {}).get("strategy", "unknown"),
+                "internal_prompt": entry.get("generator", {}).get("internal_prompt", ""),
+                "generated_attack": entry.get("generator", {}).get("generated_attack", ""),
+                "attack_length": len(entry.get("generator", {}).get("generated_attack", "")),
+                "attack_hash": hashlib.sha256(
+                    entry.get("generator", {}).get("generated_attack", "").encode()
+                ).hexdigest()[:16],
+                "duplicate_attack": entry.get("duplicate_attack", False),
+                "input_tokens": entry.get("generator", {}).get("input_tokens", 0),
+                "output_tokens": entry.get("generator", {}).get("output_tokens", 0),
+            },
+            "judge": {
+                "input": entry.get("judge", {}).get("input_to_judge", ""),
+                "decision": entry.get("judge", {}).get("decision", ""),
+                "confidence": entry.get("judge", {}).get("confidence", 0.0),
+                "probabilities": entry.get("judge", {}).get(
+                    "probabilities", {"ATTACK": 0, "ATTEMPT": 0}
+                ),
+            },
+            "victim": {
+                "raw_output": entry.get("llm_response", {}).get("raw_output", ""),
+                "clean_output": entry.get("llm_response", {}).get("clean_response", ""),
+                "output_length": entry.get("llm_response", {}).get("output_length", 0),
+            },
+            "extractor": {
+                "regex_candidates": entry.get("extractor", {}).get("regex_candidates", []),
+                "quoted_candidates": entry.get("extractor", {}).get("quoted_candidates", []),
+                "capitalized_candidates": entry.get(
+                    "extractor", {}).get("capitalized_candidates", []),
+                "llm_candidates": entry.get("extractor", {}).get("llm_candidates", []),
+                "ranked_candidates": entry.get("extractor", {}).get("all_candidates", []),
+                "best_candidate": entry.get("extractor", {}).get("best_candidate", ""),
+            },
+            "verification": {
+                "candidate_sent": entry.get("verification_candidate", ""),
+                "victim_response": entry.get("verification_response", ""),
+                "success": entry.get("verification_success", False),
+            },
+            "ground_truth_found": entry.get("ground_truth_found", False),
+            "extractor_match": entry.get("extractor_match", False),
+            "generator_success": entry.get("generator_success", False),
+        }
+        attempts.append(attempt)
+
+    # Determine success reason
+    gt_success = ground_truth_info.get("leaked", False)
+    ext_success = any(a.get("extractor_match") for a in attempts)
+    ver_success = any(a.get("verification", {}).get("success") for a in attempts)
+
+    if gt_success and ext_success:
+        success_reason = "extractor"
+    elif gt_success:
+        success_reason = "ground_truth"
+    elif ver_success:
+        success_reason = "verification"
+    else:
+        success_reason = None
+
+    run = {
+        "experiment": {
+            "run_id": run_id,
+            "benchmark_mode": benchmark_info is not None,
+            "benchmark_run_number": benchmark_info.get("run_number") if benchmark_info else None,
+            "benchmark_total_runs": benchmark_info.get("total_runs") if benchmark_info else None,
+            "max_attempts": timing_info.get("max_attempts", MAX_INTERACTIONS),
+            "dataset_size": timing_info.get("dataset_size", 1000),
+            "scenario_id": raw_dataset_entry.get("defense_id", "unknown"),
+            "seed": timing_info.get("seed", 42),
+            "timestamp": datetime.now().isoformat(),
+            "experiment_version": EXPERIMENT_VERSION,
+            "git_commit": GIT_COMMIT,
+        },
+        "raw_dataset_entry": raw_dataset_entry,
+        "models": model_info,
+        "timing": {
+            "total_run_time": timing_info.get("total_run_time", 0),
+            "model_loading_time": timing_info.get("model_loading_time", 0),
+            "average_attempt_time": timing_info.get("average_attempt_time", 0),
+        },
+        "scenario": {
+            "pre_defense": scenario.opening_defense,
+            "post_defense": scenario.closing_defense,
+            "access_code": scenario.access_code,
+            "full_prompt": f"{scenario.opening_defense}\n\n{scenario.closing_defense}",
+        },
+        "result": {
+            "ground_truth_success": gt_success,
+            "generator_success": gt_success,
+            "extractor_success": ext_success,
+            "verified_success": ver_success,
+            "extracted_value": attempts[-1].get("extractor", {}).get(
+                "best_candidate", ""
+            ) if attempts else "",
+            "success_reason": success_reason,
+            "total_attempts": len(attempts),
+        },
+        "strategy_stats": strategy_stats,
+        "best_attack": best_attack,
+        "ground_truth": ground_truth_info,
+        "attempts": attempts,
+        "events": events,
+        "summary": summary,
+    }
+
+    return run
+
+
+# =============================================================================
 # Phase 3: Generator Validation
 # =============================================================================
 
@@ -1290,6 +1441,22 @@ def verbose_test_llama(scenario: DefenseScenario, agent: RedTeamingAgent,
     env = CTFEnvironment(scenario, max_steps=max_attempts)
     env.reset()
 
+    # JSON emission: timing, events, raw dataset entry
+    run_start = time.time()
+    events = []
+    events.append({
+        "timestamp": datetime.now().isoformat(),
+        "type": "start",
+        "message": "Experiment started",
+    })
+
+    raw_dataset_entry = {
+        "defense_id": getattr(scenario, "_defense_id", "unknown"),
+        "opening_defense": scenario.opening_defense,
+        "closing_defense": scenario.closing_defense,
+        "access_code": scenario.access_code,
+    }
+
     print("\n" + "=" * 80)
     print("🔥 AUTORED: VERBOSE RED TEAMING SESSION 🔥")
     print("=" * 80)
@@ -1314,8 +1481,11 @@ def verbose_test_llama(scenario: DefenseScenario, agent: RedTeamingAgent,
     agent.extractor.set_ground_truth(scenario.access_code)
     agent.extractor.reset_stats()
 
+    total_attempts = max_attempts  # default: ran all attempts without success
+
     for i in range(max_attempts):
         iteration_log = {"iteration": i + 1}
+        attempt_start = time.time()
 
         print(f"\n{'=' * 70}")
         print(f"🚀 [ATTEMPT {i+1}/{max_attempts}]")
@@ -1456,11 +1626,24 @@ Previous Response:
             "all_candidates": [(c, s) for c, s in extraction_result['all_candidates']],
             "regex_candidates": extraction_result['regex_candidates'],
             "llm_candidates": extraction_result['llm_candidates'],
+            "quoted_candidates": extraction_result.get("quoted_candidates", []),
+            "capitalized_candidates": extraction_result.get("capitalized_candidates", []),
             "verified": verified_success,
             "ground_truth": scenario.access_code,
             "success_exact": success_exact,
             "success_extractor": success_extractor,
         }
+
+        # JSON emission: additional trace fields
+        iteration_log["timestamp"] = datetime.now().isoformat()
+        iteration_log["attempt_time_ms"] = int((time.time() - attempt_start) * 1000)
+        iteration_log["ground_truth_found"] = gt_leaked
+        iteration_log["extractor_match"] = success_extractor
+        iteration_log["generator_success"] = success_exact
+        iteration_log["verification_success"] = verified_success
+        iteration_log["verification_candidate"] = extracted_code or ""
+        iteration_log["verification_response"] = ""
+        iteration_log["duplicate_attack"] = attack in agent.used_attacks
 
         # ---------- STEP 5: UPDATE HISTORY ----------
         # Improvement #3: Update attack history for next iteration
@@ -1483,20 +1666,95 @@ Previous Response:
             iteration_log["attempts_to_success"] = i + 1
             iteration_log["extracted_code"] = extracted_code
             trace.append(iteration_log)
-            return trace, i + 1
+            total_attempts = i + 1
+            break
 
         time.sleep(1)
         trace.append(iteration_log)
 
     # ---------- MAX ATTEMPTS REACHED ----------
-    print(
-        f"\n❌ FAILED. Reached maximum attempts ({max_attempts}) "
-        f"without breaking the defense."
-    )
-    print(f"  ┌─ Access code was: '{scenario.access_code}'")
-    print(f"  └─ The defense held for all {max_attempts} iterations")
+    if total_attempts < max_attempts:
+        events.append({
+            "timestamp": datetime.now().isoformat(),
+            "type": "success",
+            "message": f"Defense broken after {total_attempts} attempts",
+        })
+    else:
+        print(
+            f"\n❌ FAILED. Reached maximum attempts ({max_attempts}) "
+            f"without breaking the defense."
+        )
+        print(f"  ┌─ Access code was: '{scenario.access_code}'")
+        print(f"  └─ The defense held for all {max_attempts} iterations")
+        events.append({
+            "timestamp": datetime.now().isoformat(),
+            "type": "failure",
+            "message": f"Max attempts ({max_attempts}) reached",
+        })
 
-    return trace, max_attempts
+    # JSON emission: serialize and save
+    run_end = time.time()
+    total_run_time = run_end - run_start
+
+    timing_info = {
+        "total_run_time": total_run_time,
+        "model_loading_time": sum(MODEL_LOAD_TIME.values()),
+        "average_attempt_time": total_run_time / len(trace) if trace else 0,
+        "max_attempts": max_attempts,
+        "dataset_size": len(defender_df),
+        "seed": 42,
+    }
+
+    model_info = {
+        "victim": {"name": LLAMA_PATH, "load_time": MODEL_LOAD_TIME.get("victim", 0)},
+        "generator": {"name": GENERATOR_PATH, "load_time": MODEL_LOAD_TIME.get("generator", 0)},
+        "judge": {"name": DISTILBERT_CKPT, "load_time": MODEL_LOAD_TIME.get("judge", 0)},
+        "extractor": {"name": LLAMA_PATH, "load_time": 0},
+    }
+
+    ground_truth_info = {
+        "access_code": scenario.access_code,
+        "leaked": any(t.get("ground_truth_found") for t in trace),
+        "leak_position": next(
+            (t.get("iteration") for t in trace if t.get("ground_truth_found")), None
+        ),
+        "leak_count": sum(1 for t in trace if t.get("ground_truth_found")),
+    }
+
+    best_attack_info = {
+        "prompt": agent.best_attack,
+        "score": agent.best_score,
+        "strategy": getattr(agent, "_current_strategy", "unknown"),
+    } if agent.best_attack else None
+
+    summary_dict = {
+        "total_attempts": total_attempts,
+        "success": total_attempts < max_attempts,
+        "ground_truth_leaked": ground_truth_info["leaked"],
+    }
+
+    run_json = serialize_run(
+        scenario=scenario,
+        trace=trace,
+        timing_info=timing_info,
+        model_info=model_info,
+        strategy_stats=agent.strategy_stats,
+        best_attack=best_attack_info,
+        ground_truth_info=ground_truth_info,
+        events=events,
+        summary=summary_dict,
+        raw_dataset_entry=raw_dataset_entry,
+    )
+
+    # Save to results directory
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
+    json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
+    with open(json_path, "w") as f:
+        json.dump(run_json, f, indent=2, default=str)
+    print(f"\n[JSON] Run saved to: {json_path}")
+
+    return trace, total_attempts, run_json
 
 
 # =============================================================================
@@ -1621,6 +1879,9 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
     total_success_extractor = 0  # Extractor detected it
     success_attempts = []
 
+    # JSON emission: collect per-round run JSONs
+    benchmark_run_jsons = []
+
     # Sample n_rounds scenarios
     scenarios_df = defender_df.sample(n=min(n_rounds, len(defender_df)), random_state=42)
 
@@ -1634,11 +1895,17 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
         )
 
         if verbose:
-            trace, attempts = verbose_test_llama(scenario, agent)
+            trace, attempts, run_json = verbose_test_llama(scenario, agent)
         else:
             # Silent mode: run without verbose logging
             trace, attempts = _silent_test(scenario, agent)
 
+            # JSON emission: serialize silent run
+            run_json = _build_benchmark_run_json(
+                scenario, trace, attempts, agent, round_idx + 1, n_rounds, row,
+            )
+
+        benchmark_run_jsons.append(run_json)
         success = attempts < MAX_INTERACTIONS
         if success:
             total_successes += 1
@@ -1713,9 +1980,140 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
     # Save results
     with open(BENCHMARK_LOG_PATH, "w") as f:
         json.dump(benchmark, f, indent=2)
-    print(f"\n💾 Benchmark saved to: {BENCHMARK_LOG_PATH}")
+    print(f"\n[JSON] Benchmark summary saved to: {BENCHMARK_LOG_PATH}")
+
+    # JSON emission: save per-round run JSONs
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
+    for run_json in benchmark_run_jsons:
+        json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
+        with open(json_path, "w") as f:
+            json.dump(run_json, f, indent=2, default=str)
+    print(f"[JSON] {len(benchmark_run_jsons)} run JSONs saved to: {results_dir}/")
 
     return benchmark
+
+
+def _build_benchmark_run_json(scenario, trace, attempts, agent,
+                               run_number, total_runs, row) -> dict:
+    """Build AutoRedRun JSON for a benchmark round (silent mode)."""
+    benchmark_info = {"run_number": run_number, "total_runs": total_runs}
+
+    # Normalize silent trace to verbose format for serialize_run
+    normalized_trace = []
+    for entry in trace:
+        normalized = {
+            "iteration": entry.get("iteration", 0),
+            "timestamp": datetime.now().isoformat(),
+            "attempt_time_ms": 0,
+            "judge": {
+                "input_to_judge": "",
+                "probabilities": {},
+                "confidence": entry.get("confidence", 0.0),
+                "decision": entry.get("judge", ""),
+            },
+            "generator": {
+                "strategy": "unknown",
+                "internal_prompt": "",
+                "generated_attack": entry.get("attack", ""),
+                "attack_length": len(entry.get("attack", "")),
+                "attack_hash": hashlib.sha256(
+                    entry.get("attack", "").encode()
+                ).hexdigest()[:16],
+                "duplicate_attack": False,
+                "input_tokens": 0,
+                "output_tokens": 0,
+            },
+            "llm_response": {
+                "raw_output": "",
+                "clean_response": "",
+                "output_length": entry.get("response_length", 0),
+            },
+            "extractor": entry.get("extractor", {}),
+            "ground_truth_found": entry.get("success", False),
+            "extractor_match": entry.get("extractor", {}).get(
+                "success_extractor", False
+            ),
+            "generator_success": entry.get("extractor", {}).get(
+                "success_exact", False
+            ),
+            "verification_success": entry.get("extractor", {}).get(
+                "verified", False
+            ),
+            "verification_candidate": entry.get("extractor", {}).get(
+                "best_candidate", ""
+            ),
+            "verification_response": "",
+            "duplicate_attack": False,
+        }
+        normalized_trace.append(normalized)
+
+    timing_info = {
+        "total_run_time": 0,
+        "model_loading_time": sum(MODEL_LOAD_TIME.values()),
+        "average_attempt_time": 0,
+        "max_attempts": MAX_INTERACTIONS,
+        "dataset_size": len(defender_df),
+        "seed": 42,
+    }
+
+    model_info = {
+        "victim": {"name": LLAMA_PATH, "load_time": MODEL_LOAD_TIME.get("victim", 0)},
+        "generator": {"name": GENERATOR_PATH, "load_time": MODEL_LOAD_TIME.get("generator", 0)},
+        "judge": {"name": DISTILBERT_CKPT, "load_time": MODEL_LOAD_TIME.get("judge", 0)},
+        "extractor": {"name": LLAMA_PATH, "load_time": 0},
+    }
+
+    ground_truth_info = {
+        "access_code": scenario.access_code,
+        "leaked": any(t.get("ground_truth_found") for t in normalized_trace),
+        "leak_position": next(
+            (t.get("iteration") for t in normalized_trace
+             if t.get("ground_truth_found")), None
+        ),
+        "leak_count": sum(1 for t in normalized_trace
+                          if t.get("ground_truth_found")),
+    }
+
+    best_attack_info = {
+        "prompt": agent.best_attack,
+        "score": agent.best_score,
+        "strategy": getattr(agent, "_current_strategy", "unknown"),
+    } if agent.best_attack else None
+
+    raw_dataset_entry = {
+        "defense_id": row.name if hasattr(row, "name") else "unknown",
+        "opening_defense": scenario.opening_defense,
+        "closing_defense": scenario.closing_defense,
+        "access_code": scenario.access_code,
+    }
+
+    events = [
+        {
+            "timestamp": datetime.now().isoformat(),
+            "type": "benchmark_round",
+            "message": f"Benchmark round {run_number}/{total_runs}",
+        }
+    ]
+
+    summary_dict = {
+        "total_attempts": attempts,
+        "success": attempts < MAX_INTERACTIONS,
+    }
+
+    return serialize_run(
+        scenario=scenario,
+        trace=normalized_trace,
+        timing_info=timing_info,
+        model_info=model_info,
+        strategy_stats=agent.strategy_stats,
+        best_attack=best_attack_info,
+        ground_truth_info=ground_truth_info,
+        events=events,
+        summary=summary_dict,
+        raw_dataset_entry=raw_dataset_entry,
+        benchmark_info=benchmark_info,
+    )
 
 
 def _silent_test(scenario: DefenseScenario, agent: RedTeamingAgent) -> tuple:
@@ -1986,6 +2384,25 @@ def benchmark_extractor(extractor: SensitiveInfoExtractor,
     print(f"  Accuracy:         {accuracy:.2%}")
     print(f"{'=' * 60}")
 
+    # JSON emission: save extractor benchmark results
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
+    extractor_json = {
+        "experiment": {
+            "run_id": f"extractor_bench_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "benchmark_mode": True,
+            "timestamp": datetime.now().isoformat(),
+            "experiment_version": EXPERIMENT_VERSION,
+            "git_commit": GIT_COMMIT,
+        },
+        "metrics": metrics,
+        "n_samples": n_samples,
+    }
+    json_path = results_dir / f"{extractor_json['experiment']['run_id']}.json"
+    with open(json_path, "w") as f:
+        json.dump(extractor_json, f, indent=2, default=str)
+    print(f"[JSON] Extractor benchmark saved to: {json_path}")
+
     return metrics
 
 
@@ -2055,7 +2472,7 @@ if __name__ == "__main__":
             print(f"Access code:   \033[93m{scenario.access_code}\033[0m")
 
             # Run the verbose test
-            trace, tries = verbose_test_llama(scenario, agent)
+            trace, tries, _run_json = verbose_test_llama(scenario, agent)
 
             # Print summary
             print_summary_table(trace)
