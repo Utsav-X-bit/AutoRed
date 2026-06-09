@@ -6,6 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts';
+import { normalizeRun, normalizeRunList } from '../utils/normalizeRun';
 
 export default function BenchmarkDashboard() {
   const navigate = useNavigate();
@@ -18,11 +19,15 @@ export default function BenchmarkDashboard() {
     const load = async () => {
       try {
         const res = await fetch('/api/runs');
-        const allRuns: RunListItem[] = await res.json();
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const allRuns: RunListItem[] = normalizeRunList(await res.json());
         // Fetch full data for benchmark runs
         const benchmarkIds = allRuns.filter(r => r.benchmark_mode);
         const fullRuns = await Promise.all(
-          benchmarkIds.map(r => fetch(`/api/run/${r.run_id}`).then(res => res.json()))
+          benchmarkIds.map(r => fetch(`/api/run/${encodeURIComponent(r.run_id)}`).then(res => {
+            if (!res.ok) throw new Error(`Run ${r.run_id}: ${res.status}`);
+            return res.json();
+          }).then(normalizeRun))
         );
         setBenchmarkRuns(fullRuns);
       } catch (e) {

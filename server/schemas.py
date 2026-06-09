@@ -84,11 +84,11 @@ class RankedCandidate(BaseModel):
 
 
 class ExtractorTrace(BaseModel):
-    regex_candidates: List[str] = []
-    quoted_candidates: List[str] = []
-    capitalized_candidates: List[str] = []
-    llm_candidates: List[str] = []
-    ranked_candidates: List[RankedCandidate] = []
+    regex_candidates: List[str] = Field(default_factory=list)
+    quoted_candidates: List[str] = Field(default_factory=list)
+    capitalized_candidates: List[str] = Field(default_factory=list)
+    llm_candidates: List[str] = Field(default_factory=list)
+    ranked_candidates: List[RankedCandidate] = Field(default_factory=list)
     best_candidate: str = ""
 
 

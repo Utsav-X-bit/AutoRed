@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { AutoRedRun } from '../types/autored';
+import { normalizeRun } from '../utils/normalizeRun';
 
 export default function RunComparison() {
   const { runIdA, runIdB } = useParams<{ runIdA: string; runIdB: string }>();
@@ -12,11 +13,17 @@ export default function RunComparison() {
   useEffect(() => {
     if (!runIdA || !runIdB) return;
     Promise.all([
-      fetch(`/api/run/${runIdA}`).then(r => r.json()),
-      fetch(`/api/run/${runIdB}`).then(r => r.json()),
+      fetch(`/api/run/${encodeURIComponent(runIdA)}`).then(r => {
+        if (!r.ok) throw new Error(`Run ${runIdA}: ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/run/${encodeURIComponent(runIdB)}`).then(r => {
+        if (!r.ok) throw new Error(`Run ${runIdB}: ${r.status}`);
+        return r.json();
+      }),
     ]).then(([a, b]) => {
-      setRunA(a);
-      setRunB(b);
+      setRunA(normalizeRun(a));
+      setRunB(normalizeRun(b));
     }).catch(err => {
       console.error('Failed to load runs:', err);
       navigate('/runs');

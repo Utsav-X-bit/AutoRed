@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RunListItem } from '../types/autored';
 
 interface FilterBarProps {
@@ -10,7 +10,7 @@ export default function FilterBar({ runs, onFilter }: FilterBarProps) {
   const [showOnly, setShowOnly] = useState<'all' | 'success' | 'failure'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const applyFilters = () => {
+  useEffect(() => {
     let filtered = [...runs];
 
     if (showOnly === 'success') {
@@ -30,7 +30,7 @@ export default function FilterBar({ runs, onFilter }: FilterBarProps) {
     }
 
     onFilter(filtered);
-  };
+  }, [runs, searchQuery, showOnly, onFilter]);
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -39,7 +39,7 @@ export default function FilterBar({ runs, onFilter }: FilterBarProps) {
         {(['all', 'success', 'failure'] as const).map((opt) => (
           <button
             key={opt}
-            onClick={() => { setShowOnly(opt); applyFilters(); }}
+            onClick={() => setShowOnly(opt)}
             className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
               showOnly === opt
                 ? 'bg-slate-900 text-white'
@@ -57,14 +57,14 @@ export default function FilterBar({ runs, onFilter }: FilterBarProps) {
           type="text"
           placeholder="Search runs (ID, access code, model...)"
           value={searchQuery}
-          onChange={(e) => { setSearchQuery(e.target.value); applyFilters(); }}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
 
       {/* Count */}
       <span className="text-xs text-slate-500">
-        {runs.length} of {runs.length} runs
+        Filter run history
       </span>
     </div>
   );

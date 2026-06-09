@@ -55,7 +55,8 @@ def chat_with_llama_server(pre_defense: str, attack: str, post_defense: str) -> 
     with torch.no_grad():
         outputs = model.generate(**inputs, max_new_tokens=200, do_sample=True, temperature=0.7, top_p=0.9)
 
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    prompt_len = inputs["input_ids"].shape[1]
+    response = tokenizer.decode(outputs[0][prompt_len:], skip_special_tokens=True)
     return response
 
 
@@ -234,7 +235,7 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
             "ground_truth_found": ground_truth_found,
             "extractor_match": extractor_success,
             "generator_success": ground_truth_found,
-            "duplicate_attack": attack in used_attacks,
+            "duplicate_attack": gen_result.get("duplicate_attack", attack in used_attacks),
         }
         trace.append(trace_entry)
         used_attacks.add(attack)
@@ -270,7 +271,10 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
                 "quoted_candidates": extraction_result.get("quoted_candidates", []),
                 "capitalized_candidates": extraction_result.get("capitalized_candidates", []),
                 "llm_candidates": extraction_result.get("llm_candidates", []),
-                "ranked_candidates": extraction_result.get("all_candidates", []),
+                "ranked_candidates": [
+                    {"value": value, "score": score}
+                    for value, score in extraction_result.get("all_candidates", [])
+                ],
                 "best_candidate": extraction_result.get("best_candidate", ""),
             },
             "verification": {

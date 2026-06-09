@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
-import { useWebSocket } from '../hooks/useWebSocket';
 import TimelineSidebar from '../components/TimelineSidebar';
 import GeneratorCard from '../components/GeneratorCard';
 import VictimCard from '../components/VictimCard';
@@ -13,16 +12,16 @@ import InvestigationTabs from '../components/InvestigationTabs';
 export default function InvestigationPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
-  const { selectedRun, selectedAttemptIndex, setSelectedRun } = useRunStore();
-  const { connect, isConnected } = useWebSocket(runId);
+  const { selectedRun, selectedAttemptIndex, setSelectedRun, clearSelectedRun } = useRunStore();
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!runId) return;
+    clearSelectedRun();
     setLoadError(null);
     console.log('[InvestigationPage] Loading run:', runId);
 
-    fetch(`/api/run/${runId}`)
+    fetch(`/api/run/${encodeURIComponent(runId)}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         return res.json();
@@ -43,9 +42,8 @@ export default function InvestigationPage() {
       .catch((err) => {
         console.error('[InvestigationPage] Failed to load run:', err);
         setLoadError(`Failed to load run: ${err.message}`);
-        navigate('/runs');
       });
-  }, [runId]);
+  }, [runId, clearSelectedRun, setSelectedRun]);
 
   if (loadError) {
     return (
@@ -112,12 +110,6 @@ export default function InvestigationPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span>Attempt {attempt.attempt_number}/{selectedRun.result.total_attempts}</span>
-          {isConnected && (
-            <span className="flex items-center gap-1.5 text-xs text-green-600">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <a

@@ -20,7 +20,32 @@ logger = logging.getLogger("autored_server")
 
 from .file_manager import list_runs, get_run, upload_run, delete_run
 from .websocket import ws_manager
-from .models_server import server_models
+
+try:
+    from .models_server import server_models
+except ImportError as exc:
+    logger.warning("[SERVER] ML dependencies unavailable: %s", exc)
+
+    class UnavailableModelsManager:
+        is_loaded = False
+        load_error = str(exc)
+        models: Dict[str, Any] = {}
+        tokenizers: Dict[str, Any] = {}
+
+        def load_all(self):
+            raise RuntimeError(self.load_error)
+
+        def get_status(self):
+            return {
+                "ready": False,
+                "error": self.load_error,
+                **{
+                    name: {"loaded": False, "name": "unavailable", "load_time": 0}
+                    for name in ("victim", "generator", "judge", "extractor")
+                },
+            }
+
+    server_models = UnavailableModelsManager()
 
 
 # ─── Startup / Shutdown ──────────────────────────────────────
@@ -28,13 +53,17 @@ from .models_server import server_models
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load models on startup, keep in memory across runs."""
-    print("[SERVER] Starting up — loading models...")
-    load_times = server_models.load_all()
-    total = sum(load_times.values())
-    print(f"[SERVER] ✓ All models loaded in {total:.1f}s")
-    print(f"[SERVER]   victim:    {load_times.get('victim', 0):.1f}s")
-    print(f"[SERVER]   generator: {load_times.get('generator', 0):.1f}s")
-    print(f"[SERVER]   judge:     {load_times.get('judge', 0):.1f}s")
+    if os.environ.get("AUTORED_LOAD_MODELS", "1") == "1":
+        print("[SERVER] Starting up — loading models...")
+        try:
+            load_times = server_models.load_all()
+            total = sum(load_times.values())
+            print(f"[SERVER] ✓ All models loaded in {total:.1f}s")
+        except Exception as exc:
+            logger.exception("[SERVER] Model loading failed; run history remains available")
+            server_models.load_error = str(exc)
+    else:
+        print("[SERVER] Starting without models (AUTORED_LOAD_MODELS=0)")
     yield
     print("[SERVER] Shutting down — clearing models...")
     server_models.models.clear()
@@ -217,7 +246,7 @@ def api_export_csv(run_id: str):
             row = {
                 "attempt": a.get("attempt_number"),
                 "strategy": a.get("generator", {}).get("strategy"),
-                "attack": a.get("generator", {}).get("generated_attack")[:100],
+                "attack": a.get("generator", {}).get("generated_attack", "")[:100],
                 "judge_decision": a.get("judge", {}).get("decision"),
                 "ground_truth_found": a.get("ground_truth_found"),
                 "extractor_match": a.get("extractor_match"),

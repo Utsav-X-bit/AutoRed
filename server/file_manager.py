@@ -1,11 +1,12 @@
 import json
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-RESULTS_DIR = Path("results")
+from .run_normalizer import normalize_run
+
+RESULTS_DIR = Path(__file__).resolve().parents[1] / "results"
 
 
 def ensure_results_dir():
@@ -20,7 +21,7 @@ def list_runs() -> List[Dict[str, Any]]:
     for f in sorted(RESULTS_DIR.glob("run_*.json"), key=os.path.getmtime, reverse=True):
         try:
             with open(f, "r") as fp:
-                data = json.load(fp)
+                data = normalize_run(json.load(fp), f.stem)
             runs.append({
                 "run_id": data.get("experiment", {}).get("run_id", f.stem),
                 "file_path": str(f),
@@ -45,15 +46,14 @@ def list_runs() -> List[Dict[str, Any]]:
 def get_run(run_id: str) -> Optional[Dict[str, Any]]:
     """Load a specific run by run_id."""
     ensure_results_dir()
-    # Try exact match first
-    path = RESULTS_DIR / f"{run_id}.json"
-    if path.exists():
-        with open(path, "r") as f:
-            return json.load(f)
-    # Try glob pattern
-    for p in RESULTS_DIR.glob(f"*{run_id}*"):
-        with open(p, "r") as f:
-            return json.load(f)
+    for path in RESULTS_DIR.glob("*.json"):
+        try:
+            with open(path, "r") as f:
+                data = normalize_run(json.load(f), path.stem)
+            if path.stem == run_id or data["experiment"]["run_id"] == run_id:
+                return data
+        except (json.JSONDecodeError, OSError):
+            continue
     return None
 
 
@@ -65,25 +65,28 @@ def upload_run(file_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"File not found: {file_path}")
 
     with open(src, "r") as f:
-        data = json.load(f)
+        data = normalize_run(json.load(f))
 
     run_id = data.get("experiment", {}).get("run_id", f"imported_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-    dest = RESULTS_DIR / f"{run_id}.json"
+    safe_run_id = Path(run_id).name.replace(".json", "") or f"imported_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    dest = RESULTS_DIR / f"{safe_run_id}.json"
 
     # Avoid overwrite
     if dest.exists():
         timestamp = datetime.now().strftime("%H%M%S%f")[:-3]
-        dest = RESULTS_DIR / f"{run_id}_{timestamp}.json"
+        dest = RESULTS_DIR / f"{safe_run_id}_{timestamp}.json"
 
-    shutil.copy2(src, dest)
+    data["experiment"]["run_id"] = dest.stem
+    with open(dest, "w") as f:
+        json.dump(data, f, indent=2)
 
-    return {"run_id": run_id, "file_path": str(dest)}
+    return {"run_id": dest.stem, "file_path": str(dest)}
 
 
 def delete_run(run_id: str) -> bool:
     """Delete a run JSON file."""
-    path = RESULTS_DIR / f"{run_id}.json"
-    if path.exists():
-        path.unlink()
-        return True
+    for path in RESULTS_DIR.glob("*.json"):
+        if path.stem == run_id:
+            path.unlink()
+            return True
     return False

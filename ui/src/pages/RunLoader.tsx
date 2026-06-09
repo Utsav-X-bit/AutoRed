@@ -4,6 +4,7 @@ import { useRunStore } from '../store/runStore';
 import FilterBar from '../components/FilterBar';
 import NewRunDialog from '../components/NewRunDialog';
 import type { RunListItem } from '../types/autored';
+import { normalizeRunList } from '../utils/normalizeRun';
 
 export default function RunLoader() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function RunLoader() {
   const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<RunListItem[]>([]);
   const [showNewRun, setShowNewRun] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRuns();
@@ -21,11 +23,14 @@ export default function RunLoader() {
   const fetchRuns = async () => {
     try {
       const res = await fetch('/api/runs');
-      const data = await res.json();
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = normalizeRunList(await res.json());
       setRuns(data);
       setFilteredRuns(data);
+      setError(null);
     } catch (e) {
       console.error('Failed to load runs:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load runs');
     } finally {
       setLoading(false);
     }
@@ -38,10 +43,15 @@ export default function RunLoader() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      await fetch('/api/runs/upload', { method: 'POST', body: formData });
-      fetchRuns();
+      const res = await fetch('/api/runs/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `Upload failed (${res.status})`);
+      }
+      await fetchRuns();
     } catch (err) {
       console.error('Upload failed:', err);
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -91,6 +101,11 @@ export default function RunLoader() {
 
       {/* Run List */}
       <main className="max-w-7xl mx-auto p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {runs.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
             <p className="text-lg">No runs yet</p>
@@ -101,7 +116,7 @@ export default function RunLoader() {
             {filteredRuns.map((run: RunListItem) => (
               <button
                 key={run.run_id}
-                onClick={() => navigate(`/run/${run.run_id}`)}
+                onClick={() => navigate(`/run/${encodeURIComponent(run.run_id)}`)}
                 className="w-full text-left bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-400 hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between">

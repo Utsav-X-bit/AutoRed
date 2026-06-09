@@ -22,8 +22,8 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
   const [error, setError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
-
   const wsConnected = useRef(false);
+  const runCompleted = useRef(false);
 
   const connectWebSocket = useCallback((rid: string) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -32,6 +32,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     wsConnected.current = false;
+    runCompleted.current = false;
 
     ws.onopen = () => {
       wsConnected.current = true;
@@ -53,6 +54,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
             setSuccess(true);
           }
         } else if (data.type === 'run_complete') {
+          runCompleted.current = true;
           console.log('[NewRun WS] ✓ run_complete received');
           const rawRun = (data as { run: unknown }).run;
           if (rawRun && typeof rawRun === 'object' && 'error' in rawRun) {
@@ -62,7 +64,11 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
             const run = rawRun as AutoRedRun;
             console.log('[NewRun WS] Run complete - success:', run.result?.ground_truth_success, 'attempts:', run.result?.total_attempts);
             console.log('[NewRun WS] Run attempts array length:', run.attempts?.length);
-            setSuccess(run.result?.ground_truth_success ?? false);
+            setSuccess(Boolean(
+              run.result?.ground_truth_success
+              || run.result?.extractor_success
+              || run.result?.verified_success
+            ));
             setTotalAttempts(run.result?.total_attempts ?? 0);
             setSelectedRun(run);
           }
@@ -77,12 +83,12 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
     ws.onclose = (event) => {
       console.log(`[NewRun WS] WebSocket closed: code=${event.code}, reason=${event.reason}`);
+      const wasConnected = wsConnected.current;
       wsRef.current = null;
       wsConnected.current = false;
-      // Only auto-close dialog if we were actually connected and run finished
-      if (running && !success && !error && wsConnected.current) {
+      if (running && wasConnected && !runCompleted.current && !error) {
+        setError('Live connection closed before the run completed.');
         setRunning(false);
-        onSuccess();
       }
     };
 
@@ -94,7 +100,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
         setRunning(false);
       }
     };
-  }, [setSelectedRun, running, onSuccess, success, error]);
+  }, [setSelectedRun, running, error]);
 
   const handleStart = async () => {
     setRunning(true);
@@ -133,7 +139,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
       connectWebSocket(rid);
 
       // Wait for WebSocket to open before starting experiment
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('WebSocket timeout')), 5000);
         const checkWs = setInterval(() => {
           if (wsConnected.current) {
@@ -159,6 +165,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
         console.error('[NewRun] POST failed:', res.status, err);
         setError(err.detail || `Server error (${res.status})`);
         setRunning(false);
+        wsRef.current?.close();
         return;
       }
 
@@ -183,7 +190,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
   const handleDone = () => {
     if (wsRef.current) wsRef.current.close();
-    if (success && runId) {
+    if (runId && !error) {
       navigate(`/run/${runId}`);
     } else {
       onSuccess();

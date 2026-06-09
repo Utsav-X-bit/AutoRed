@@ -33,6 +33,7 @@ class ServerModelsManager:
         self.models: Dict[str, Any] = {}
         self.tokenizers: Dict[str, Any] = {}
         self.load_times: Dict[str, float] = {}
+        self.load_error: Optional[str] = None
         self._loaded = False
 
     def load_all(self) -> Dict[str, float]:
@@ -90,6 +91,8 @@ class ServerModelsManager:
 
     def get_status(self) -> Dict[str, Any]:
         return {
+            "ready": self._loaded,
+            "error": self.load_error,
             "victim": {"loaded": self._loaded, "name": LLAMA_PATH, "load_time": self.load_times.get("victim", 0)},
             "generator": {"loaded": self._loaded, "name": GENERATOR_PATH, "load_time": self.load_times.get("generator", 0)},
             "judge": {"loaded": self._loaded, "name": DISTILBERT_CKPT, "load_time": self.load_times.get("judge", 0)},
