@@ -1,15 +1,40 @@
+import os
+# MUST set BEFORE any experiment imports to prevent double model loading
+os.environ["AUTORED_SERVER_MODE"] = "1"
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import List, Dict, Any
 import json
 import tempfile
-import os
+import asyncio
 
 from .file_manager import list_runs, get_run, upload_run, delete_run
 from .websocket import ws_manager
+from .models_server import server_models
 
-app = FastAPI(title="AutoRed Web UI", version="1.0.0")
+
+# ─── Startup / Shutdown ──────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load models on startup, keep in memory across runs."""
+    print("[SERVER] Starting up — loading models...")
+    load_times = server_models.load_all()
+    total = sum(load_times.values())
+    print(f"[SERVER] ✓ All models loaded in {total:.1f}s")
+    print(f"[SERVER]   victim:    {load_times.get('victim', 0):.1f}s")
+    print(f"[SERVER]   generator: {load_times.get('generator', 0):.1f}s")
+    print(f"[SERVER]   judge:     {load_times.get('judge', 0):.1f}s")
+    yield
+    print("[SERVER] Shutting down — clearing models...")
+    server_models.models.clear()
+    server_models.tokenizers.clear()
+
+
+app = FastAPI(title="AutoRed Web UI", version="1.0.0", lifespan=lifespan)
 
 # CORS for Vite dev server
 app.add_middleware(
@@ -19,6 +44,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Track running state
+_run_lock = asyncio.Lock()
+_is_running = False
+
+
+@app.get("/api/run/status")
+def api_run_status():
+    """Check if a run is currently in progress."""
+    return {"running": _is_running}
 
 
 # ─── Run Endpoints ──────────────────────────────────────────
@@ -63,27 +98,56 @@ def api_delete_run(run_id: str):
 
 @app.get("/api/models/status")
 def api_model_status():
-    """Get model load status (from worker)."""
-    # For now, return placeholder — worker will update this via Redis
-    return {
-        "victim": {"loaded": False, "name": "", "load_time": 0},
-        "generator": {"loaded": False, "name": "", "load_time": 0},
-        "judge": {"loaded": False, "name": "", "load_time": 0},
-        "extractor": {"loaded": False, "name": "", "load_time": 0},
-    }
+    """Get model load status from server."""
+    return server_models.get_status()
 
 
 # ─── Experiment Endpoints ───────────────────────────────────
 
 @app.post("/api/run")
-def api_start_run(scenario_id: str = "", max_attempts: int = 20):
-    """Start a new experiment run (dispatched to worker)."""
-    # For now, return placeholder — worker integration in Task 6
+async def api_start_run(scenario_id: str = "", max_attempts: int = 20):
+    """Start a new experiment run with pre-loaded models and live WebSocket streaming.
+    
+    Returns immediately with run_id; experiment runs in background.
+    Client should connect WebSocket to /ws/run/{run_id} before calling this endpoint.
+    """
+    if not server_models.is_loaded:
+        raise HTTPException(status_code=503, detail="Models not loaded yet. Server may be starting up.")
+
+    # Generate run_id client-side or server-side
+    run_id = f"run_{__import__('time').time():.0f}"
+
+    # Start experiment in background
+    asyncio.create_task(
+        _run_experiment_task(run_id, scenario_id or None, max_attempts)
+    )
+
     return {
-        "run_id": f"run_{int(__import__('time').time())}",
-        "status": "queued",
-        "message": "Worker integration pending (Task 6)",
+        "run_id": run_id,
+        "status": "started",
+        "message": "Experiment started. Connect WebSocket to /ws/run/{run_id} for live updates.",
     }
+
+
+async def _run_experiment_task(run_id: str, scenario_id: str, max_attempts: int):
+    """Background task: run experiment, stream via WebSocket."""
+    global _is_running
+    async with _run_lock:
+        _is_running = True
+        try:
+            from .experiment_server import run_experiment_server
+            await run_experiment_server(
+                run_id=run_id,
+                scenario_id=scenario_id,
+                max_attempts=max_attempts,
+            )
+        except Exception as e:
+            print(f"[SERVER] Experiment {run_id} failed: {e}")
+            import traceback
+            traceback.print_exc()
+            await ws_manager.send_run_complete(run_id, {"error": str(e), "experiment": {"run_id": run_id}})
+        finally:
+            _is_running = False
 
 
 # ─── Export Endpoints ───────────────────────────────────────

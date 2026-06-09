@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
 import FilterBar from '../components/FilterBar';
+import NewRunDialog from '../components/NewRunDialog';
 import type { RunListItem } from '../types/autored';
 
 export default function RunLoader() {
@@ -11,6 +12,7 @@ export default function RunLoader() {
   const [uploading, setUploading] = useState(false);
   const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<RunListItem[]>([]);
+  const [showNewRun, setShowNewRun] = useState(false);
 
   useEffect(() => {
     fetchRuns();
@@ -45,6 +47,11 @@ export default function RunLoader() {
     }
   };
 
+  const handleNewRunSuccess = () => {
+    setShowNewRun(false);
+    fetchRuns();
+  };
+
   if (loading) return <div className="p-8 text-center text-slate-500">Loading runs...</div>;
 
   return (
@@ -54,6 +61,12 @@ export default function RunLoader() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">AutoRed — Run History</h1>
           <div className="flex gap-3 items-center">
+            <button
+              onClick={() => setShowNewRun(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              + New Run
+            </button>
             {selectedRuns.length === 2 && (
               <button
                 onClick={() => navigate(`/compare/${selectedRuns[0]}/${selectedRuns[1]}`)}
@@ -140,6 +153,11 @@ export default function RunLoader() {
           </div>
         )}
       </main>
+
+      {/* New Run Dialog */}
+      {showNewRun && (
+        <NewRunDialog onClose={() => setShowNewRun(false)} onSuccess={handleNewRunSuccess} />
+      )}
     </div>
   );
 }

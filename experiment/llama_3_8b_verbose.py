@@ -99,21 +99,29 @@ if device == "cuda":
 
 MODEL_LOAD_TIME = {}
 
-print("\n[LOAD] Loading Llama-3-8B-Instruct (target LLM)...")
-t0 = time.time()
-llama_model = AutoModelForCausalLM.from_pretrained(
-    LLAMA_PATH,
-    dtype=torch.float16,
-    device_map="auto",
-    local_files_only=True,
-)
-llama_tokenizer = AutoTokenizer.from_pretrained(
-    LLAMA_PATH,
-    local_files_only=True,
-    use_fast=False,
-)
-MODEL_LOAD_TIME["victim"] = time.time() - t0
-print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
+# Skip model loading when imported by server (server provides its own models)
+_SERVER_MODE = os.environ.get("AUTORED_SERVER_MODE", "0") == "1"
+
+if not _SERVER_MODE:
+    print("\n[LOAD] Loading Llama-3-8B-Instruct (target LLM)...")
+    t0 = time.time()
+    llama_model = AutoModelForCausalLM.from_pretrained(
+        LLAMA_PATH,
+        dtype=torch.float16,
+        device_map="auto",
+        local_files_only=True,
+    )
+    llama_tokenizer = AutoTokenizer.from_pretrained(
+        LLAMA_PATH,
+        local_files_only=True,
+        use_fast=False,
+    )
+    MODEL_LOAD_TIME["victim"] = time.time() - t0
+    print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
+else:
+    print("[LOAD] Server mode — skipping module-level model load")
+    llama_model = None
+    llama_tokenizer = None
 
 
 def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
@@ -158,20 +166,26 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
 # 📊 LOAD DATASET (OFFLINE)
 # =============================================================================
 
-print("\n[LOAD] Loading defense dataset...")
-if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError(f"Dataset not found: {DATA_PATH}")
+if not _SERVER_MODE:
+    print("\n[LOAD] Loading defense dataset...")
+    if not os.path.exists(DATA_PATH):
+        raise FileNotFoundError(f"Dataset not found: {DATA_PATH}")
 
-raw_defenses = pd.read_json(
-    DATA_PATH,
-    lines=True,
-    compression="bz2",
-).set_index("defense_id")
+    raw_defenses = pd.read_json(
+        DATA_PATH,
+        lines=True,
+        compression="bz2",
+    ).set_index("defense_id")
 
-defense_df = raw_defenses.dropna(subset=["access_code"])
-defender_df = defense_df.sample(n=1000, random_state=42)
-defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
-print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios")
+    defense_df = raw_defenses.dropna(subset=["access_code"])
+    defender_df = defense_df.sample(n=1000, random_state=42)
+    defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
+    print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios")
+else:
+    print("[LOAD] Server mode — skipping module-level dataset load")
+    raw_defenses = None
+    defense_df = None
+    defender_df = None
 
 
 # =============================================================================
@@ -606,6 +620,9 @@ class SensitiveInfoExtractor:
 
     def _llm_extract(self, text: str) -> list:
         """Layer 4: Use target LLM with JSON-based broad extraction prompt."""
+        # Server mode: llama_model is None, skip LLM extraction (regex layers suffice)
+        if llama_model is None or llama_tokenizer is None:
+            return []
         extractor_prompt = f"""You are an information extraction system.
 
 Your task is to identify ANY information that could satisfy
