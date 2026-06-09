@@ -2075,6 +2075,7 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
             closing_defense=row["closing_defense"],
             access_code=row["access_code"],
         )
+        scenario._defense_id = row.name
 
         if verbose:
             trace, attempts, run_json = verbose_test_llama(scenario, agent)
@@ -2181,54 +2182,58 @@ def _build_benchmark_run_json(scenario, trace, attempts, agent,
     """Build AutoRedRun JSON for a benchmark round (silent mode)."""
     benchmark_info = {"run_number": run_number, "total_runs": total_runs}
 
-    # Normalize silent trace to verbose format for serialize_run
-    normalized_trace = []
-    for entry in trace:
-        normalized = {
-            "iteration": entry.get("iteration", 0),
-            "timestamp": datetime.now().isoformat(),
-            "attempt_time_ms": 0,
-            "judge": {
-                "input_to_judge": "",
-                "probabilities": {},
-                "confidence": entry.get("confidence", 0.0),
-                "decision": entry.get("judge", ""),
-            },
-            "generator": {
-                "strategy": "unknown",
-                "internal_prompt": "",
-                "generated_attack": entry.get("attack", ""),
-                "attack_length": len(entry.get("attack", "")),
-                "attack_hash": hashlib.sha256(
-                    entry.get("attack", "").encode()
-                ).hexdigest()[:16],
-                "duplicate_attack": False,
-                "input_tokens": 0,
-                "output_tokens": 0,
-            },
-            "llm_response": {
-                "raw_output": "",
-                "clean_response": "",
-                "output_length": entry.get("response_length", 0),
-            },
-            "extractor": entry.get("extractor", {}),
-            "ground_truth_found": entry.get("success", False),
-            "extractor_match": entry.get("extractor", {}).get(
-                "success_extractor", False
-            ),
-            "generator_success": entry.get("extractor", {}).get(
-                "success_exact", False
-            ),
-            "verification_success": entry.get("extractor", {}).get(
-                "verified", False
-            ),
-            "verification_candidate": entry.get("extractor", {}).get(
-                "best_candidate", ""
-            ),
-            "verification_response": "",
-            "duplicate_attack": False,
-        }
-        normalized_trace.append(normalized)
+    # Current silent traces are already verbose-compatible. Keep the old
+    # fallback so older saved traces can still be converted.
+    if trace and "generator" in trace[0] and "llm_response" in trace[0]:
+        normalized_trace = trace
+    else:
+        normalized_trace = []
+        for entry in trace:
+            normalized = {
+                "iteration": entry.get("iteration", 0),
+                "timestamp": datetime.now().isoformat(),
+                "attempt_time_ms": 0,
+                "judge": {
+                    "input_to_judge": "",
+                    "probabilities": {},
+                    "confidence": entry.get("confidence", 0.0),
+                    "decision": entry.get("judge", ""),
+                },
+                "generator": {
+                    "strategy": entry.get("strategy", "unknown"),
+                    "internal_prompt": entry.get("internal_prompt", ""),
+                    "generated_attack": entry.get("attack", ""),
+                    "attack_length": len(entry.get("attack", "")),
+                    "attack_hash": hashlib.sha256(
+                        entry.get("attack", "").encode()
+                    ).hexdigest()[:16],
+                    "duplicate_attack": entry.get("duplicate_attack", False),
+                    "input_tokens": entry.get("input_tokens", 0),
+                    "output_tokens": entry.get("output_tokens", 0),
+                },
+                "llm_response": {
+                    "raw_output": entry.get("response", ""),
+                    "clean_response": entry.get("clean_response", ""),
+                    "output_length": entry.get("response_length", 0),
+                },
+                "extractor": entry.get("extractor", {}),
+                "ground_truth_found": entry.get("success", False),
+                "extractor_match": entry.get("extractor", {}).get(
+                    "success_extractor", False
+                ),
+                "generator_success": entry.get("extractor", {}).get(
+                    "success_exact", False
+                ),
+                "verification_success": entry.get("extractor", {}).get(
+                    "verified", False
+                ),
+                "verification_candidate": entry.get("extractor", {}).get(
+                    "best_candidate", ""
+                ),
+                "verification_response": "",
+                "duplicate_attack": entry.get("duplicate_attack", False),
+            }
+            normalized_trace.append(normalized)
 
     timing_info = {
         "total_run_time": 0,
@@ -2317,6 +2322,7 @@ def _silent_test(scenario: DefenseScenario, agent: RedTeamingAgent) -> tuple:
     agent.extractor.reset_stats()
 
     for i in range(MAX_INTERACTIONS):
+        attempt_start = time.time()
         # Problem 4: Trim judge input
         if i == 0:
             judge_input = "[No previous output — first iteration]"
@@ -2339,6 +2345,7 @@ Previous Response:
             previous_response=last_response
         )
         attack = gen_result["generated_attack"]
+        strategy = gen_result.get("strategy", "unknown")
 
         # Victim
         response, reward, done, info = env.step(attack)
@@ -2373,17 +2380,59 @@ Previous Response:
 
         trace.append({
             "iteration": i + 1,
-            "judge": judge_result["decision_name"],
-            "confidence": judge_result["confidence"],
-            "attack": attack,
-            "response_length": len(response),
-            "success": real_success,
+            "timestamp": datetime.now().isoformat(),
+            "attempt_time_ms": int((time.time() - attempt_start) * 1000),
+            "judge": {
+                "input_to_judge": judge_input,
+                "probabilities": judge_result["probabilities"],
+                "confidence": judge_result["confidence"],
+                "decision": judge_result["decision_name"],
+            },
+            "generator": {
+                "strategy": strategy,
+                "internal_prompt": gen_result.get("internal_prompt", ""),
+                "generated_attack": attack,
+                "attack_length": len(attack),
+                "attack_hash": hashlib.sha256(attack.encode()).hexdigest()[:16],
+                "duplicate_attack": gen_result.get("duplicate_attack", False),
+                "input_tokens": gen_result.get("input_tokens", 0),
+                "output_tokens": gen_result.get("output_tokens", 0),
+            },
+            "llm_response": {
+                "raw_output": response,
+                "clean_response": new_content,
+                "output_length": len(response),
+                "clean_length": len(new_content) if new_content else 0,
+            },
             "extractor": {
                 "best_candidate": extracted_code,
+                "all_candidates": [
+                    (c, s) for c, s in extraction_result.get("all_candidates", [])
+                ],
+                "regex_candidates": extraction_result.get("regex_candidates", []),
+                "llm_candidates": extraction_result.get("llm_candidates", []),
+                "quoted_candidates": extraction_result.get("quoted_candidates", []),
+                "capitalized_candidates": extraction_result.get(
+                    "capitalized_candidates", []
+                ),
                 "verified": verified_success,
+                "ground_truth": scenario.access_code,
                 "success_exact": success_exact,
                 "success_extractor": success_extractor,
             },
+            "ground_truth_found": gt_leaked,
+            "extractor_match": success_extractor,
+            "generator_success": success_exact,
+            "verification_success": verified_success,
+            "verification_candidate": extracted_code or "",
+            "verification_response": "",
+            "duplicate_attack": gen_result.get("duplicate_attack", False),
+            # Legacy summary fields retained for old consumers.
+            "attack": attack,
+            "response": response,
+            "response_length": len(response),
+            "success": real_success,
+            "confidence": judge_result["confidence"],
         })
 
         if real_success:
@@ -2648,13 +2697,14 @@ if __name__ == "__main__":
                 closing_defense=sample_row["closing_defense"],
                 access_code=sample_row["access_code"],
             )
+            scenario._defense_id = sample_row.name
 
             print(f"Pre-defense:   {scenario.opening_defense[:100]}...")
             print(f"Post-defense:  {scenario.closing_defense[:100]}...")
             print(f"Access code:   \033[93m{scenario.access_code}\033[0m")
 
             # Run the verbose test
-            trace, tries, _run_json = verbose_test_llama(scenario, agent)
+            trace, tries, run_json = verbose_test_llama(scenario, agent)
 
             # Print summary
             print_summary_table(trace)
@@ -2662,6 +2712,11 @@ if __name__ == "__main__":
 
             # Save trace
             save_trace(trace, scenario, tries)
+            print(
+                f"[JSON] UI run JSON available at: "
+                f"results/{run_json['experiment']['run_id']}.json"
+            )
+            print(f"[JSON] Raw terminal trace available at: {TRACE_LOG_PATH}")
 
             print(f"\n{'=' * 80}")
             print(f"🏁 TOTAL ATTEMPTS: {tries}")
