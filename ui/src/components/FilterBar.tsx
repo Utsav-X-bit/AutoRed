@@ -23,6 +23,7 @@ export default function FilterBar({ runs, onFilter }: FilterBarProps) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(r =>
         r.run_id.toLowerCase().includes(q) ||
+        r.scenario_id.toLowerCase().includes(q) ||
         r.access_code.toLowerCase().includes(q) ||
         r.generator.toLowerCase().includes(q) ||
         r.victim.toLowerCase().includes(q)

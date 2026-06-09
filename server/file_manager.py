@@ -26,6 +26,7 @@ def list_runs() -> List[Dict[str, Any]]:
                 "run_id": data.get("experiment", {}).get("run_id", f.stem),
                 "file_path": str(f),
                 "timestamp": data.get("experiment", {}).get("timestamp", ""),
+                "scenario_id": data.get("experiment", {}).get("scenario_id", ""),
                 "success": data.get("result", {}).get("ground_truth_success", False),
                 "total_attempts": data.get("result", {}).get("total_attempts", 0),
                 "access_code": data.get("scenario", {}).get("access_code", ""),
@@ -37,6 +38,7 @@ def list_runs() -> List[Dict[str, Any]]:
             runs.append({
                 "run_id": f.stem,
                 "file_path": str(f),
+                "scenario_id": "",
                 "error": str(e),
                 "benchmark_mode": False,
             })

@@ -34,7 +34,22 @@ def load_dataset() -> pd.DataFrame:
     """Load defense dataset."""
     raw = pd.read_json(DATA_PATH, lines=True, compression="bz2").set_index("defense_id")
     df = raw.dropna(subset=["access_code"])
-    return df.sample(n=1000, random_state=42)[["opening_defense", "closing_defense", "access_code"]]
+    return df[["opening_defense", "closing_defense", "access_code"]]
+
+
+def select_scenario_row(defender_df: pd.DataFrame,
+                        scenario_id: Optional[str]) -> tuple[Any, pd.Series]:
+    """Select a scenario by defense_id, accepting either string or numeric IDs."""
+    if scenario_id:
+        wanted = str(scenario_id).strip()
+        matches = [idx for idx in defender_df.index if str(idx) == wanted]
+        if not matches:
+            raise ValueError(f"Scenario ID {wanted!r} not found in dataset")
+        selected_id = matches[0]
+        return selected_id, defender_df.loc[selected_id]
+
+    row = defender_df.sample(n=1, random_state=random.randint(0, 10000)).iloc[0]
+    return row.name, row
 
 
 # ─── Chat / Judge helpers (use server models) ────────────────
@@ -115,23 +130,22 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
     defender_df = load_dataset()
     logger.info(f"[EXP] Dataset loaded: {len(defender_df)} scenarios")
 
-    if scenario_id and scenario_id in defender_df.index:
-        row = defender_df.loc[scenario_id]
-        logger.info(f"[EXP] Using specific scenario: {scenario_id}")
-    else:
-        row = defender_df.sample(n=1, random_state=random.randint(0, 10000)).iloc[0]
-        scenario_id = row.name
-        logger.info(f"[EXP] Random scenario selected: {scenario_id}")
+    requested_scenario_id = bool(scenario_id)
+    scenario_id, row = select_scenario_row(defender_df, scenario_id)
+    logger.info(
+        f"[EXP] {'Using specific' if requested_scenario_id else 'Random'} "
+        f"scenario selected: {scenario_id}"
+    )
 
     scenario = DefenseScenario(
         opening_defense=row["opening_defense"],
         closing_defense=row["closing_defense"],
         access_code=row["access_code"],
     )
-    scenario._defense_id = scenario_id
+    scenario._defense_id = str(scenario_id)
 
     raw_dataset_entry = {
-        "defense_id": scenario_id,
+        "defense_id": str(scenario_id),
         "opening_defense": scenario.opening_defense,
         "closing_defense": scenario.closing_defense,
         "access_code": scenario.access_code,

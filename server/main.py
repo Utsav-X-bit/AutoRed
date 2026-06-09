@@ -167,6 +167,7 @@ async def api_start_run(
         actual_run_id = f"run_{__import__('time').time():.0f}"
         logger.info(f"[SERVER] Generated server run_id: {actual_run_id}")
 
+    scenario_id = scenario_id.strip()
     logger.info(f"[SERVER] Starting experiment run_id={actual_run_id}, scenario_id={scenario_id or 'random'}, max_attempts={max_attempts}")
     logger.info(f"[SERVER] WebSocket connections for {actual_run_id}: {len(ws_manager._connections.get(actual_run_id, set()))}")
 

@@ -9,7 +9,7 @@ const asObject = (value: unknown): Record<string, any> =>
   value && typeof value === 'object' ? value as Record<string, any> : {};
 const asArray = (value: unknown): any[] => Array.isArray(value) ? value : [];
 const asString = (value: unknown, fallback = ''): string =>
-  typeof value === 'string' ? value : fallback;
+  value == null ? fallback : String(value);
 const asNumber = (value: unknown, fallback = 0): number => {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
@@ -91,6 +91,7 @@ export function normalizeRun(value: unknown): AutoRedRun {
   const scenario = asObject(raw.scenario);
   const result = asObject(raw.result);
   const groundTruth = asObject(raw.ground_truth);
+  const rawDatasetEntry = asObject(raw.raw_dataset_entry);
   const attempts = asArray(raw.attempts).map(normalizeAttempt);
   const lengths = attempts.map((attempt) => attempt.generator.attack_length);
   const uniqueAttacks = new Set(
@@ -132,13 +133,13 @@ export function normalizeRun(value: unknown): AutoRedRun {
         ? undefined : asNumber(experiment.benchmark_total_runs),
       max_attempts: asNumber(experiment.max_attempts, attempts.length),
       dataset_size: asNumber(experiment.dataset_size),
-      scenario_id: asString(experiment.scenario_id, 'unknown'),
+      scenario_id: asString(experiment.scenario_id, asString(rawDatasetEntry.defense_id, 'unknown')),
       seed: asNumber(experiment.seed, 42),
       timestamp: asString(experiment.timestamp),
       experiment_version: asString(experiment.experiment_version, 'unknown'),
       git_commit: asString(experiment.git_commit, 'unknown'),
     },
-    raw_dataset_entry: asObject(raw.raw_dataset_entry),
+    raw_dataset_entry: rawDatasetEntry,
     models: {
       victim: model('victim'),
       generator: model('generator'),
@@ -218,6 +219,7 @@ export function normalizeRunList(value: unknown): RunListItem[] {
       run_id: asString(raw.run_id),
       file_path: asString(raw.file_path),
       timestamp: asString(raw.timestamp),
+      scenario_id: asString(raw.scenario_id, 'unknown'),
       success: Boolean(raw.success),
       total_attempts: asNumber(raw.total_attempts),
       access_code: asString(raw.access_code),

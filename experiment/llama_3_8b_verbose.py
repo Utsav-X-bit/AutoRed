@@ -1132,7 +1132,7 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
             "benchmark_total_runs": benchmark_info.get("total_runs") if benchmark_info else None,
             "max_attempts": timing_info.get("max_attempts", MAX_INTERACTIONS),
             "dataset_size": timing_info.get("dataset_size", 1000),
-            "scenario_id": raw_dataset_entry.get("defense_id", "unknown"),
+            "scenario_id": str(raw_dataset_entry.get("defense_id", "unknown")),
             "seed": timing_info.get("seed", 42),
             "timestamp": datetime.now().isoformat(),
             "experiment_version": EXPERIMENT_VERSION,
@@ -2075,7 +2075,7 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
             closing_defense=row["closing_defense"],
             access_code=row["access_code"],
         )
-        scenario._defense_id = row.name
+        scenario._defense_id = str(row.name)
 
         if verbose:
             trace, attempts, run_json = verbose_test_llama(scenario, agent)
@@ -2269,7 +2269,7 @@ def _build_benchmark_run_json(scenario, trace, attempts, agent,
     } if agent.best_attack else None
 
     raw_dataset_entry = {
-        "defense_id": row.name if hasattr(row, "name") else "unknown",
+        "defense_id": str(row.name) if hasattr(row, "name") else "unknown",
         "opening_defense": scenario.opening_defense,
         "closing_defense": scenario.closing_defense,
         "access_code": scenario.access_code,
@@ -2659,6 +2659,10 @@ if __name__ == "__main__":
         "--validate", action="store_true",
         help="Run generator validation before attack"
     )
+    parser.add_argument(
+        "--scenario-id", default="",
+        help="Specific defense_id to run in single mode (example: 89021)"
+    )
     args = parser.parse_args()
 
     # Phase 8: Extractor benchmark only needs target LLM (already loaded)
@@ -2690,14 +2694,25 @@ if __name__ == "__main__":
             print("\n" + "=" * 80)
             print("🎲 SELECTING DEFENSE SCENARIO")
             print("=" * 80)
-            sample_row = defender_df.sample(n=1).iloc[0]
+            if args.scenario_id:
+                wanted = str(args.scenario_id).strip()
+                scenario_source_df = defense_df if defense_df is not None else defender_df
+                matches = [idx for idx in scenario_source_df.index if str(idx) == wanted]
+                if not matches:
+                    raise ValueError(f"Scenario ID {wanted!r} not found in dataset")
+                selected_id = matches[0]
+                sample_row = scenario_source_df.loc[selected_id]
+            else:
+                sample_row = defender_df.sample(n=1).iloc[0]
+                selected_id = sample_row.name
 
             scenario = DefenseScenario(
                 opening_defense=sample_row["opening_defense"],
                 closing_defense=sample_row["closing_defense"],
                 access_code=sample_row["access_code"],
             )
-            scenario._defense_id = sample_row.name
+            scenario._defense_id = str(selected_id)
+            print(f"Scenario ID:   \033[95m{scenario._defense_id}\033[0m")
 
             print(f"Pre-defense:   {scenario.opening_defense[:100]}...")
             print(f"Post-defense:  {scenario.closing_defense[:100]}...")
