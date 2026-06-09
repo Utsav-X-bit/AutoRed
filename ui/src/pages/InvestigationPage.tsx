@@ -7,6 +7,7 @@ import VictimCard from '../components/VictimCard';
 import ExtractorCard from '../components/ExtractorCard';
 import VerifierCard from '../components/VerifierCard';
 import AnalyticsPanel from '../components/AnalyticsPanel';
+import InvestigationTabs from '../components/InvestigationTabs';
 
 export default function InvestigationPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -89,6 +90,9 @@ export default function InvestigationPage() {
         {/* Right: Analytics */}
         <AnalyticsPanel />
       </div>
+
+      {/* Bottom: Investigation Tabs */}
+      <InvestigationTabs />
     </div>
   );
 }
