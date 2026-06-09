@@ -3,12 +3,14 @@ import ScenarioTab from './ScenarioTab';
 import AttackEvolutionTab from './AttackEvolutionTab';
 import ExtractorDebuggerTab from './ExtractorDebuggerTab';
 import VerificationTraceTab from './VerificationTraceTab';
+import TokenAnalyticsTab from './TokenAnalyticsTab';
 
 const tabs = [
   { id: 'scenario', label: 'Scenario' },
   { id: 'evolution', label: 'Attack Evolution' },
   { id: 'extractor', label: 'Extractor Debugger' },
   { id: 'verification', label: 'Verification' },
+  { id: 'tokens', label: 'Token Analytics' },
 ];
 
 export default function InvestigationTabs() {
@@ -36,6 +38,7 @@ export default function InvestigationTabs() {
         {activeTab === 'evolution' && <AttackEvolutionTab />}
         {activeTab === 'extractor' && <ExtractorDebuggerTab />}
         {activeTab === 'verification' && <VerificationTraceTab />}
+        {activeTab === 'tokens' && <TokenAnalyticsTab />}
       </div>
     </div>
   );
