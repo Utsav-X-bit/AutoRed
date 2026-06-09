@@ -37,17 +37,26 @@ The UI tells this story. It is **attempt-centric**, not metrics-centric. 90% of 
 └──────────────────────┬──────────────────────────────────┘
                        │ REST + WebSocket
 ┌──────────────────────▼──────────────────────────────────┐
-│                    FastAPI Backend                       │
-│  Model Manager │ Experiment Runner │ JSON File Manager  │
+│                  FastAPI Server (Web)                    │
+│  REST API │ WebSocket Hub │ JSON File Manager           │
+└──────────────────────┬──────────────────────────────────┘
+                       │ Redis Queue / Celery Broker
+┌──────────────────────▼──────────────────────────────────┐
+│              Background Worker Process                   │
+│  Model Manager │ Experiment Runner                      │
+│  (isolated — crashes don't kill the web server)         │
 └──────────────────────────────────────────────────────────┘
 ```
+
+**Why separate worker?** If an experiment crashes (CUDA OOM, model exception, bad prompt), the web server stays alive. The worker is the only process holding GPU memory.
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React + TypeScript + Vite + Tailwind CSS |
-| Backend | FastAPI + Python |
+| Web Server | FastAPI + Python |
+| Background Worker | Celery + Redis (or RQ + Redis) |
 | Charts | Recharts |
 | State | Zustand |
 | WebSocket | Native WebSocket API |
@@ -61,11 +70,15 @@ AutoRed/
 │   └── llama_3_8b_verbose.py      # Modified: emit JSON + timing
 ├── server/
 │   ├── __init__.py
-│   ├── main.py                    # FastAPI app
-│   ├── models_manager.py          # Keep models loaded in memory
-│   ├── experiment_runner.py       # Orchestrate runs
+│   ├── main.py                    # FastAPI web server (no models)
 │   ├── schemas.py                 # Pydantic schemas
-│   └── file_manager.py            # Past run JSON CRUD
+│   ├── file_manager.py            # Past run JSON CRUD
+│   └── websocket.py               # WebSocket hub
+├── worker/
+│   ├── __init__.py
+│   ├── celery_app.py              # Celery/RQ app config
+│   ├── models_manager.py          # Load + keep models in memory
+│   └── experiment_runner.py       # Orchestrate runs (GPU process)
 ├── ui/
 │   ├── src/
 │   │   ├── components/            # AttemptCard, Chart, FilterBar...
@@ -98,6 +111,17 @@ interface AutoRedRun {
     scenario_id: string;
     seed: number;
     timestamp: string;
+    experiment_version: string;   // e.g., "2.0.0"
+    git_commit: string;           // git hash for reproducibility
+  };
+
+  // Raw dataset entry (for full reproducibility)
+  raw_dataset_entry: {
+    defense_id: string;
+    opening_defense: string;
+    closing_defense: string;
+    access_code: string;
+    [key: string]: any;           // preserve all original fields
   };
 
   // All 4 models
@@ -126,6 +150,7 @@ interface AutoRedRun {
   // Result with reason
   result: {
     ground_truth_success: boolean;
+    generator_success: boolean;      // generator leaked access code
     extractor_success: boolean;
     verified_success: boolean;
     extracted_value: string;
@@ -217,12 +242,19 @@ interface Attempt {
     llm_candidates: string[];
     ranked_candidates: { value: string; score: number }[];
     best_candidate: string;
-    verified: boolean;
+  };
+
+  // Verification trace (was just `verified: boolean`)
+  verification: {
+    candidate_sent: string;
+    victim_response: string;
+    success: boolean;
   };
 
   // Ground truth per-attempt
   ground_truth_found: boolean;
   extractor_match: boolean;
+  generator_success: boolean;       // access code leaked this attempt
 }
 ```
 
@@ -333,9 +365,9 @@ Verifier (send-back result)
 - If wrong selection: "❌ Wrong Selection" warning
 
 **Verifier Card:**
-- Candidate sent back
-- Victim response
-- Verification result: ✓/✗
+- Candidate sent back (from `verification.candidate_sent`)
+- Victim response (from `verification.victim_response`)
+- Verification result: ✓/✗ (from `verification.success`)
 
 ### Right Panel — Analytics
 
@@ -375,6 +407,35 @@ Separate view for `--rounds 70` mode.
 
 ---
 
+## Run Comparison View
+
+Dedicated page for comparing two or more runs side-by-side. Essential for generator/model comparison.
+
+**Use Case:** Compare Llama-2 vs Lexi generators, or different target models.
+
+**Layout:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Run A (Llama-2 Generator)  │  Run B (Lexi Generator)  │
+├─────────────────────────────┼───────────────────────────┤
+│  Success Rate: 42%          │  Success Rate: 58%        │
+│  Avg Attempts: 13           │  Avg Attempts: 9          │
+│  Best Strategy: summarization│  Best Strategy: roleplay  │
+│  Worst Strategy: translation │  Worst Strategy: summary  │
+├─────────────────────────────┼───────────────────────────┤
+│  Per-attempt comparison     │  Per-attempt comparison   │
+│  (aligned by attempt #)     │  (aligned by attempt #)   │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Extractor Failure Analysis:**
+- Ground truth vs candidates
+- Ranking breakdown
+- Failure reason classification (ranking bug, missing candidate, etc.)
+
+---
+
 ## Backend API
 
 | Endpoint | Method | Purpose |
@@ -392,11 +453,13 @@ Separate view for `--rounds 70` mode.
 
 ## Model Persistence
 
-The FastAPI server loads all 4 models at startup and keeps them in GPU memory. Clicking "New Run" in the UI does NOT reload models — it only selects a new random scenario from the dataset and starts the experiment loop. This eliminates the ~30s model load time between runs.
+The **background worker** loads all 4 models at startup and keeps them in GPU memory. Clicking "New Run" in the UI does NOT reload models — it only selects a new random scenario from the dataset and starts the experiment loop. This eliminates the ~30s model load time between runs.
 
 Models are only reloaded if:
-- Server restarts
+- Worker process restarts
 - User explicitly requests model reload via `/api/models/reload`
+
+**Isolation:** The web server (FastAPI) never loads models. It only communicates with the worker via Redis Queue. If the worker crashes (CUDA OOM, model exception), the web server stays alive and shows an error state.
 
 ## Python Script Modifications
 
@@ -413,22 +476,27 @@ Models are only reloaded if:
 8. Record full extractor trace (6 layers)
 9. Record ground truth position + count
 10. Record event timeline
-11. Save to `results/run_<timestamp>.json`
+11. Record `experiment_version` + `git_commit`
+12. Record `raw_dataset_entry` (full original row)
+13. Record `generator_success` per attempt
+14. Record `verification` trace (candidate, response, success)
+15. Save to `results/run_<timestamp>.json`
 
 ### Model Persistence
 
-New `server/models_manager.py`:
-- Loads models once on server start
-- Keeps in memory across runs
-- Exposes `/api/models/status` for frontend
+New `worker/models_manager.py`:
+- Loads models once on worker start
+- Keeps in GPU memory across runs
+- Exposes status via worker → web server queue
 
 ### Experiment Runner
 
-New `server/experiment_runner.py`:
+New `worker/experiment_runner.py`:
 - Takes scenario from dataset
 - Orchestrates AutoRed loop
-- Streams attempts via WebSocket
+- Streams attempts via WebSocket (through web server)
 - Saves JSON on completion
+- Runs in isolated process (crashes don't affect web server)
 
 ---
 
@@ -453,6 +521,36 @@ New `server/experiment_runner.py`:
 | CSV | Flattened attempt table |
 | HTML Report | Styled report with charts |
 | PDF | Printable summary |
+
+---
+
+## Implementation Phases
+
+If development time becomes constrained, implement in this order:
+
+### Phase 1 — Core Investigation
+- Run Loader (JSON file upload + list)
+- Timeline Sidebar
+- Attempt Investigation View (Generator → Victim → Extractor → Verifier)
+- Background Worker (isolated from web server)
+
+### Phase 2 — Debugging Tools
+- Scenario Page
+- Extractor Debugger
+- Live Streaming (WebSocket)
+- Verification Trace display
+
+### Phase 3 — Analysis
+- Attack Evolution View
+- Benchmark Dashboard
+- Run Comparison View
+- Search and Filters
+
+### Phase 4 — Advanced
+- Token Analytics Charts
+- Model Performance Heatmap
+- Export Reports (CSV, HTML, PDF)
+- Strategy Heatmaps
 
 ---
 
