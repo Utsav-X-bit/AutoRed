@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
+import FilterBar from '../components/FilterBar';
 import type { RunListItem } from '../types/autored';
 
 export default function RunLoader() {
@@ -8,6 +9,8 @@ export default function RunLoader() {
   const { runs, setRuns } = useRunStore();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
+  const [filteredRuns, setFilteredRuns] = useState<RunListItem[]>([]);
 
   useEffect(() => {
     fetchRuns();
@@ -18,6 +21,7 @@ export default function RunLoader() {
       const res = await fetch('/api/runs');
       const data = await res.json();
       setRuns(data);
+      setFilteredRuns(data);
     } catch (e) {
       console.error('Failed to load runs:', e);
     } finally {
@@ -49,7 +53,15 @@ export default function RunLoader() {
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">AutoRed — Run History</h1>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            {selectedRuns.length === 2 && (
+              <button
+                onClick={() => navigate(`/compare/${selectedRuns[0]}/${selectedRuns[1]}`)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Compare
+              </button>
+            )}
             <label className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer text-sm font-medium transition-colors">
               Upload JSON
               <input type="file" accept=".json" onChange={handleUpload} className="hidden" />
@@ -58,6 +70,11 @@ export default function RunLoader() {
           </div>
         </div>
       </header>
+
+      {/* Filter Bar */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <FilterBar runs={runs} onFilter={setFilteredRuns} />
+      </div>
 
       {/* Run List */}
       <main className="max-w-7xl mx-auto p-6">
@@ -68,7 +85,7 @@ export default function RunLoader() {
           </div>
         ) : (
           <div className="space-y-3">
-            {runs.map((run: RunListItem) => (
+            {filteredRuns.map((run: RunListItem) => (
               <button
                 key={run.run_id}
                 onClick={() => navigate(`/run/${run.run_id}`)}
@@ -76,6 +93,21 @@ export default function RunLoader() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedRuns.includes(run.run_id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        if (e.target.checked) {
+                          if (selectedRuns.length < 2) setSelectedRuns([...selectedRuns, run.run_id]);
+                        } else {
+                          setSelectedRuns(selectedRuns.filter(id => id !== run.run_id));
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mr-1"
+                      disabled={selectedRuns.length >= 2 && !selectedRuns.includes(run.run_id)}
+                    />
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${run.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {run.success ? '✓' : '✗'}
                     </span>
