@@ -922,15 +922,21 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
     for entry in trace:
         # Detect format: flat if top-level "strategy" key exists
         is_flat = "strategy" in entry and "generator" not in entry
+        is_attempt_shape = (
+            "generator" in entry
+            and ("victim" in entry or "verification" in entry)
+        )
 
         if is_flat:
+            attack_text = entry.get("attack") or ""
+            best_candidate = entry.get("best_candidate") or ""
             gen = {
                 "strategy": entry.get("strategy", "unknown"),
                 "internal_prompt": entry.get("internal_prompt", ""),
-                "generated_attack": entry.get("attack", ""),
-                "attack_length": len(entry.get("attack", "")),
+                "generated_attack": attack_text,
+                "attack_length": len(attack_text),
                 "attack_hash": hashlib.sha256(
-                    entry.get("attack", "").encode()
+                    attack_text.encode()
                 ).hexdigest()[:16],
                 "duplicate_attack": entry.get("duplicate_attack", False),
                 "input_tokens": entry.get("input_tokens", 0),
@@ -957,49 +963,103 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
                 "ranked_candidates": normalize_ranked_candidates(
                     entry.get("ranked_candidates")
                 ),
-                "best_candidate": entry.get("best_candidate", ""),
+                "best_candidate": best_candidate,
             }
             verification = {
-                "candidate_sent": entry.get("verification_candidate", ""),
+                "candidate_sent": entry.get("verification_candidate") or "",
                 "victim_response": entry.get("verification_response", ""),
                 "success": entry.get("verification_success", False),
             }
-        else:
+        elif is_attempt_shape:
+            raw_gen = entry.get("generator", {})
+            raw_judge = entry.get("judge", {})
+            raw_victim = entry.get("victim", {})
+            raw_extractor = entry.get("extractor", {})
+            raw_verification = entry.get("verification", {})
+            attack_text = raw_gen.get("generated_attack") or ""
+            raw_attack_hash = raw_gen.get("attack_hash") or ""
+            raw_best_candidate = raw_extractor.get("best_candidate") or ""
+            raw_response = raw_victim.get("raw_output") or ""
+
             gen = {
-                "strategy": entry.get("generator", {}).get("strategy", "unknown"),
-                "internal_prompt": entry.get("generator", {}).get("internal_prompt", ""),
-                "generated_attack": entry.get("generator", {}).get("generated_attack", ""),
-                "attack_length": len(entry.get("generator", {}).get("generated_attack", "")),
-                "attack_hash": hashlib.sha256(
-                    entry.get("generator", {}).get("generated_attack", "").encode()
+                "strategy": raw_gen.get("strategy", "unknown"),
+                "internal_prompt": raw_gen.get("internal_prompt", ""),
+                "generated_attack": attack_text,
+                "attack_length": raw_gen.get("attack_length") or len(attack_text),
+                "attack_hash": raw_attack_hash or hashlib.sha256(
+                    attack_text.encode()
                 ).hexdigest()[:16],
-                "duplicate_attack": entry.get("duplicate_attack", False),
-                "input_tokens": entry.get("generator", {}).get("input_tokens", 0),
-                "output_tokens": entry.get("generator", {}).get("output_tokens", 0),
+                "duplicate_attack": raw_gen.get("duplicate_attack", False),
+                "input_tokens": raw_gen.get("input_tokens", 0),
+                "output_tokens": raw_gen.get("output_tokens", 0),
             }
             judge = {
-                "input": entry.get("judge", {}).get("input_to_judge", ""),
-                "decision": entry.get("judge", {}).get("decision", ""),
-                "confidence": entry.get("judge", {}).get("confidence", 0.0),
+                "input": raw_judge.get("input", ""),
+                "decision": raw_judge.get("decision", ""),
+                "confidence": raw_judge.get("confidence", 0.0),
+                "probabilities": normalize_probabilities(raw_judge.get("probabilities")),
+            }
+            victim = {
+                "raw_output": raw_response,
+                "clean_output": raw_victim.get("clean_output", raw_response),
+                "output_length": raw_victim.get("output_length") or len(raw_response),
+            }
+            extractor = {
+                "regex_candidates": raw_extractor.get("regex_candidates", []),
+                "quoted_candidates": raw_extractor.get("quoted_candidates", []),
+                "capitalized_candidates": raw_extractor.get("capitalized_candidates", []),
+                "llm_candidates": raw_extractor.get("llm_candidates", []),
+                "ranked_candidates": normalize_ranked_candidates(
+                    raw_extractor.get("ranked_candidates")
+                ),
+                "best_candidate": raw_best_candidate,
+            }
+            verification = {
+                "candidate_sent": raw_verification.get("candidate_sent") or "",
+                "victim_response": raw_verification.get("victim_response", ""),
+                "success": raw_verification.get("success", False),
+            }
+        else:
+            raw_gen = entry.get("generator", {})
+            raw_judge = entry.get("judge", {})
+            raw_response = entry.get("llm_response", {})
+            raw_extractor = entry.get("extractor", {})
+            attack_text = raw_gen.get("generated_attack") or ""
+            best_candidate = raw_extractor.get("best_candidate") or ""
+            gen = {
+                "strategy": raw_gen.get("strategy", "unknown"),
+                "internal_prompt": raw_gen.get("internal_prompt", ""),
+                "generated_attack": attack_text,
+                "attack_length": len(attack_text),
+                "attack_hash": hashlib.sha256(
+                    attack_text.encode()
+                ).hexdigest()[:16],
+                "duplicate_attack": entry.get("duplicate_attack", False),
+                "input_tokens": raw_gen.get("input_tokens", 0),
+                "output_tokens": raw_gen.get("output_tokens", 0),
+            }
+            judge = {
+                "input": raw_judge.get("input_to_judge", ""),
+                "decision": raw_judge.get("decision", ""),
+                "confidence": raw_judge.get("confidence", 0.0),
                 "probabilities": normalize_probabilities(
-                    entry.get("judge", {}).get("probabilities")
+                    raw_judge.get("probabilities")
                 ),
             }
             victim = {
-                "raw_output": entry.get("llm_response", {}).get("raw_output", ""),
-                "clean_output": entry.get("llm_response", {}).get("clean_response", ""),
-                "output_length": entry.get("llm_response", {}).get("output_length", 0),
+                "raw_output": raw_response.get("raw_output", ""),
+                "clean_output": raw_response.get("clean_response", ""),
+                "output_length": raw_response.get("output_length", 0),
             }
             extractor = {
-                "regex_candidates": entry.get("extractor", {}).get("regex_candidates", []),
-                "quoted_candidates": entry.get("extractor", {}).get("quoted_candidates", []),
-                "capitalized_candidates": entry.get(
-                    "extractor", {}).get("capitalized_candidates", []),
-                "llm_candidates": entry.get("extractor", {}).get("llm_candidates", []),
+                "regex_candidates": raw_extractor.get("regex_candidates", []),
+                "quoted_candidates": raw_extractor.get("quoted_candidates", []),
+                "capitalized_candidates": raw_extractor.get("capitalized_candidates", []),
+                "llm_candidates": raw_extractor.get("llm_candidates", []),
                 "ranked_candidates": normalize_ranked_candidates(
-                    entry.get("extractor", {}).get("all_candidates")
+                    raw_extractor.get("all_candidates")
                 ),
-                "best_candidate": entry.get("extractor", {}).get("best_candidate", ""),
+                "best_candidate": best_candidate,
             }
             verification = {
                 "candidate_sent": entry.get("verification_candidate", ""),
@@ -1008,7 +1068,9 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
             }
 
         attempt = {
-            "attempt_number": entry.get("attempt_number", entry.get("iteration", 0)),
+            "attempt_number": entry.get(
+                "attempt_number", entry.get("iteration", len(attempts) + 1)
+            ),
             "timestamp": entry.get("timestamp", ""),
             "attempt_time_ms": entry.get("attempt_time_ms", 0),
             "generator": gen,
