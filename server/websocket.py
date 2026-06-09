@@ -24,7 +24,8 @@ class WebSocketManager:
             return
         message = json.dumps({"type": "attempt_update", "run_id": run_id, "attempt": attempt})
         disconnected = set()
-        for ws in self._connections[run_id]:
+        # Iterate over a copy to avoid "Set changed size during iteration"
+        for ws in set(self._connections[run_id]):
             try:
                 await ws.send_text(message)
             except Exception:
@@ -35,7 +36,7 @@ class WebSocketManager:
         if run_id not in self._connections:
             return
         message = json.dumps({"type": "run_complete", "run_id": run_id, "run": run})
-        for ws in self._connections[run_id]:
+        for ws in set(self._connections[run_id]):
             try:
                 await ws.send_text(message)
             except Exception:
@@ -45,7 +46,7 @@ class WebSocketManager:
         if run_id not in self._connections:
             return
         message = json.dumps(data)
-        for ws in self._connections[run_id]:
+        for ws in set(self._connections[run_id]):
             try:
                 await ws.send_text(message)
             except Exception:
