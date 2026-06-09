@@ -30,12 +30,14 @@ def list_runs() -> List[Dict[str, Any]]:
                 "access_code": data.get("scenario", {}).get("access_code", ""),
                 "generator": data.get("models", {}).get("generator", {}).get("name", ""),
                 "victim": data.get("models", {}).get("victim", {}).get("name", ""),
+                "benchmark_mode": data.get("experiment", {}).get("benchmark_mode", False),
             })
         except (json.JSONDecodeError, KeyError) as e:
             runs.append({
                 "run_id": f.stem,
                 "file_path": str(f),
                 "error": str(e),
+                "benchmark_mode": False,
             })
     return runs
 

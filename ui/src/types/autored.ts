@@ -164,6 +164,7 @@ export interface RunListItem {
   access_code: string;
   generator: string;
   victim: string;
+  benchmark_mode: boolean;
   error?: string;
 }
 
