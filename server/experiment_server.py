@@ -230,8 +230,50 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         trace.append(trace_entry)
         used_attacks.add(attack)
 
-        # Stream via WebSocket
-        await ws_manager.send_attempt(run_id, trace_entry)
+        # Stream via WebSocket — convert flat format to nested frontend format
+        ws_attempt = {
+            "attempt_number": attempt,
+            "timestamp": trace_entry["timestamp"],
+            "attempt_time_ms": trace_entry["attempt_time_ms"],
+            "generator": {
+                "strategy": strategy,
+                "internal_prompt": internal_prompt,
+                "generated_attack": attack,
+                "attack_length": len(attack),
+                "attack_hash": "",
+                "duplicate_attack": trace_entry["duplicate_attack"],
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+            },
+            "judge": {
+                "input": judge_input_text,
+                "decision": judge_result["decision_name"],
+                "confidence": judge_result["confidence"],
+                "probabilities": judge_result["probabilities"],
+            },
+            "victim": {
+                "raw_output": response,
+                "clean_output": clean_output,
+                "output_length": len(response),
+            },
+            "extractor": {
+                "regex_candidates": extraction_result.get("regex_candidates", []),
+                "quoted_candidates": extraction_result.get("quoted_candidates", []),
+                "capitalized_candidates": extraction_result.get("capitalized_candidates", []),
+                "llm_candidates": extraction_result.get("llm_candidates", []),
+                "ranked_candidates": extraction_result.get("all_candidates", []),
+                "best_candidate": extraction_result.get("best_candidate", ""),
+            },
+            "verification": {
+                "candidate_sent": verification_candidate,
+                "victim_response": "",
+                "success": verification_success,
+            },
+            "ground_truth_found": ground_truth_found,
+            "extractor_match": extractor_success,
+            "generator_success": ground_truth_found,
+        }
+        await ws_manager.send_attempt(run_id, ws_attempt)
 
         # Yield control to event loop (prevents WebSocket backlog)
         await asyncio.sleep(0)

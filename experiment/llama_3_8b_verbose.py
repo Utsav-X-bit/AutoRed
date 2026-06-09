@@ -895,14 +895,51 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
     """Convert experiment trace to AutoRedRun JSON structure."""
     run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # Build attempts array
+    # Build attempts array — supports both nested (original) and flat (server) trace formats
     attempts = []
     for entry in trace:
-        attempt = {
-            "attempt_number": entry.get("iteration", 0),
-            "timestamp": entry.get("timestamp", ""),
-            "attempt_time_ms": entry.get("attempt_time_ms", 0),
-            "generator": {
+        # Detect format: flat if top-level "strategy" key exists
+        is_flat = "strategy" in entry and "generator" not in entry
+
+        if is_flat:
+            gen = {
+                "strategy": entry.get("strategy", "unknown"),
+                "internal_prompt": entry.get("internal_prompt", ""),
+                "generated_attack": entry.get("attack", ""),
+                "attack_length": len(entry.get("attack", "")),
+                "attack_hash": hashlib.sha256(
+                    entry.get("attack", "").encode()
+                ).hexdigest()[:16],
+                "duplicate_attack": entry.get("duplicate_attack", False),
+                "input_tokens": entry.get("input_tokens", 0),
+                "output_tokens": entry.get("output_tokens", 0),
+            }
+            judge = {
+                "input": entry.get("judge_input", ""),
+                "decision": entry.get("judge_decision", ""),
+                "confidence": entry.get("judge_confidence", 0.0),
+                "probabilities": entry.get("judge_probabilities", {"ATTACK": 0, "ATTEMPT": 0}),
+            }
+            victim = {
+                "raw_output": entry.get("raw_output", entry.get("response", "")),
+                "clean_output": entry.get("clean_output", entry.get("response", "")),
+                "output_length": len(entry.get("response", "")),
+            }
+            extractor = {
+                "regex_candidates": entry.get("regex_candidates", []),
+                "quoted_candidates": entry.get("quoted_candidates", []),
+                "capitalized_candidates": entry.get("capitalized_candidates", []),
+                "llm_candidates": entry.get("llm_candidates", []),
+                "ranked_candidates": entry.get("ranked_candidates", []),
+                "best_candidate": entry.get("best_candidate", ""),
+            }
+            verification = {
+                "candidate_sent": entry.get("verification_candidate", ""),
+                "victim_response": entry.get("verification_response", ""),
+                "success": entry.get("verification_success", False),
+            }
+        else:
+            gen = {
                 "strategy": entry.get("generator", {}).get("strategy", "unknown"),
                 "internal_prompt": entry.get("generator", {}).get("internal_prompt", ""),
                 "generated_attack": entry.get("generator", {}).get("generated_attack", ""),
@@ -913,21 +950,21 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
                 "duplicate_attack": entry.get("duplicate_attack", False),
                 "input_tokens": entry.get("generator", {}).get("input_tokens", 0),
                 "output_tokens": entry.get("generator", {}).get("output_tokens", 0),
-            },
-            "judge": {
+            }
+            judge = {
                 "input": entry.get("judge", {}).get("input_to_judge", ""),
                 "decision": entry.get("judge", {}).get("decision", ""),
                 "confidence": entry.get("judge", {}).get("confidence", 0.0),
                 "probabilities": entry.get("judge", {}).get(
                     "probabilities", {"ATTACK": 0, "ATTEMPT": 0}
                 ),
-            },
-            "victim": {
+            }
+            victim = {
                 "raw_output": entry.get("llm_response", {}).get("raw_output", ""),
                 "clean_output": entry.get("llm_response", {}).get("clean_response", ""),
                 "output_length": entry.get("llm_response", {}).get("output_length", 0),
-            },
-            "extractor": {
+            }
+            extractor = {
                 "regex_candidates": entry.get("extractor", {}).get("regex_candidates", []),
                 "quoted_candidates": entry.get("extractor", {}).get("quoted_candidates", []),
                 "capitalized_candidates": entry.get(
@@ -935,12 +972,22 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
                 "llm_candidates": entry.get("extractor", {}).get("llm_candidates", []),
                 "ranked_candidates": entry.get("extractor", {}).get("all_candidates", []),
                 "best_candidate": entry.get("extractor", {}).get("best_candidate", ""),
-            },
-            "verification": {
+            }
+            verification = {
                 "candidate_sent": entry.get("verification_candidate", ""),
                 "victim_response": entry.get("verification_response", ""),
                 "success": entry.get("verification_success", False),
-            },
+            }
+
+        attempt = {
+            "attempt_number": entry.get("attempt_number", entry.get("iteration", 0)),
+            "timestamp": entry.get("timestamp", ""),
+            "attempt_time_ms": entry.get("attempt_time_ms", 0),
+            "generator": gen,
+            "judge": judge,
+            "victim": victim,
+            "extractor": extractor,
+            "verification": verification,
             "ground_truth_found": entry.get("ground_truth_found", False),
             "extractor_match": entry.get("extractor_match", False),
             "generator_success": entry.get("generator_success", False),
