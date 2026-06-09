@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import ScenarioTab from './ScenarioTab';
+import AttackEvolutionTab from './AttackEvolutionTab';
 import ExtractorDebuggerTab from './ExtractorDebuggerTab';
 import VerificationTraceTab from './VerificationTraceTab';
 
 const tabs = [
   { id: 'scenario', label: 'Scenario' },
+  { id: 'evolution', label: 'Attack Evolution' },
   { id: 'extractor', label: 'Extractor Debugger' },
   { id: 'verification', label: 'Verification' },
 ];
@@ -29,8 +31,9 @@ export default function InvestigationTabs() {
           </button>
         ))}
       </div>
-      <div className="p-4 max-h-64 overflow-y-auto bg-slate-50">
+      <div className="p-4 max-h-96 overflow-y-auto bg-slate-50">
         {activeTab === 'scenario' && <ScenarioTab />}
+        {activeTab === 'evolution' && <AttackEvolutionTab />}
         {activeTab === 'extractor' && <ExtractorDebuggerTab />}
         {activeTab === 'verification' && <VerificationTraceTab />}
       </div>
