@@ -1,15 +1,22 @@
 import os
 # MUST set BEFORE any experiment imports to prevent double model loading
 os.environ["AUTORED_SERVER_MODE"] = "1"
+# Suppress transformer warnings that clutter logs
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 import tempfile
 import asyncio
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("autored_server")
 
 from .file_manager import list_runs, get_run, upload_run, delete_run
 from .websocket import ws_manager
@@ -67,9 +74,12 @@ def api_list_runs():
 @app.get("/api/run/{run_id}")
 def api_get_run(run_id: str):
     """Get a specific run by ID."""
+    logger.info(f"[API] GET /api/run/{run_id}")
     run = get_run(run_id)
     if not run:
+        logger.warning(f"[API] Run {run_id} not found")
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+    logger.info(f"[API] Returning run {run_id}: attempts={len(run.get('attempts', []))}, result={run.get('result')}")
     return run
 
 
@@ -105,49 +115,70 @@ def api_model_status():
 # ─── Experiment Endpoints ───────────────────────────────────
 
 @app.post("/api/run")
-async def api_start_run(scenario_id: str = "", max_attempts: int = 20):
+async def api_start_run(
+    run_id: Optional[str] = Query(default=None, description="Client-generated run_id for WebSocket routing"),
+    scenario_id: str = Query(default="", description="Specific scenario ID (optional)"),
+    max_attempts: int = Query(default=20, description="Maximum number of attempts"),
+):
     """Start a new experiment run with pre-loaded models and live WebSocket streaming.
-    
-    Returns immediately with run_id; experiment runs in background.
-    Client should connect WebSocket to /ws/run/{run_id} before calling this endpoint.
+
+    Client MUST connect WebSocket to /ws/run/{run_id} BEFORE calling this endpoint.
+    If client provides run_id query param, server uses it (ensures WebSocket routing works).
+    Returns immediately; experiment runs in background.
     """
     if not server_models.is_loaded:
+        logger.warning("[SERVER] Models not loaded yet, rejecting run request")
         raise HTTPException(status_code=503, detail="Models not loaded yet. Server may be starting up.")
 
-    # Generate run_id client-side or server-side
-    run_id = f"run_{__import__('time').time():.0f}"
+    # Use client-provided run_id if available (critical for WebSocket routing!)
+    if run_id and run_id.startswith("run_"):
+        actual_run_id = run_id
+        logger.info(f"[SERVER] Using client-provided run_id: {actual_run_id}")
+    else:
+        actual_run_id = f"run_{__import__('time').time():.0f}"
+        logger.info(f"[SERVER] Generated server run_id: {actual_run_id}")
+
+    logger.info(f"[SERVER] Starting experiment run_id={actual_run_id}, scenario_id={scenario_id or 'random'}, max_attempts={max_attempts}")
+    logger.info(f"[SERVER] WebSocket connections for {actual_run_id}: {len(ws_manager._connections.get(actual_run_id, set()))}")
 
     # Start experiment in background
     asyncio.create_task(
-        _run_experiment_task(run_id, scenario_id or None, max_attempts)
+        _run_experiment_task(actual_run_id, scenario_id or None, max_attempts)
     )
 
+    logger.info(f"[SERVER] Background task created for {actual_run_id}, returning immediately to client")
     return {
-        "run_id": run_id,
+        "run_id": actual_run_id,
         "status": "started",
-        "message": "Experiment started. Connect WebSocket to /ws/run/{run_id} for live updates.",
+        "message": f"Experiment started. Connect WebSocket to /ws/run/{actual_run_id} for live updates.",
     }
 
 
-async def _run_experiment_task(run_id: str, scenario_id: str, max_attempts: int):
+async def _run_experiment_task(run_id: str, scenario_id: Optional[str], max_attempts: int):
     """Background task: run experiment, stream via WebSocket."""
     global _is_running
+    logger.info(f"[SERVER] _run_experiment_task acquired lock for {run_id}")
     async with _run_lock:
         _is_running = True
+        logger.info(f"[SERVER] Experiment {run_id} beginning execution (models are pre-loaded)")
         try:
             from .experiment_server import run_experiment_server
-            await run_experiment_server(
+            result = await run_experiment_server(
                 run_id=run_id,
                 scenario_id=scenario_id,
                 max_attempts=max_attempts,
             )
+            total_attempts = result.get("result", {}).get("total_attempts", 0)
+            success = result.get("result", {}).get("ground_truth_success", False)
+            logger.info(f"[SERVER] ✓ Experiment {run_id} COMPLETED: attempts={total_attempts}, success={success}")
         except Exception as e:
-            print(f"[SERVER] Experiment {run_id} failed: {e}")
+            logger.error(f"[SERVER] ✗ Experiment {run_id} FAILED with exception: {e}", exc_info=True)
             import traceback
             traceback.print_exc()
             await ws_manager.send_run_complete(run_id, {"error": str(e), "experiment": {"run_id": run_id}})
         finally:
             _is_running = False
+            logger.info(f"[SERVER] _run_experiment_task finished for {run_id}, _is_running=False")
 
 
 # ─── Export Endpoints ───────────────────────────────────────
@@ -252,9 +283,11 @@ pre {{ background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; overflow-
 
 @app.websocket("/ws/run/{run_id}")
 async def websocket_endpoint(websocket: WebSocket, run_id: str):
+    logger.info(f"[WS] Incoming WebSocket connection request for run_id={run_id}")
     await ws_manager.connect(run_id, websocket)
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(run_id, websocket)
+        logger.info(f"[WS] WebSocket disconnected for run_id={run_id}")

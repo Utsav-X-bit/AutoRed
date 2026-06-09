@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -15,17 +15,54 @@ export default function InvestigationPage() {
   const navigate = useNavigate();
   const { selectedRun, selectedAttemptIndex, setSelectedRun } = useRunStore();
   const { connect, isConnected } = useWebSocket(runId);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!runId) return;
+    setLoadError(null);
+    console.log('[InvestigationPage] Loading run:', runId);
+
     fetch(`/api/run/${runId}`)
-      .then((res) => res.json())
-      .then((data) => setSelectedRun(data))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        return res.json();
+      })
+      .then((data) => {
+        console.log('[InvestigationPage] Run loaded:', {
+          run_id: data.experiment?.run_id,
+          attempts_count: data.attempts?.length,
+          result: data.result,
+        });
+        if (!data.attempts || !Array.isArray(data.attempts)) {
+          console.error('[InvestigationPage] Run data missing attempts array:', data);
+          setLoadError('Invalid run data: missing attempts. The run file may be corrupted.');
+          return;
+        }
+        setSelectedRun(data);
+      })
       .catch((err) => {
-        console.error('Failed to load run:', err);
+        console.error('[InvestigationPage] Failed to load run:', err);
+        setLoadError(`Failed to load run: ${err.message}`);
         navigate('/runs');
       });
   }, [runId]);
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-2">Error Loading Run</p>
+          <p className="text-sm text-slate-500 mb-4">{loadError}</p>
+          <button
+            onClick={() => navigate('/runs')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+          >
+            ← Back to Runs
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedRun) {
     return (
@@ -35,8 +72,29 @@ export default function InvestigationPage() {
     );
   }
 
-  const attempt = selectedRun.attempts[selectedAttemptIndex];
-  if (!attempt) return null;
+  const attempt = selectedRun.attempts?.[selectedAttemptIndex];
+  if (!attempt) {
+    console.error('[InvestigationPage] Attempt not found:', {
+      index: selectedAttemptIndex,
+      total_attempts: selectedRun.attempts?.length,
+    });
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-yellow-600 font-medium mb-2">No Attempt Data</p>
+          <p className="text-sm text-slate-500 mb-4">
+            Attempt {selectedAttemptIndex + 1} not found (total: {selectedRun.attempts?.length || 0})
+          </p>
+          <button
+            onClick={() => navigate('/runs')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+          >
+            ← Back to Runs
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col">

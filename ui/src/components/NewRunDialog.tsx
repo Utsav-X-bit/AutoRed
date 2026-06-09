@@ -27,29 +27,41 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
   const connectWebSocket = useCallback((rid: string) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/run/${rid}`);
+    const wsUrl = `${protocol}//${window.location.host}/ws/run/${rid}`;
+    console.log(`[NewRun WS] Opening WebSocket: ${wsUrl}`);
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     wsConnected.current = false;
 
     ws.onopen = () => {
       wsConnected.current = true;
+      console.log(`[NewRun WS] ✓ WebSocket opened for run_id=${rid}`);
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log(`[NewRun WS] Received message type=${data.type}, run_id=${data.run_id}`);
+
         if (data.type === 'attempt_update') {
-          setCurrentAttempt(data.attempt.attempt_number);
-          setTotalAttempts(data.attempt.attempt_number);
+          const attemptNum = data.attempt.attempt_number;
+          console.log(`[NewRun WS] Attempt #${attemptNum} received, ground_truth_found=${data.attempt.ground_truth_found}`);
+          setCurrentAttempt(attemptNum);
+          setTotalAttempts(attemptNum);
           if (data.attempt.ground_truth_found) {
+            console.log('[NewRun WS] ✓ Ground truth found in this attempt!');
             setSuccess(true);
           }
         } else if (data.type === 'run_complete') {
+          console.log('[NewRun WS] ✓ run_complete received');
           const rawRun = (data as { run: unknown }).run;
           if (rawRun && typeof rawRun === 'object' && 'error' in rawRun) {
+            console.error('[NewRun WS] Run completed with error:', (rawRun as { error: string }).error);
             setError((rawRun as { error: string }).error);
           } else {
             const run = rawRun as AutoRedRun;
+            console.log('[NewRun WS] Run complete - success:', run.result?.ground_truth_success, 'attempts:', run.result?.total_attempts);
+            console.log('[NewRun WS] Run attempts array length:', run.attempts?.length);
             setSuccess(run.result?.ground_truth_success ?? false);
             setTotalAttempts(run.result?.total_attempts ?? 0);
             setSelectedRun(run);
@@ -59,11 +71,12 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
           setRunning(false);
         }
       } catch (e) {
-        console.error('WebSocket message parse error:', e);
+        console.error('[NewRun WS] Message parse error:', e);
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log(`[NewRun WS] WebSocket closed: code=${event.code}, reason=${event.reason}`);
       wsRef.current = null;
       wsConnected.current = false;
       // Only auto-close dialog if we were actually connected and run finished
@@ -74,6 +87,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
     };
 
     ws.onerror = (err) => {
+      console.error('[NewRun WS] WebSocket error:', err);
       // Only surface error if we never connected (server unreachable)
       if (!wsConnected.current) {
         setError('Cannot connect to server. Is the backend running on port 8001?');
@@ -89,45 +103,79 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
     setCurrentAttempt(0);
 
     try {
+      console.log('[NewRun] Starting run flow...');
+
       // Health check first
+      console.log('[NewRun] Checking server health...');
       const healthRes = await fetch('/api/models/status');
       if (!healthRes.ok) {
+        console.error('[NewRun] Health check failed:', healthRes.status);
         setError('Cannot reach server. Is the backend running on port 8001?');
         setRunning(false);
         return;
       }
 
       const health = await healthRes.json();
+      console.log('[NewRun] Health check passed:', health);
       if (!health.victim?.loaded) {
         setError('Server is starting up — models are still loading. Wait a moment and try again.');
         setRunning(false);
         return;
       }
 
+      // Generate run_id client-side — we'll use THIS same ID for both WebSocket and POST
       const rid = `run_${Date.now()}`;
       setRunId(rid);
+      console.log(`[NewRun] Generated run_id: ${rid}`);
+
+      // Step 1: Connect WebSocket FIRST (before experiment starts)
+      console.log(`[NewRun] Connecting WebSocket to /ws/run/${rid}...`);
       connectWebSocket(rid);
 
+      // Wait for WebSocket to open before starting experiment
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('WebSocket timeout')), 5000);
+        const checkWs = setInterval(() => {
+          if (wsConnected.current) {
+            clearTimeout(timeout);
+            clearInterval(checkWs);
+            console.log('[NewRun] ✓ WebSocket connected');
+            resolve();
+          }
+        }, 50);
+      });
+
+      // Step 2: Start experiment, passing the SAME run_id for WebSocket routing
       const params = new URLSearchParams({
+        run_id: rid,  // CRITICAL: pass client run_id so server routes WS messages correctly
         max_attempts: String(maxAttempts),
         ...(scenarioId ? { scenario_id: scenarioId } : {}),
       });
 
+      console.log(`[NewRun] Starting experiment via POST /api/run?${params}`);
       const res = await fetch(`/api/run?${params}`, { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        console.error('[NewRun] POST failed:', res.status, err);
         setError(err.detail || `Server error (${res.status})`);
         setRunning(false);
         return;
       }
 
       const data = await res.json();
+      console.log('[NewRun] POST response:', data);
+
+      // Verify server used our run_id
       if (data.run_id && data.run_id !== rid) {
+        console.warn(`[NewRun] Server returned different run_id: ${data.run_id} (expected ${rid}). Reconnecting WebSocket...`);
         setRunId(data.run_id);
         if (wsRef.current) wsRef.current.close();
         connectWebSocket(data.run_id);
+      } else {
+        console.log(`[NewRun] ✓ Server confirmed run_id: ${data.run_id}`);
       }
     } catch (e) {
+      console.error('[NewRun] Exception during start:', e);
       setError('Cannot connect to server. Check that the backend is running and SSH tunnel is active.');
       setRunning(false);
     }

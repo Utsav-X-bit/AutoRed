@@ -6,12 +6,15 @@ import time
 import json
 import random
 import asyncio
+import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any
 
 import torch
 import pandas as pd
+
+logger = logging.getLogger("autored_server")
 
 from .models_server import server_models
 from .websocket import ws_manager
@@ -92,6 +95,7 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
     Args:
         scenario_id: Specific scenario ID, or None for random
         max_attempts: Maximum number of attempts
+        run_id: Pre-generated run_id (from client or server)
 
     Returns:
         AutoRedRun JSON dict
@@ -103,14 +107,19 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
     if run_id is None:
         run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
+    logger.info(f"[EXP] run_experiment_server START: run_id={run_id}, scenario_id={scenario_id}, max_attempts={max_attempts}")
+
     # Load dataset and pick scenario
     defender_df = load_dataset()
+    logger.info(f"[EXP] Dataset loaded: {len(defender_df)} scenarios")
 
     if scenario_id and scenario_id in defender_df.index:
         row = defender_df.loc[scenario_id]
+        logger.info(f"[EXP] Using specific scenario: {scenario_id}")
     else:
         row = defender_df.sample(n=1, random_state=random.randint(0, 10000)).iloc[0]
         scenario_id = row.name
+        logger.info(f"[EXP] Random scenario selected: {scenario_id}")
 
     scenario = DefenseScenario(
         opening_defense=row["opening_defense"],
@@ -273,6 +282,8 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
             "extractor_match": extractor_success,
             "generator_success": ground_truth_found,
         }
+        logger.info(f"[EXP] Attempt #{attempt} done: strategy={strategy}, gt_found={ground_truth_found}, ext_match={extractor_success}")
+        logger.info(f"[EXP] Sending WebSocket attempt_update for run_id={run_id}, attempt={attempt}")
         await ws_manager.send_attempt(run_id, ws_attempt)
 
         # Yield control to event loop (prevents WebSocket backlog)
@@ -281,6 +292,7 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         # Success check
         if ground_truth_found and extractor_success:
             success = True
+            logger.info(f"[EXP] ✓ SUCCESS at attempt {attempt}!")
             events.append({"timestamp": datetime.now().isoformat(), "type": "success", "message": f"Success at attempt {attempt}"})
             break
 
@@ -337,9 +349,12 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
     json_path = results_dir / f"{run_id}.json"
     with open(json_path, "w") as f:
         json.dump(run_json, f, indent=2, default=str)
-    print(f"\n[SERVER] 💾 Run JSON saved to: {json_path}")
+    logger.info(f"[EXP] 💾 Run JSON saved to: {json_path}")
+    logger.info(f"[EXP] Run JSON structure: attempts={len(run_json.get('attempts', []))}, result={run_json.get('result')}")
 
     # Send completion signal
+    logger.info(f"[EXP] Sending WebSocket run_complete for run_id={run_id}")
     await ws_manager.send_run_complete(run_id, run_json)
+    logger.info(f"[EXP] run_experiment_server DONE: run_id={run_id}")
 
     return run_json
