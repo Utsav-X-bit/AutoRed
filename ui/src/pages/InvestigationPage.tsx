@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
+import { useWebSocket } from '../hooks/useWebSocket';
 import TimelineSidebar from '../components/TimelineSidebar';
 import GeneratorCard from '../components/GeneratorCard';
 import VictimCard from '../components/VictimCard';
@@ -13,6 +14,7 @@ export default function InvestigationPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { selectedRun, selectedAttemptIndex, setSelectedRun } = useRunStore();
+  const { connect, isConnected } = useWebSocket(runId);
 
   useEffect(() => {
     if (!runId) return;
@@ -52,6 +54,12 @@ export default function InvestigationPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span>Attempt {attempt.attempt_number}/{selectedRun.result.total_attempts}</span>
+          {isConnected && (
+            <span className="flex items-center gap-1.5 text-xs text-green-600">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Live
+            </span>
+          )}
         </div>
       </header>
 
