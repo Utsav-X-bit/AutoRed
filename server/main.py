@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import List, Dict, Any
@@ -7,6 +7,7 @@ import tempfile
 import os
 
 from .file_manager import list_runs, get_run, upload_run, delete_run
+from .websocket import ws_manager
 
 app = FastAPI(title="AutoRed Web UI", version="1.0.0")
 
@@ -133,3 +134,15 @@ def api_export_csv(run_id: str):
     from fastapi.responses import Response
     return Response(content=output.getvalue(), media_type="text/csv",
                     headers={"Content-Disposition": f"attachment; filename={run_id}.csv"})
+
+
+# ─── WebSocket Endpoint ─────────────────────────────────────
+
+@app.websocket("/ws/run/{run_id}")
+async def websocket_endpoint(websocket: WebSocket, run_id: str):
+    await ws_manager.connect(run_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(run_id, websocket)
