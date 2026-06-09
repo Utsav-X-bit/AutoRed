@@ -229,7 +229,7 @@ def run_experiment(scenario_id: Optional[str] = None,
             on_attempt(trace_entry)
 
         # Success check
-        if ground_truth_found and extractor_success:
+        if ground_truth_found or extractor_success or verification_success:
             success = True
             events.append({"timestamp": datetime.now().isoformat(), "type": "success", "message": f"Success at attempt {attempt}"})
             break

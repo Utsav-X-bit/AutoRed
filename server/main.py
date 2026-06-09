@@ -13,6 +13,7 @@ import json
 import tempfile
 import asyncio
 import logging
+import html as html_lib
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -159,6 +160,10 @@ async def api_start_run(
         logger.warning("[SERVER] Models not loaded yet, rejecting run request")
         raise HTTPException(status_code=503, detail="Models not loaded yet. Server may be starting up.")
 
+    global _is_running
+    if _is_running or _run_lock.locked():
+        raise HTTPException(status_code=409, detail="Another experiment is already running.")
+
     # Use client-provided run_id if available (critical for WebSocket routing!)
     if run_id and run_id.startswith("run_"):
         actual_run_id = run_id
@@ -170,6 +175,8 @@ async def api_start_run(
     scenario_id = scenario_id.strip()
     logger.info(f"[SERVER] Starting experiment run_id={actual_run_id}, scenario_id={scenario_id or 'random'}, max_attempts={max_attempts}")
     logger.info(f"[SERVER] WebSocket connections for {actual_run_id}: {len(ws_manager._connections.get(actual_run_id, set()))}")
+
+    _is_running = True
 
     # Start experiment in background
     asyncio.create_task(
@@ -199,7 +206,11 @@ async def _run_experiment_task(run_id: str, scenario_id: Optional[str], max_atte
                 max_attempts=max_attempts,
             )
             total_attempts = result.get("result", {}).get("total_attempts", 0)
-            success = result.get("result", {}).get("ground_truth_success", False)
+            result_info = result.get("result", {})
+            success = any(
+                bool(result_info.get(key))
+                for key in ("ground_truth_success", "extractor_success", "verified_success")
+            )
             logger.info(f"[SERVER] ✓ Experiment {run_id} COMPLETED: attempts={total_attempts}, success={success}")
         except Exception as e:
             logger.error(f"[SERVER] ✗ Experiment {run_id} FAILED with exception: {e}", exc_info=True)
@@ -268,8 +279,18 @@ def api_export_html(run_id: str):
     if not run:
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
 
+    def esc(value: Any) -> str:
+        return html_lib.escape(str(value if value is not None else ""))
+
+    result = run.get("result", {})
+    success = any(
+        bool(result.get(key))
+        for key in ("ground_truth_success", "extractor_success", "verified_success")
+    )
+    success_badge = f'<span class="badge {"badge-green" if success else "badge-red"}">{"✓" if success else "✗"}</span>'
+
     html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>AutoRed Report: {run_id}</title>
+<html><head><meta charset="utf-8"><title>AutoRed Report: {esc(run_id)}</title>
 <style>
 body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #0f172a; }}
 h1 {{ font-size: 1.5rem; }} h2 {{ font-size: 1.2rem; margin-top: 1.5rem; }}
@@ -282,16 +303,19 @@ th {{ background: #f1f5f9; }}
 .card {{ background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin: 0.5rem 0; }}
 pre {{ background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.8rem; }}
 </style></head><body>
-<h1>AutoRed Report: {run_id}</h1>
-<p>Timestamp: {run.get('experiment', {}).get('timestamp', 'N/A')}</p>
-<p>Version: {run.get('experiment', {}).get('experiment_version', 'N/A')}</p>
-<p>Git: {run.get('experiment', {}).get('git_commit', 'N/A')}</p>
+<h1>AutoRed Report: {esc(run_id)}</h1>
+<p>Timestamp: {esc(run.get('experiment', {}).get('timestamp', 'N/A'))}</p>
+<p>Scenario: {esc(run.get('experiment', {}).get('scenario_id', 'N/A'))}</p>
+<p>Version: {esc(run.get('experiment', {}).get('experiment_version', 'N/A'))}</p>
+<p>Git: {esc(run.get('experiment', {}).get('git_commit', 'N/A'))}</p>
 
 <h2>Result</h2>
 <div class="card">
+<p>Overall: {success_badge}</p>
 <p>Ground Truth: <span class="badge {'badge-green' if run.get('result', {}).get('ground_truth_success') else 'badge-red'}">{'✓' if run.get('result', {}).get('ground_truth_success') else '✗'}</span></p>
 <p>Extractor: <span class="badge {'badge-green' if run.get('result', {}).get('extractor_success') else 'badge-red'}">{'✓' if run.get('result', {}).get('extractor_success') else '✗'}</span></p>
-<p>Attempts: {run.get('result', {}).get('total_attempts', 0)}</p>
+<p>Verifier: <span class="badge {'badge-green' if run.get('result', {}).get('verified_success') else 'badge-red'}">{'✓' if run.get('result', {}).get('verified_success') else '✗'}</span></p>
+<p>Attempts: {esc(run.get('result', {}).get('total_attempts', 0))}</p>
 </div>
 
 <h2>Attempts</h2>
@@ -301,7 +325,13 @@ pre {{ background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; overflow-
     for a in run.get("attempts", []):
         gt = '<span class="badge badge-green">✓</span>' if a.get("ground_truth_found") else '<span class="badge badge-red">✗</span>'
         ext = '<span class="badge badge-green">✓</span>' if a.get("extractor_match") else '<span class="badge badge-red">✗</span>'
-        html += f'<tr><td>{a.get("attempt_number")}</td><td>{a.get("generator", {}).get("strategy")}</td><td>{a.get("judge", {}).get("decision")}</td><td>{gt}</td><td>{ext}</td><td>{a.get("extractor", {}).get("best_candidate", "N/A")}</td></tr>\n'
+        html += (
+            f'<tr><td>{esc(a.get("attempt_number"))}</td>'
+            f'<td>{esc(a.get("generator", {}).get("strategy"))}</td>'
+            f'<td>{esc(a.get("judge", {}).get("decision"))}</td>'
+            f'<td>{gt}</td><td>{ext}</td>'
+            f'<td>{esc(a.get("extractor", {}).get("best_candidate", "N/A"))}</td></tr>\n'
+        )
 
     html += """</table></body></html>"""
 

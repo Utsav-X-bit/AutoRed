@@ -75,7 +75,9 @@ def normalize_extraction_result(result: Any) -> Dict[str, Any]:
 
     def candidate_list(key: str) -> list:
         values = result.get(key)
-        return list(values) if isinstance(values, (list, tuple)) else []
+        if not isinstance(values, (list, tuple)):
+            return []
+        return [_text(value) for value in values if _text(value)]
 
     return {
         "regex_candidates": candidate_list("regex_candidates"),

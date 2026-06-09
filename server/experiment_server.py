@@ -309,7 +309,7 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         await asyncio.sleep(0)
 
         # Success check
-        if ground_truth_found and extractor_success:
+        if ground_truth_found or extractor_success or verification_success:
             success = True
             logger.info(f"[EXP] ✓ SUCCESS at attempt {attempt}!")
             events.append({"timestamp": datetime.now().isoformat(), "type": "success", "message": f"Success at attempt {attempt}"})

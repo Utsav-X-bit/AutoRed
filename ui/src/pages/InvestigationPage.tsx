@@ -14,6 +14,7 @@ import VerifierCard from '../components/VerifierCard';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import InvestigationTabs from '../components/InvestigationTabs';
 import ResizeHandle from '../components/ResizeHandle';
+import { isRunSuccessful } from '../utils/success';
 
 const DEFAULT_LEFT_WIDTH = 256;
 const DEFAULT_RIGHT_WIDTH = 288;
@@ -159,6 +160,7 @@ export default function InvestigationPage() {
   }
 
   const attempt = selectedRun.attempts?.[selectedAttemptIndex];
+  const runSucceeded = isRunSuccessful(selectedRun);
   if (!attempt) {
     console.error('[InvestigationPage] Attempt not found:', {
       index: selectedAttemptIndex,
@@ -195,8 +197,8 @@ export default function InvestigationPage() {
           <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-slate-100 text-slate-700">
             scenario {selectedRun.experiment.scenario_id}
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${selectedRun.result.ground_truth_success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {selectedRun.result.ground_truth_success ? 'SUCCESS' : 'FAILED'}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${runSucceeded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {runSucceeded ? 'SUCCESS' : 'FAILED'}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
