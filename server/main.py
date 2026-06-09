@@ -136,6 +136,54 @@ def api_export_csv(run_id: str):
                     headers={"Content-Disposition": f"attachment; filename={run_id}.csv"})
 
 
+@app.get("/api/export/{run_id}/html")
+def api_export_html(run_id: str):
+    """Export run as styled HTML report."""
+    run = get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>AutoRed Report: {run_id}</title>
+<style>
+body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #0f172a; }}
+h1 {{ font-size: 1.5rem; }} h2 {{ font-size: 1.2rem; margin-top: 1.5rem; }}
+table {{ width: 100%; border-collapse: collapse; margin: 1rem 0; }}
+th, td {{ border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; font-size: 0.875rem; }}
+th {{ background: #f1f5f9; }}
+.badge {{ display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }}
+.badge-green {{ background: #dcfce7; color: #166534; }}
+.badge-red {{ background: #fee2e2; color: #991b1b; }}
+.card {{ background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin: 0.5rem 0; }}
+pre {{ background: #f1f5f9; padding: 0.75rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.8rem; }}
+</style></head><body>
+<h1>AutoRed Report: {run_id}</h1>
+<p>Timestamp: {run.get('experiment', {}).get('timestamp', 'N/A')}</p>
+<p>Version: {run.get('experiment', {}).get('experiment_version', 'N/A')}</p>
+<p>Git: {run.get('experiment', {}).get('git_commit', 'N/A')}</p>
+
+<h2>Result</h2>
+<div class="card">
+<p>Ground Truth: <span class="badge {'badge-green' if run.get('result', {}).get('ground_truth_success') else 'badge-red'}">{'✓' if run.get('result', {}).get('ground_truth_success') else '✗'}</span></p>
+<p>Extractor: <span class="badge {'badge-green' if run.get('result', {}).get('extractor_success') else 'badge-red'}">{'✓' if run.get('result', {}).get('extractor_success') else '✗'}</span></p>
+<p>Attempts: {run.get('result', {}).get('total_attempts', 0)}</p>
+</div>
+
+<h2>Attempts</h2>
+<table>
+<tr><th>#</th><th>Strategy</th><th>Judge</th><th>GT Found</th><th>Extractor</th><th>Best Candidate</th></tr>
+"""
+    for a in run.get("attempts", []):
+        gt = '<span class="badge badge-green">✓</span>' if a.get("ground_truth_found") else '<span class="badge badge-red">✗</span>'
+        ext = '<span class="badge badge-green">✓</span>' if a.get("extractor_match") else '<span class="badge badge-red">✗</span>'
+        html += f'<tr><td>{a.get("attempt_number")}</td><td>{a.get("generator", {}).get("strategy")}</td><td>{a.get("judge", {}).get("decision")}</td><td>{gt}</td><td>{ext}</td><td>{a.get("extractor", {}).get("best_candidate", "N/A")}</td></tr>\n'
+
+    html += """</table></body></html>"""
+
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=html)
+
+
 # ─── WebSocket Endpoint ─────────────────────────────────────
 
 @app.websocket("/ws/run/{run_id}")

@@ -61,6 +61,29 @@ export default function InvestigationPage() {
             </span>
           )}
         </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/export/${selectedRun.experiment.run_id}/json`}
+            download={`${selectedRun.experiment.run_id}.json`}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium transition-colors"
+          >
+            Export JSON
+          </a>
+          <a
+            href={`/api/export/${selectedRun.experiment.run_id}/csv`}
+            download={`${selectedRun.experiment.run_id}.csv`}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium transition-colors"
+          >
+            Export CSV
+          </a>
+          <a
+            href={`/api/export/${selectedRun.experiment.run_id}/html`}
+            download={`${selectedRun.experiment.run_id}.html`}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium transition-colors"
+          >
+            Export HTML
+          </a>
+        </div>
       </header>
 
       {/* 3-Panel Layout */}
