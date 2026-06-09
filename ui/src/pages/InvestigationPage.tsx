@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStore } from '../store/runStore';
 import TimelineSidebar from '../components/TimelineSidebar';
@@ -8,12 +13,95 @@ import ExtractorCard from '../components/ExtractorCard';
 import VerifierCard from '../components/VerifierCard';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import InvestigationTabs from '../components/InvestigationTabs';
+import ResizeHandle from '../components/ResizeHandle';
+
+const DEFAULT_LEFT_WIDTH = 256;
+const DEFAULT_RIGHT_WIDTH = 288;
+const DEFAULT_BOTTOM_HEIGHT = 360;
+const MIN_SIDE_WIDTH = 180;
+const MIN_CENTER_WIDTH = 420;
+const MIN_BOTTOM_HEIGHT = 160;
+const MIN_MAIN_HEIGHT = 220;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), Math.max(min, max));
+
+const readStoredSize = (key: string, fallback: number) => {
+  if (typeof window === 'undefined') return fallback;
+  const value = Number(window.localStorage.getItem(key));
+  return Number.isFinite(value) ? value : fallback;
+};
 
 export default function InvestigationPage() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { selectedRun, selectedAttemptIndex, setSelectedRun, clearSelectedRun } = useRunStore();
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [leftWidth, setLeftWidth] = useState(() =>
+    readStoredSize('autored.layout.leftWidth', DEFAULT_LEFT_WIDTH),
+  );
+  const [rightWidth, setRightWidth] = useState(() =>
+    readStoredSize('autored.layout.rightWidth', DEFAULT_RIGHT_WIDTH),
+  );
+  const [bottomHeight, setBottomHeight] = useState(() =>
+    readStoredSize('autored.layout.bottomHeight', DEFAULT_BOTTOM_HEIGHT),
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem('autored.layout.leftWidth', String(leftWidth));
+    window.localStorage.setItem('autored.layout.rightWidth', String(rightWidth));
+    window.localStorage.setItem('autored.layout.bottomHeight', String(bottomHeight));
+  }, [leftWidth, rightWidth, bottomHeight]);
+
+  const resizeFromPointer = useCallback((
+    event: ReactPointerEvent<HTMLDivElement>,
+    axis: 'x' | 'y',
+    currentSize: number,
+    applyDelta: (startSize: number, delta: number) => void,
+  ) => {
+    event.preventDefault();
+    const startPosition = axis === 'x' ? event.clientX : event.clientY;
+    const cursor = axis === 'x' ? 'col-resize' : 'row-resize';
+    document.body.classList.add('is-resizing');
+    document.body.style.cursor = cursor;
+
+    const handleMove = (pointerEvent: PointerEvent) => {
+      const position = axis === 'x' ? pointerEvent.clientX : pointerEvent.clientY;
+      applyDelta(currentSize, position - startPosition);
+    };
+    const handleEnd = () => {
+      document.body.classList.remove('is-resizing');
+      document.body.style.cursor = '';
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+      window.removeEventListener('pointercancel', handleEnd);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleEnd);
+    window.addEventListener('pointercancel', handleEnd);
+  }, []);
+
+  const updateLeftWidth = useCallback((value: number) => {
+    const max = window.innerWidth - rightWidth - MIN_CENTER_WIDTH;
+    setLeftWidth(clamp(value, MIN_SIDE_WIDTH, max));
+  }, [rightWidth]);
+
+  const updateRightWidth = useCallback((value: number) => {
+    const max = window.innerWidth - leftWidth - MIN_CENTER_WIDTH;
+    setRightWidth(clamp(value, MIN_SIDE_WIDTH, max));
+  }, [leftWidth]);
+
+  const updateBottomHeight = useCallback((value: number) => {
+    const max = window.innerHeight - MIN_MAIN_HEIGHT;
+    setBottomHeight(clamp(value, MIN_BOTTOM_HEIGHT, max));
+  }, []);
+
+  const resetLayout = useCallback(() => {
+    setLeftWidth(DEFAULT_LEFT_WIDTH);
+    setRightWidth(DEFAULT_RIGHT_WIDTH);
+    setBottomHeight(DEFAULT_BOTTOM_HEIGHT);
+  }, []);
 
   useEffect(() => {
     if (!runId) return;
@@ -112,6 +200,13 @@ export default function InvestigationPage() {
           <span>Attempt {attempt.attempt_number}/{selectedRun.result.total_attempts}</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={resetLayout}
+            className="px-3 py-1.5 text-slate-500 hover:text-slate-900 text-xs font-medium transition-colors"
+            title="Reset all panel sizes"
+          >
+            Reset Layout
+          </button>
           <a
             href={`/api/export/${selectedRun.experiment.run_id}/json`}
             download={`${selectedRun.experiment.run_id}.json`}
@@ -136,14 +231,29 @@ export default function InvestigationPage() {
         </div>
       </header>
 
-      {/* 3-Panel Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Timeline */}
-        <TimelineSidebar />
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <aside
+            className="flex-shrink-0 min-w-0 overflow-hidden"
+            style={{ width: leftWidth }}
+          >
+            <TimelineSidebar />
+          </aside>
+          <ResizeHandle
+            direction="vertical"
+            label="Resize attempt timeline"
+            onPointerDown={(event) => resizeFromPointer(
+              event,
+              'x',
+              leftWidth,
+              (start, delta) => updateLeftWidth(start + delta),
+            )}
+            onKeyboardResize={(delta) => updateLeftWidth(leftWidth + delta)}
+            onReset={() => setLeftWidth(DEFAULT_LEFT_WIDTH)}
+          />
 
-        {/* Center: Investigation */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
-          <div className="max-w-4xl mx-auto space-y-4">
+          <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50 p-6">
+            <div className="w-full max-w-6xl mx-auto space-y-4">
             {/* Attempt Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">Attempt {attempt.attempt_number}</h2>
@@ -165,15 +275,48 @@ export default function InvestigationPage() {
             <ExtractorCard attempt={attempt} />
             <div className="flex justify-center text-slate-400 text-lg">↓</div>
             <VerifierCard attempt={attempt} />
-          </div>
+            </div>
+          </main>
+
+          <ResizeHandle
+            direction="vertical"
+            label="Resize analytics panel"
+            onPointerDown={(event) => resizeFromPointer(
+              event,
+              'x',
+              rightWidth,
+              (start, delta) => updateRightWidth(start - delta),
+            )}
+            onKeyboardResize={(delta) => updateRightWidth(rightWidth - delta)}
+            onReset={() => setRightWidth(DEFAULT_RIGHT_WIDTH)}
+          />
+          <aside
+            className="flex-shrink-0 min-w-0 overflow-hidden"
+            style={{ width: rightWidth }}
+          >
+            <AnalyticsPanel />
+          </aside>
         </div>
 
-        {/* Right: Analytics */}
-        <AnalyticsPanel />
+        <ResizeHandle
+          direction="horizontal"
+          label="Resize investigation tabs"
+          onPointerDown={(event) => resizeFromPointer(
+            event,
+            'y',
+            bottomHeight,
+            (start, delta) => updateBottomHeight(start - delta),
+          )}
+          onKeyboardResize={(delta) => updateBottomHeight(bottomHeight - delta)}
+          onReset={() => setBottomHeight(DEFAULT_BOTTOM_HEIGHT)}
+        />
+        <section
+          className="flex-shrink-0 min-h-0 overflow-hidden"
+          style={{ height: bottomHeight }}
+        >
+          <InvestigationTabs />
+        </section>
       </div>
-
-      {/* Bottom: Investigation Tabs */}
-      <InvestigationTabs />
     </div>
   );
 }

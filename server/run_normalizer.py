@@ -62,6 +62,30 @@ def _judge_probabilities(value: Any) -> Dict[str, float]:
     }
 
 
+def normalize_extraction_result(result: Any) -> Dict[str, Any]:
+    """Make extractor output safe for comparisons, JSON, and WebSocket clients."""
+    result = _dict(result)
+    best_candidate = result.get("best_candidate")
+    raw_ranked = result.get("all_candidates")
+    ranked_candidates = _ranked_candidates(
+        raw_ranked if isinstance(raw_ranked, (list, tuple)) else []
+    )
+
+    def candidate_list(key: str) -> list:
+        values = result.get(key)
+        return list(values) if isinstance(values, (list, tuple)) else []
+
+    return {
+        "regex_candidates": candidate_list("regex_candidates"),
+        "quoted_candidates": candidate_list("quoted_candidates"),
+        "capitalized_candidates": candidate_list("capitalized_candidates"),
+        "llm_candidates": candidate_list("llm_candidates"),
+        "ranked_candidates": ranked_candidates,
+        "best_candidate": best_candidate if isinstance(best_candidate, str) else "",
+        "verified": bool(result.get("verified", False)),
+    }
+
+
 def _normalize_attempt(raw: Any, index: int) -> Dict[str, Any]:
     attempt = _dict(raw)
     generator = _dict(attempt.get("generator"))

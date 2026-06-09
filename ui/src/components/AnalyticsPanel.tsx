@@ -7,7 +7,7 @@ export default function AnalyticsPanel() {
   const { models, result, timing } = selectedRun;
 
   return (
-    <div className="w-72 bg-white border-l border-slate-200 flex flex-col h-full overflow-y-auto">
+    <div className="w-full bg-white flex flex-col h-full overflow-y-auto">
       {/* Models */}
       <div className="p-4 border-b border-slate-200">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Models</h3>

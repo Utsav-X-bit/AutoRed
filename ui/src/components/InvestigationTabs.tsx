@@ -21,8 +21,8 @@ export default function InvestigationTabs() {
   const [activeTab, setActiveTab] = useState('scenario');
 
   return (
-    <div className="border-t border-slate-200 bg-white flex-shrink-0">
-      <div className="flex items-center gap-1 px-4 border-b border-slate-200">
+    <div className="bg-white h-full min-h-0 flex flex-col">
+      <div className="flex items-center gap-1 px-4 border-b border-slate-200 overflow-x-auto flex-shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -37,7 +37,7 @@ export default function InvestigationTabs() {
           </button>
         ))}
       </div>
-      <div className="p-4 max-h-96 overflow-y-auto bg-slate-50">
+      <div className="p-4 flex-1 min-h-0 overflow-y-auto bg-slate-50">
         {activeTab === 'scenario' && <ScenarioTab />}
         {activeTab === 'evolution' && <AttackEvolutionTab />}
         {activeTab === 'heatmap' && <StrategyHeatmapTab />}

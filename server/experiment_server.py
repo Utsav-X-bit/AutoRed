@@ -17,6 +17,7 @@ import pandas as pd
 logger = logging.getLogger("autored_server")
 
 from .models_server import server_models
+from .run_normalizer import normalize_extraction_result
 from .websocket import ws_manager
 from experiment.llama_3_8b_verbose import (
     DefenseScenario, CTFEnvironment, RedTeamingAgent, StopPointIdentifier,
@@ -195,13 +196,16 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         output_tokens = len(victim_tokenizer.encode(response))
 
         # Extractor
-        extraction_result = extractor.extract(response)
-        verification_candidate = extraction_result.get("best_candidate", "")
-        verification_success = extraction_result.get("verified", False)
+        extraction_result = normalize_extraction_result(extractor.extract(response))
+        verification_candidate = extraction_result["best_candidate"]
+        verification_success = extraction_result["verified"]
 
         # Ground truth check
         ground_truth_found = scenario.access_code.lower() in response.lower()
-        extractor_success = extraction_result.get("best_candidate", "").lower() == scenario.access_code.lower()
+        extractor_success = (
+            bool(verification_candidate)
+            and verification_candidate.casefold() == scenario.access_code.casefold()
+        )
 
         # Record in agent history
         agent.record_attempt(attack, response, judge_result["confidence"])
@@ -223,12 +227,12 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
             "response": response,
             "raw_output": raw_output,
             "clean_output": clean_output,
-            "regex_candidates": extraction_result.get("regex_candidates", []),
-            "quoted_candidates": extraction_result.get("quoted_candidates", []),
-            "capitalized_candidates": extraction_result.get("capitalized_candidates", []),
-            "llm_candidates": extraction_result.get("llm_candidates", []),
-            "ranked_candidates": [{"value": v, "score": s} for v, s in extraction_result.get("all_candidates", [])],
-            "best_candidate": extraction_result.get("best_candidate", ""),
+            "regex_candidates": extraction_result["regex_candidates"],
+            "quoted_candidates": extraction_result["quoted_candidates"],
+            "capitalized_candidates": extraction_result["capitalized_candidates"],
+            "llm_candidates": extraction_result["llm_candidates"],
+            "ranked_candidates": extraction_result["ranked_candidates"],
+            "best_candidate": verification_candidate,
             "verification_candidate": verification_candidate,
             "verification_response": "",
             "verification_success": verification_success,
@@ -267,15 +271,12 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
                 "output_length": len(response),
             },
             "extractor": {
-                "regex_candidates": extraction_result.get("regex_candidates", []),
-                "quoted_candidates": extraction_result.get("quoted_candidates", []),
-                "capitalized_candidates": extraction_result.get("capitalized_candidates", []),
-                "llm_candidates": extraction_result.get("llm_candidates", []),
-                "ranked_candidates": [
-                    {"value": value, "score": score}
-                    for value, score in extraction_result.get("all_candidates", [])
-                ],
-                "best_candidate": extraction_result.get("best_candidate", ""),
+                "regex_candidates": extraction_result["regex_candidates"],
+                "quoted_candidates": extraction_result["quoted_candidates"],
+                "capitalized_candidates": extraction_result["capitalized_candidates"],
+                "llm_candidates": extraction_result["llm_candidates"],
+                "ranked_candidates": extraction_result["ranked_candidates"],
+                "best_candidate": verification_candidate,
             },
             "verification": {
                 "candidate_sent": verification_candidate,

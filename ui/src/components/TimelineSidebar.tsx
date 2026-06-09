@@ -14,7 +14,7 @@ export default function TimelineSidebar() {
   };
 
   return (
-    <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-full">
+    <div className="w-full bg-white flex flex-col h-full overflow-hidden">
       {/* Run Header */}
       <div className="p-4 border-b border-slate-200">
         <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Run</p>
