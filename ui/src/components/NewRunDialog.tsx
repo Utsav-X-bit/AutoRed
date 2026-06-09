@@ -23,10 +23,17 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
   const wsRef = useRef<WebSocket | null>(null);
 
+  const wsConnected = useRef(false);
+
   const connectWebSocket = useCallback((rid: string) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(`${protocol}//${window.location.host}/ws/run/${rid}`);
     wsRef.current = ws;
+    wsConnected.current = false;
+
+    ws.onopen = () => {
+      wsConnected.current = true;
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -58,16 +65,22 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
     ws.onclose = () => {
       wsRef.current = null;
-      if (running) {
+      wsConnected.current = false;
+      // Only auto-close dialog if we were actually connected and run finished
+      if (running && !success && !error && wsConnected.current) {
         setRunning(false);
         onSuccess();
       }
     };
 
     ws.onerror = (err) => {
-      console.error('WebSocket error:', err);
+      // Only surface error if we never connected (server unreachable)
+      if (!wsConnected.current) {
+        setError('Cannot connect to server. Is the backend running on port 8001?');
+        setRunning(false);
+      }
     };
-  }, [setSelectedRun, running, onSuccess]);
+  }, [setSelectedRun, running, onSuccess, success, error]);
 
   const handleStart = async () => {
     setRunning(true);
@@ -76,6 +89,21 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
     setCurrentAttempt(0);
 
     try {
+      // Health check first
+      const healthRes = await fetch('/api/models/status');
+      if (!healthRes.ok) {
+        setError('Cannot reach server. Is the backend running on port 8001?');
+        setRunning(false);
+        return;
+      }
+
+      const health = await healthRes.json();
+      if (!health.victim?.loaded) {
+        setError('Server is starting up — models are still loading. Wait a moment and try again.');
+        setRunning(false);
+        return;
+      }
+
       const rid = `run_${Date.now()}`;
       setRunId(rid);
       connectWebSocket(rid);
@@ -87,8 +115,8 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
 
       const res = await fetch(`/api/run?${params}`, { method: 'POST' });
       if (!res.ok) {
-        const err = await res.json();
-        setError(err.detail || 'Failed to start run');
+        const err = await res.json().catch(() => ({}));
+        setError(err.detail || `Server error (${res.status})`);
         setRunning(false);
         return;
       }
@@ -100,7 +128,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
         connectWebSocket(data.run_id);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error');
+      setError('Cannot connect to server. Check that the backend is running and SSH tunnel is active.');
       setRunning(false);
     }
   };
