@@ -70,9 +70,9 @@ LLAMA_PATH = "meta-llama/Meta-Llama-3-8B-Instruct"
 # Phase 1 (Generator): Replace T5 with LLaMA-2-7B-Chat
 GENERATOR_PATH = "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
 
-DISTILBERT_CKPT = "/nlsasfs/home/isea/isea11/slurmJobs/AutoRed/pre_trained/pi_reward_model"
+DISTILBERT_CKPT = "/nlsasfs/home/isea/isea13/AutoRed/pre_trained/pi_reward_model"
 
-DATA_PATH = "/nlsasfs/home/isea/isea11/slurmJobs/AutoRed/experiment/raw_dump_defenses.jsonl.bz2"
+DATA_PATH = "/nlsasfs/home/isea/isea13/AUTORED/experiment/raw_dump_defenses.jsonl.bz2"
 EXT_DATA_PATH = "scripts/pi/pi_data/pi_ext_data/train.json"
 
 # Where to save the full trace log
