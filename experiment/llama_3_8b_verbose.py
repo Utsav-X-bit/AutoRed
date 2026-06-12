@@ -178,9 +178,13 @@ if not _SERVER_MODE:
     ).set_index("defense_id")
 
     defense_df = raw_defenses.dropna(subset=["access_code"])
-    defender_df = defense_df.sample(n=1000, random_state=42)
+    
+    # Dataset size is configurable via --dataset-size (default: 1000)
+    # Will be overridden below in __main__ after argparse runs
+    _DEFAULT_DATASET_SIZE = 1000
+    defender_df = defense_df.sample(n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42)
     defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
-    print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios")
+    print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)")
 else:
     print("[LOAD] Server mode — skipping module-level dataset load")
     raw_defenses = None
@@ -2064,8 +2068,14 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
     # JSON emission: collect per-round run JSONs
     benchmark_run_jsons = []
 
-    # Sample n_rounds scenarios
-    scenarios_df = defender_df.sample(n=min(n_rounds, len(defender_df)), random_state=42)
+    # Sample n_rounds scenarios (with replacement if rounds > pool size)
+    pool_size = len(defender_df)
+    if n_rounds > pool_size:
+        print(f"\n  [WARN] Rounds ({n_rounds}) > pool size ({pool_size}). "
+              f"Sampling with replacement.")
+        scenarios_df = defender_df.sample(n=n_rounds, random_state=42, replace=True)
+    else:
+        scenarios_df = defender_df.sample(n=n_rounds, random_state=42)
 
     for round_idx, (_, row) in enumerate(tqdm(
         scenarios_df.iterrows(), total=n_rounds, desc="Benchmark"
@@ -2656,14 +2666,33 @@ if __name__ == "__main__":
         help=f"Number of benchmark rounds (default: {BENCHMARK_ROUNDS})"
     )
     parser.add_argument(
+        "--dataset-size", type=int, default=1000,
+        help="Number of defense scenarios to sample from the full dataset (default: 1000). "
+             "Use larger values (e.g., 5000) for bigger benchmarks to avoid repeated scenarios."
+    )
+    parser.add_argument(
         "--validate", action="store_true",
         help="Run generator validation before attack"
+    )
+    parser.add_argument(
+        "--dataset-size", type=int, default=1000,
+        help="Number of defense scenarios to sample from the full dataset (default: 1000). "
+             "Use larger values (e.g., 5000) for bigger benchmarks."
     )
     parser.add_argument(
         "--scenario-id", default="",
         help="Specific defense_id to run in single mode (example: 89021)"
     )
     args = parser.parse_args()
+
+    # Reload dataset with requested size (only in non-server mode)
+    if not _SERVER_MODE and args.dataset_size != _DEFAULT_DATASET_SIZE:
+        print(f"\n[LOAD] Reloading dataset with size={args.dataset_size}...")
+        defender_df = defense_df.sample(
+            n=min(args.dataset_size, len(defense_df)), random_state=42
+        )
+        defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
+        print(f"[LOAD] ✓ Dataset reloaded: {len(defender_df)} defense scenarios")
 
     # Phase 8: Extractor benchmark only needs target LLM (already loaded)
     if args.mode == "extractor_benchmark":
