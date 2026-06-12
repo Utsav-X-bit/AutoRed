@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 import { normalizeRun, normalizeRunList } from '../utils/normalizeRun';
+import { isRunSuccessful } from '../utils/success';
 
 export default function BenchmarkDashboard() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export default function BenchmarkDashboard() {
 
   // Compute stats
   const totalRuns = benchmarkRuns.length;
-  const successes = benchmarkRuns.filter(r => r.result.ground_truth_success).length;
+  const successes = benchmarkRuns.filter(isRunSuccessful).length;
   const successRate = (successes / totalRuns * 100).toFixed(1);
   const avgAttempts = (benchmarkRuns.reduce((sum, r) => sum + r.result.total_attempts, 0) / totalRuns).toFixed(1);
 
@@ -197,7 +198,7 @@ export default function BenchmarkDashboard() {
                     <span className="font-mono text-xs text-slate-600 truncate">{run.experiment.run_id}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400">{run.result.total_attempts} attempts</span>
-                      <span className={`w-2 h-2 rounded-full ${run.result.ground_truth_success ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className={`w-2 h-2 rounded-full ${isRunSuccessful(run) ? 'bg-green-500' : 'bg-red-500'}`} />
                     </div>
                   </button>
                 ))}

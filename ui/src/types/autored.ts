@@ -159,6 +159,7 @@ export interface RunListItem {
   run_id: string;
   file_path: string;
   timestamp: string;
+  scenario_id: string;
   success: boolean;
   total_attempts: number;
   access_code: string;

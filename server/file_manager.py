@@ -9,6 +9,13 @@ from .run_normalizer import normalize_run
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "results"
 
 
+def _overall_success(result: Dict[str, Any]) -> bool:
+    return any(
+        bool(result.get(key))
+        for key in ("ground_truth_success", "extractor_success", "verified_success")
+    )
+
+
 def ensure_results_dir():
     """Create results directory if it doesn't exist."""
     RESULTS_DIR.mkdir(exist_ok=True)
@@ -26,7 +33,8 @@ def list_runs() -> List[Dict[str, Any]]:
                 "run_id": data.get("experiment", {}).get("run_id", f.stem),
                 "file_path": str(f),
                 "timestamp": data.get("experiment", {}).get("timestamp", ""),
-                "success": data.get("result", {}).get("ground_truth_success", False),
+                "scenario_id": data.get("experiment", {}).get("scenario_id", ""),
+                "success": _overall_success(data.get("result", {})),
                 "total_attempts": data.get("result", {}).get("total_attempts", 0),
                 "access_code": data.get("scenario", {}).get("access_code", ""),
                 "generator": data.get("models", {}).get("generator", {}).get("name", ""),
@@ -37,6 +45,7 @@ def list_runs() -> List[Dict[str, Any]]:
             runs.append({
                 "run_id": f.stem,
                 "file_path": str(f),
+                "scenario_id": "",
                 "error": str(e),
                 "benchmark_mode": False,
             })

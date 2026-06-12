@@ -178,9 +178,13 @@ if not _SERVER_MODE:
     ).set_index("defense_id")
 
     defense_df = raw_defenses.dropna(subset=["access_code"])
-    defender_df = defense_df.sample(n=1000, random_state=42)
+    
+    # Dataset size is configurable via --dataset-size (default: 1000)
+    # Will be overridden below in __main__ after argparse runs
+    _DEFAULT_DATASET_SIZE = 1000
+    defender_df = defense_df.sample(n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42)
     defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
-    print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios")
+    print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)")
 else:
     print("[LOAD] Server mode — skipping module-level dataset load")
     raw_defenses = None
@@ -1132,7 +1136,7 @@ def serialize_run(scenario, trace, timing_info, model_info, strategy_stats,
             "benchmark_total_runs": benchmark_info.get("total_runs") if benchmark_info else None,
             "max_attempts": timing_info.get("max_attempts", MAX_INTERACTIONS),
             "dataset_size": timing_info.get("dataset_size", 1000),
-            "scenario_id": raw_dataset_entry.get("defense_id", "unknown"),
+            "scenario_id": str(raw_dataset_entry.get("defense_id", "unknown")),
             "seed": timing_info.get("seed", 42),
             "timestamp": datetime.now().isoformat(),
             "experiment_version": EXPERIMENT_VERSION,
@@ -2064,8 +2068,14 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
     # JSON emission: collect per-round run JSONs
     benchmark_run_jsons = []
 
-    # Sample n_rounds scenarios
-    scenarios_df = defender_df.sample(n=min(n_rounds, len(defender_df)), random_state=42)
+    # Sample n_rounds scenarios (with replacement if rounds > pool size)
+    pool_size = len(defender_df)
+    if n_rounds > pool_size:
+        print(f"\n  [WARN] Rounds ({n_rounds}) > pool size ({pool_size}). "
+              f"Sampling with replacement.")
+        scenarios_df = defender_df.sample(n=n_rounds, random_state=42, replace=True)
+    else:
+        scenarios_df = defender_df.sample(n=n_rounds, random_state=42)
 
     for round_idx, (_, row) in enumerate(tqdm(
         scenarios_df.iterrows(), total=n_rounds, desc="Benchmark"
@@ -2075,7 +2085,7 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
             closing_defense=row["closing_defense"],
             access_code=row["access_code"],
         )
-        scenario._defense_id = row.name
+        scenario._defense_id = str(row.name)
 
         if verbose:
             trace, attempts, run_json = verbose_test_llama(scenario, agent)
@@ -2269,7 +2279,7 @@ def _build_benchmark_run_json(scenario, trace, attempts, agent,
     } if agent.best_attack else None
 
     raw_dataset_entry = {
-        "defense_id": row.name if hasattr(row, "name") else "unknown",
+        "defense_id": str(row.name) if hasattr(row, "name") else "unknown",
         "opening_defense": scenario.opening_defense,
         "closing_defense": scenario.closing_defense,
         "access_code": scenario.access_code,
@@ -2656,10 +2666,33 @@ if __name__ == "__main__":
         help=f"Number of benchmark rounds (default: {BENCHMARK_ROUNDS})"
     )
     parser.add_argument(
+        "--dataset-size", type=int, default=1000,
+        help="Number of defense scenarios to sample from the full dataset (default: 1000). "
+             "Use larger values (e.g., 5000) for bigger benchmarks to avoid repeated scenarios."
+    )
+    parser.add_argument(
         "--validate", action="store_true",
         help="Run generator validation before attack"
     )
+    parser.add_argument(
+        "--dataset-size", type=int, default=1000,
+        help="Number of defense scenarios to sample from the full dataset (default: 1000). "
+             "Use larger values (e.g., 5000) for bigger benchmarks."
+    )
+    parser.add_argument(
+        "--scenario-id", default="",
+        help="Specific defense_id to run in single mode (example: 89021)"
+    )
     args = parser.parse_args()
+
+    # Reload dataset with requested size (only in non-server mode)
+    if not _SERVER_MODE and args.dataset_size != _DEFAULT_DATASET_SIZE:
+        print(f"\n[LOAD] Reloading dataset with size={args.dataset_size}...")
+        defender_df = defense_df.sample(
+            n=min(args.dataset_size, len(defense_df)), random_state=42
+        )
+        defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
+        print(f"[LOAD] ✓ Dataset reloaded: {len(defender_df)} defense scenarios")
 
     # Phase 8: Extractor benchmark only needs target LLM (already loaded)
     if args.mode == "extractor_benchmark":
@@ -2690,14 +2723,25 @@ if __name__ == "__main__":
             print("\n" + "=" * 80)
             print("🎲 SELECTING DEFENSE SCENARIO")
             print("=" * 80)
-            sample_row = defender_df.sample(n=1).iloc[0]
+            if args.scenario_id:
+                wanted = str(args.scenario_id).strip()
+                scenario_source_df = defense_df if defense_df is not None else defender_df
+                matches = [idx for idx in scenario_source_df.index if str(idx) == wanted]
+                if not matches:
+                    raise ValueError(f"Scenario ID {wanted!r} not found in dataset")
+                selected_id = matches[0]
+                sample_row = scenario_source_df.loc[selected_id]
+            else:
+                sample_row = defender_df.sample(n=1).iloc[0]
+                selected_id = sample_row.name
 
             scenario = DefenseScenario(
                 opening_defense=sample_row["opening_defense"],
                 closing_defense=sample_row["closing_defense"],
                 access_code=sample_row["access_code"],
             )
-            scenario._defense_id = sample_row.name
+            scenario._defense_id = str(selected_id)
+            print(f"Scenario ID:   \033[95m{scenario._defense_id}\033[0m")
 
             print(f"Pre-defense:   {scenario.opening_defense[:100]}...")
             print(f"Post-defense:  {scenario.closing_defense[:100]}...")

@@ -42,21 +42,17 @@
 - **Fix**: Judge now receives only `previous_new_content[-500:]` (trimmed to last 500 chars); iteration 0 gets `"[No previous output — first iteration]"`
 - **File**: `experiment/llama_3_8b_verbose.py`
 
-### Bug 5: False Positive from Few-Shot Regeneration
-- **Problem**: Llama-3 continues few-shot pattern from pre-defense prompt, regenerating `~💩~ ... ~🫧~` blocks containing "Access Granted"
-- **Fix**: Added `strip_few_shot_patterns()` — regex removes sandwich markers, "Response: I love Taylor!", "USER: I love Taylor!"
-- **File**: `experiment/llama_3_8b_verbose.py`
 
 ---
 
 ## Generator Upgrade
 
-### T5-Base → LLaMA-2-7B-Chat
+### T5-Base → Llama-3.1-8B-Lexi-Uncensored-V2
 - **Before**: T5-base (769M params) — trained for summarization/translation, not adversarial prompt generation
-- **After**: LLaMA-2-7B-Chat — natively understands prompt structure and instruction following
+- **After**: Llama-3.1-8B-Lexi-Uncensored-V2 — natively understands prompt structure and instruction following
 - **Changes**:
   - Replaced `inference_gen_model_verbose()` to use `apply_chat_template()` for proper instruction following
-  - Added `load_gen_model()` for LLaMA-2-7B-Chat loading with `device_map="auto"`
+  - Added `load_gen_model()` for Llama-3.1-8B-Lexi-Uncensored-V2 loading with `device_map="auto"`
   - Generation params: `max_new_tokens=128`, `temperature=0.7`, `top_p=0.9`
 - **Impact**: Attacks shifted from keyword stuffing to structural jailbreak patterns
 

@@ -252,7 +252,7 @@ export default function NewRunDialog({ onClose, onSuccess }: NewRunDialogProps) 
                 type="text"
                 value={scenarioId}
                 onChange={(e) => setScenarioId(e.target.value)}
-                placeholder="e.g., defense_123"
+                placeholder="e.g., 89021"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

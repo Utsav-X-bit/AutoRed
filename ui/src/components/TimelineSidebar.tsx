@@ -1,9 +1,11 @@
 import { useRunStore } from '../store/runStore';
 import type { Attempt } from '../types/autored';
+import { isRunSuccessful } from '../utils/success';
 
 export default function TimelineSidebar() {
   const { selectedRun, selectedAttemptIndex, setSelectedAttempt } = useRunStore();
   if (!selectedRun) return null;
+  const runSucceeded = isRunSuccessful(selectedRun);
 
   const getAttemptColor = (a: Attempt): string => {
     if (a.extractor_match) return 'bg-green-500';
@@ -20,8 +22,8 @@ export default function TimelineSidebar() {
         <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Run</p>
         <p className="font-mono text-sm font-bold text-slate-900 mt-1 truncate">{selectedRun.experiment.run_id}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${selectedRun.result.ground_truth_success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {selectedRun.result.ground_truth_success ? 'SUCCESS' : 'FAILED'}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${runSucceeded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {runSucceeded ? 'SUCCESS' : 'FAILED'}
           </span>
           <span className="text-xs text-slate-500">{selectedRun.result.total_attempts} attempts</span>
         </div>

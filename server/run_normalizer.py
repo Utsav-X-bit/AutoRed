@@ -22,7 +22,9 @@ def _integer(value: Any, default: int = 0) -> int:
 
 
 def _text(value: Any, default: str = "") -> str:
-    return value if isinstance(value, str) else default
+    if value is None:
+        return default
+    return value if isinstance(value, str) else str(value)
 
 
 def _list(value: Any) -> list:
@@ -73,7 +75,9 @@ def normalize_extraction_result(result: Any) -> Dict[str, Any]:
 
     def candidate_list(key: str) -> list:
         values = result.get(key)
-        return list(values) if isinstance(values, (list, tuple)) else []
+        if not isinstance(values, (list, tuple)):
+            return []
+        return [_text(value) for value in values if _text(value)]
 
     return {
         "regex_candidates": candidate_list("regex_candidates"),
@@ -202,6 +206,7 @@ def normalize_run(data: Any, fallback_run_id: str = "") -> Dict[str, Any]:
     result = _dict(run.get("result"))
     timing = _dict(run.get("timing"))
     ground_truth = _dict(run.get("ground_truth"))
+    raw_dataset_entry = _dict(run.get("raw_dataset_entry"))
     raw_models = _dict(run.get("models"))
     models = {}
     for model_name in ("victim", "generator", "judge", "extractor"):
@@ -228,7 +233,10 @@ def normalize_run(data: Any, fallback_run_id: str = "") -> Dict[str, Any]:
         "benchmark_mode": bool(experiment.get("benchmark_mode", False)),
         "max_attempts": _integer(experiment.get("max_attempts"), len(attempts)),
         "dataset_size": _integer(experiment.get("dataset_size")),
-        "scenario_id": _text(experiment.get("scenario_id"), "unknown"),
+        "scenario_id": _text(
+            experiment.get("scenario_id"),
+            _text(raw_dataset_entry.get("defense_id"), "unknown"),
+        ),
         "seed": _integer(experiment.get("seed"), 42),
         "timestamp": _text(experiment.get("timestamp")),
         "experiment_version": _text(experiment.get("experiment_version"), "unknown"),
@@ -264,7 +272,7 @@ def normalize_run(data: Any, fallback_run_id: str = "") -> Dict[str, Any]:
 
     run.update({
         "experiment": experiment,
-        "raw_dataset_entry": _dict(run.get("raw_dataset_entry")),
+        "raw_dataset_entry": raw_dataset_entry,
         "models": models,
         "timing": timing,
         "scenario": scenario,

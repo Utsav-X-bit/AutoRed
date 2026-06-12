@@ -9,6 +9,16 @@ export default function ScenarioTab() {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <h3 className="text-sm font-bold text-slate-900 mb-3">Scenario ID</h3>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-lg font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+            {selectedRun.experiment.scenario_id}
+          </span>
+          <span className="text-xs text-slate-500">dataset defense_id</span>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
         <h3 className="text-sm font-bold text-slate-900 mb-3">Defense Scenario</h3>
         <div className="space-y-3">
           <div>
