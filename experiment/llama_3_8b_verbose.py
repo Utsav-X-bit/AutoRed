@@ -2675,11 +2675,6 @@ if __name__ == "__main__":
         help="Run generator validation before attack"
     )
     parser.add_argument(
-        "--dataset-size", type=int, default=1000,
-        help="Number of defense scenarios to sample from the full dataset (default: 1000). "
-             "Use larger values (e.g., 5000) for bigger benchmarks."
-    )
-    parser.add_argument(
         "--scenario-id", default="",
         help="Specific defense_id to run in single mode (example: 89021)"
     )
