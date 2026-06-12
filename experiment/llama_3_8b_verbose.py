@@ -2680,14 +2680,21 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Reload dataset with requested size (only in non-server mode)
-    if not _SERVER_MODE and args.dataset_size != _DEFAULT_DATASET_SIZE:
-        print(f"\n[LOAD] Reloading dataset with size={args.dataset_size}...")
+    # Reload dataset with requested size (handles both server and non-server mode)
+    if args.dataset_size != _DEFAULT_DATASET_SIZE or defender_df is None:
+        if defender_df is None:
+            # Server mode or fallback — load from disk
+            print(f"\n[LOAD] Loading defense dataset...")
+            raw_defenses = pd.read_json(DATA_PATH, lines=True, compression="bz2").set_index("defense_id")
+            defense_df = raw_defenses.dropna(subset=["access_code"])
+
+        actual_size = args.dataset_size
+        print(f"[LOAD] Sampling dataset with size={actual_size}...")
         defender_df = defense_df.sample(
-            n=min(args.dataset_size, len(defense_df)), random_state=42
+            n=min(actual_size, len(defense_df)), random_state=42
         )
         defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
-        print(f"[LOAD] ✓ Dataset reloaded: {len(defender_df)} defense scenarios")
+        print(f"[LOAD] ✓ Dataset ready: {len(defender_df)} defense scenarios (from {len(defense_df)} total)")
 
     # Phase 8: Extractor benchmark only needs target LLM (already loaded)
     if args.mode == "extractor_benchmark":
