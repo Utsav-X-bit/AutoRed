@@ -225,8 +225,10 @@ def post_process_results(results_dir: Path, logger: SuccessesLogger):
 
         run_id = run_data.get("experiment", {}).get("run_id", run_file.stem)
         scenario = run_data.get("scenario", {})
-        scenario_id = scenario.get("defense_id", "unknown")
-        
+        experiment = run_data.get("experiment", {})
+        # New schema: scenario_id in experiment; old schema: defense_id in scenario
+        scenario_id = scenario.get("defense_id") or experiment.get("scenario_id") or "unknown"
+
         # Support both schema variants (old: opening_defense/closing_defense, new: pre_defense/post_defense)
         opening = scenario.get("opening_defense") or scenario.get("pre_defense", "")
         closing = scenario.get("closing_defense") or scenario.get("post_defense", "")
@@ -234,9 +236,28 @@ def post_process_results(results_dir: Path, logger: SuccessesLogger):
 
         # Support both 'attempts' and 'trace' keys
         attempts = run_data.get("attempts") or run_data.get("trace", [])
-        summary = run_data.get("summary", {})
-        total_attempts = summary.get("total_attempts", len(attempts))
-        run_success = summary.get("success", False)
+
+        # ── Support multiple JSON schemas ──
+        # New benchmark schema (v2): result.ground_truth_success, result.generator_success
+        # Old schema: summary.success
+        result_section = run_data.get("result", {})
+        summary_section = run_data.get("summary", {})
+
+        if result_section and result_section.get("ground_truth_success") is not None:
+            # New benchmark schema
+            run_success = (
+                result_section.get("ground_truth_success", False)
+                or result_section.get("generator_success", False)
+                or result_section.get("verified_success", False)
+            )
+            total_attempts = result_section.get("total_attempts", len(attempts))
+        else:
+            # Old schema fallback
+            run_success = summary_section.get("success", False)
+            total_attempts = summary_section.get("total_attempts", len(attempts))
+
+        if not total_attempts:
+            total_attempts = len(attempts)
 
         for step in attempts:
             attempt_num = step.get("attempt_number") or step.get("iteration", 0)
@@ -250,6 +271,19 @@ def post_process_results(results_dir: Path, logger: SuccessesLogger):
             if not response:
                 response = step.get("llm_response", {}).get("raw_output", "")
 
+            # Per-attempt success flags (new schema has them at attempt level)
+            attempt_gt_found = step.get("ground_truth_found", False)
+            attempt_gen_success = step.get("generator_success", False)
+            attempt_ext_match = step.get("extractor_match", False)
+
+            # Extractor success: check multiple possible keys across schemas
+            ext_success = (
+                extractor.get("success_extractor")
+                or extractor.get("success", False)
+                or attempt_ext_match
+                or bool(extractor.get("best_candidate", ""))
+            )
+
             logger.log_attempt(
                 run_id=run_id,
                 scenario_id=scenario_id,
@@ -259,9 +293,9 @@ def post_process_results(results_dir: Path, logger: SuccessesLogger):
                 strategy=generator.get("strategy", "unknown"),
                 attack=generator.get("generated_attack", ""),
                 victim_response=response,
-                ground_truth_leaked=step.get("ground_truth_found", False),
-                extractor_success=extractor.get("success_extractor") or extractor.get("success", False),
-                verification_success=verification.get("success") or extractor.get("verified", False),
+                ground_truth_leaked=attempt_gt_found or attempt_gen_success,
+                extractor_success=ext_success,
+                verification_success=verification.get("success", False),
                 opening_defense=opening,
                 closing_defense=closing,
                 access_code=access_code,
