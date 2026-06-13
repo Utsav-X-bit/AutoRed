@@ -7,3 +7,10 @@
 #SBATCH --output=benchmark_%j.out
 #SBATCH --error=benchmark_%j.err
 #SBATCH --partition=airawatp
+
+AUTORED_SERVER_MODE=0
+
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
+uv run experiment/llama_3_8b_verbose.py --mode benchmark --rounds 500 --dataset-size 5000 > benchmark.log

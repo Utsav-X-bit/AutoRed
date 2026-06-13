@@ -166,6 +166,8 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
 # 📊 LOAD DATASET (OFFLINE)
 # =============================================================================
 
+_DEFAULT_DATASET_SIZE = 1000
+
 if not _SERVER_MODE:
     print("\n[LOAD] Loading defense dataset...")
     if not os.path.exists(DATA_PATH):
@@ -179,9 +181,7 @@ if not _SERVER_MODE:
 
     defense_df = raw_defenses.dropna(subset=["access_code"])
     
-    # Dataset size is configurable via --dataset-size (default: 1000)
-    # Will be overridden below in __main__ after argparse runs
-    _DEFAULT_DATASET_SIZE = 1000
+
     defender_df = defense_df.sample(n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42)
     defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
     print(f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)")
