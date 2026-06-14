@@ -32,7 +32,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    TrainingArguments,
     set_seed,
 )
 from trl import SFTTrainer, SFTConfig
@@ -226,13 +225,39 @@ def main():
 
     # SFT Trainer
     print(f"\nSetting up SFTTrainer...")
+    sft_config = SFTConfig(
+        output_dir=args.output_dir,
+        num_train_epochs=args.epochs,
+        per_device_train_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation,
+        learning_rate=args.learning_rate,
+        warmup_ratio=0.05,
+        lr_scheduler_type="cosine",
+        weight_decay=0.01,
+        logging_steps=5,
+        save_strategy="epoch",
+        eval_strategy="epoch" if val_dataset else "no",
+        save_total_limit=3,
+        load_best_model_at_end=True if val_dataset else False,
+        metric_for_best_model="eval_loss" if val_dataset else None,
+        fp16=False,
+        bf16=True,
+        dataloader_pin_memory=False,
+        seed=args.seed,
+        report_to="wandb" if args.wandb_project else "none",
+        run_name=args.run_name,
+        max_seq_length=args.max_length,
+    )
+
+    if args.wandb_project:
+        sft_config.wandb_project = args.wandb_project
+
     trainer = SFTTrainer(
         model=model,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        tokenizer=tokenizer,
-        args=training_args,
-        max_seq_length=args.max_length,
+        processing_class=tokenizer,
+        args=sft_config,
     )
 
     # Training
