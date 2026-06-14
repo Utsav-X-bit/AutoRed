@@ -1,102 +1,236 @@
-# GEMINI.md: AutoRed
+# GEMINI.md: AutoRed — Current State
+
+**Last Updated:** 2026-06-14
+**Status:** Active research project — 500-round benchmark completed, dataset analysis done
+
+---
 
 ## 1. Overview
 
-AutoRed is an automated framework for red teaming Large Language Models (LLMs). It's designed to generate malicious attack scenarios to test and evaluate the security of LLMs, specifically their susceptibility to sensitive information leakage. The framework is built upon the `RL4LMs` library from the Allen Institute for AI (AI2).
+AutoRed is an automated framework for red teaming Large Language Models (LLMs). It generates malicious attack scenarios to extract sensitive information (hidden "access codes") from LLMs protected by defense prompts. The framework was originally published at IEEE BigData 2024 and has been extensively modified for this research project.
 
-The primary goal of AutoRed is to automate the costly and time-consuming process of manual red teaming by using a combination of machine learning models to simulate attacks.
+**Key Achievement:** 500-round benchmark against Llama-3-8B-Instruct achieved **56.6% success rate** (283/500 scenarios), with 1947 successful attempts and 4330 failures collected for analysis.
 
-## 2. Architecture
+---
 
-The AutoRed framework consists of three core components that work in concert to generate and execute attack scenarios:
+## 2. Current Architecture
 
-*   **Stop Point Identifier**: A high-level decision-making model. This binary classifier determines the current phase of the attack, deciding whether to generate a malicious prompt or to attempt to extract sensitive information.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AutoRed Attack Pipeline                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Strategy Selector ──→ Llama-3.1-8B-Lexi Generator ──→ Attack   │
+│  (performance-based)   (8B params, uncensored)      (40-word)   │
+│         ↑                              │                        │
+│         │      ┌───────────────────────┘                        │
+│         │      ▼                                                │
+│  Strategy Feedback ← DistilBERT Judge ← Llama-3-8B-Instruct     │
+│  (scoring system)   (256 tokens)      (victim, defended)        │
+│                              │                                   │
+│                              ▼                                   │
+│              Multi-Layer Extractor Pipeline                      │
+│              ├─ Ground Truth Leak Check                          │
+│              ├─ 12 Regex Patterns                                │
+│              ├─ Quoted Text Extraction                           │
+│              ├─ Capitalized Candidate Extraction                 │
+│              ├─ LLM Extractor (JSON-based)                       │
+│              ├─ Candidate Ranking (scoring)                      │
+│              └─ Verifier (send back to victim)                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-*   **Malicious Prompt Generator**: A low-level model responsible for creating diverse and effective prompt injection attacks. This component is trained using a combination of Supervised Fine-Tuning (SFT) and Reinforcement Learning (RL) techniques.
+### Core Components
 
-*   **Sensitive Information Extractor**: Another low-level model, this component is a few-shot engineered GPT-3.5-turbo model specifically designed to extract sensitive data from the target LLM once a vulnerability has been exposed by the Malicious Prompt Generator.
+| Component | Model | Role |
+|-----------|-------|------|
+| **Generator** | Llama-3.1-8B-Lexi-Uncensored-V2 | Generates adversarial prompts using 7 strategies |
+| **Judge** | DistilBERT (256 tokens) | Extraction confidence scorer (not binary gate) |
+| **Victim** | Llama-3-8B-Instruct | Defended model under attack |
+| **Extractor** | Multi-layer pipeline | Extracts access codes from victim responses |
+| **Strategy System** | Performance-based scoring | Selects and mutates attack strategies |
 
-The overall architecture is depicted in the following diagram from the research paper:
+### 7 Attack Strategies
 
-![AutoRed Model](assets/autored-model.png)
+1. `trigger_phrase_discovery` — Find exact phrase that grants access
+2. `instruction_leak` — Extract system instructions
+3. `exception_discovery` — Find exceptions in defense rules
+4. `roleplay` — Role-playing framing attacks
+5. `translation` — Translation wrapper attacks
+6. `summarization` — Summarization-based extraction
+7. `system_prompt_recovery` — Recover full system prompt
+
+---
 
 ## 3. Codebase Structure
 
-The AutoRed repository is organized as follows:
-
 ```
-/
-├── assets/                  # Logos and architectural diagrams
-├── experiment/              # Jupyter notebooks for running experiments
-├── rl4lms/                  # Core library for RL for LMs, forked from AllenAI
-│   ├── algorithms/          # RL algorithms (PPO, A2C, etc.)
-│   ├── core_components/     # Core components for RL training
-│   ├── data_pools/          # Data loading and processing
-│   └── envs/                  # Environment setup for text generation tasks
-├── scripts/                 # Training and data generation scripts
-│   ├── pi/                  # Scripts for the Prompt Injection tasks
-│   └── training/            # Scripts for training the models
-├── LICENSE                  # License file
-├── README.md                # Project README
-├── requirements.txt         # Python dependencies
-└── setup.py                 # Project setup script
+AutoRed/
+├── experiment/
+│   ├── llama_3_8b_verbose.py      # Main experiment runner (~2074 lines)
+│   └── llama_3_8b-1.py            # First custom test script (superseded)
+├── scripts/
+│   ├── dataset_tools/             # Dataset analysis tools
+│   │   ├── autored_successes_logger.py  # Success/failure logger + post-processor
+│   │   ├── analyze_dataset.py         # Feature mining + strategy analysis
+│   │   ├── audit_generator.py         # Generator quality auditor
+│   │   ├── build_augmented_v1.py      # Augmented dataset builder
+│   │   ├── classify_dedup_score.py    # Classification/dedup/scoring
+│   │   ├── clean_v1_report.py         # Cleaning report generator
+│   │   ├── complexity_multilabel_gold.py  # Complexity multi-label gold
+│   │   ├── create_benchmark.py        # Benchmark scenario creator
+│   │   └── generate_augmentation.py   # Augmentation generator
+│   ├── pi/                        # Prompt injection notebooks + data
+│   └── training/                  # Training scripts + configs
+├── rl4lms/                        # Forked RL4LMs library (AllenAI)
+├── hpc/                           # SLURM scripts for HPC deployment
+├── data/                          # Collected datasets
+│   ├── autored_successes_v1.jsonl     # 1947 successful attempts
+│   ├── autored_failures_v1.jsonl      # 4330 failed attempts
+│   ├── autored_positive_v1.jsonl      # 291 positive (gt_leaked OR verified)
+│   ├── autored_verified_v1.jsonl      # 138 verified successes
+│   └── analysis_report_v1.md          # Comprehensive analysis report
+├── results/                       # Benchmark run JSON files (503 runs)
+└── assets/                        # Logos, diagrams
 ```
 
-## 4. Setup and Installation
+---
 
-### 4.1. Prerequisites
+## 4. Key Modifications from Original Paper
 
-*   Python 3.7+
-*   NVIDIA GPU with CUDA support (recommended for training)
+| Component | Original Paper | Current Implementation |
+|-----------|---------------|------------------------|
+| Generator | T5-base (769M params) | Llama-3.1-8B-Lexi-Uncensored-V2 (8B params) |
+| Victim | Llama-3-8B (base) | Llama-3-8B-Instruct |
+| Judge | DistilBERT (64 tokens) | DistilBERT (256 tokens, trimmed input) |
+| Extractor | Simple substring match | 8-phase multi-layer pipeline |
+| Strategies | None (single approach) | 7 strategies with performance-based selection |
+| Success Criteria | Binary (access code in response) | 3-tier: ground_truth_leaked, generator_success, verification_success |
+| Benchmark | 70 rounds, 100 interactions | 500 rounds, variable interactions |
 
-### 4.2. Installation Steps
+---
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/yoyostudy/AutoRed.git
-    cd AutoRed
-    ```
+## 5. Running Experiments
 
-2.  **Create a virtual environment:**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-
-3.  **Install PyTorch:**
-    The `requirements.txt` file specifies `torch==1.12.0` and `torchvision==0.13.0`. For systems with CUDA, it is recommended to install the appropriate version from the PyTorch website. For example, for CUDA 11.3:
-    ```bash
-    pip install torch==1.12.0+cu113 torchvision==0.13.0+cu113 torchaudio==0.12.0 --extra-index-url https://download.pytorch.org/whl/cu113
-    ```
-    For other CUDA versions or for CPU-only installation, please refer to the [PyTorch installation guide](https://pytorch.org/get-started/previous-versions/).
-
-4.  **Install the remaining dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-5.  **Install the `autored` package:**
-    ```bash
-    pip install -e .
-    ```
-    The `-e` flag installs the package in "editable" mode, which is useful for development.
-
-### 4.3. Stanford CoreNLP Models
-
-The SPICE metric used in the `rl4lms` library requires the Stanford CoreNLP models. To download them, run the following script:
-
+### Single Scenario (Verbose)
 ```bash
-cd rl4lms/envs/text_generation/caption_metrics/spice
-./get_stanford_models.sh
-cd ../../../../../../
+python experiment/llama_3_8b_verbose.py --mode single
 ```
 
-## 5. Running Experiments and Training
+### Benchmark Mode
+```bash
+# 500-round benchmark (default dataset size: 1000)
+python experiment/llama_3_8b_verbose.py --mode benchmark --rounds 500
 
-The `experiment` directory contains Jupyter notebooks for running experiments with different models. The `scripts` directory contains the necessary scripts for data creation and model training.
+# Larger dataset pool
+python experiment/llama_3_8b_verbose.py --mode benchmark --rounds 500 --dataset-size 5000
+```
 
-For detailed instructions on running the experiments and training the models, please refer to the `GEMINI.md` files in the respective directories:
+### Post-Processing Results
+```bash
+# Extract successes from benchmark JSON files
+python scripts/dataset_tools/autored_successes_logger.py --mode post-process --input results/
 
-*   [`scripts/GEMINI.md`](scripts/GEMINI.md): For training and data generation.
-*   [`experiment/GEMINI.md`](experiment/GEMINI.md): For running the experiments.
-*   [`rl4lms/GEMINI.md`](rl4lms/GEMINI.md): For an overview of the RL4LMs library.
+# View collected data
+python scripts/dataset_tools/autored_successes_logger.py --mode view
+```
+
+### Dataset Analysis
+```bash
+# Build curated datasets + run feature mining + strategy analysis
+python scripts/dataset_tools/analyze_dataset.py --mode all
+
+# Specific modes
+python scripts/dataset_tools/analyze_dataset.py --mode build      # Build datasets only
+python scripts/dataset_tools/analyze_dataset.py --mode features   # Feature mining only
+python scripts/dataset_tools/analyze_dataset.py --mode strategies # Strategy analysis only
+```
+
+---
+
+## 6. Benchmark Results Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Scenarios | 500 |
+| Success Rate | 56.6% (283/500) |
+| Unique Successful Scenarios | 288 |
+| Total Successful Attempts | 1947 |
+| Total Failed Attempts | 4330 |
+| Positive Dataset (gt_leaked OR verified) | 291 entries |
+| Verified Dataset (verification_success) | 138 entries |
+
+### Strategy Effectiveness (with failure baseline)
+| Strategy | Success Rate |
+|----------|-------------|
+| exception_discovery | 39.7% |
+| instruction_leak | 37.4% |
+| trigger_phrase_discovery | 34.9% |
+| roleplay | 32.9% |
+| translation | 28.5% |
+| system_prompt_recovery | 20.0% |
+| summarization | 19.6% |
+
+### Top Discriminative Features (lift > 1)
+| Feature | Lift | Leak Rate |
+|---------|------|-----------|
+| contains_educational_frame | 1.99 | 47.2% |
+| contains_negation_bypass | 1.77 | 44.3% |
+| contains_command_injection | 1.71 | 43.5% |
+| contains_technical_jargon | 1.37 | 38.1% |
+| contains_questioning | 1.30 | 36.9% |
+
+---
+
+## 7. HPC Deployment
+
+### Environment
+- **Cluster:** NLS at Iowa State University
+- **Partitions:** "gpu" / "airawatp"
+- **GPU:** NVIDIA A100-SXM4-40GB
+- **Offline Mode:** All models cached via `hpc/download_hf_assets.py`
+
+### SLURM Scripts
+| Script | Purpose | GPU | Memory | Time |
+|--------|---------|-----|--------|------|
+| `train_reward_model.slurm` | DistilBERT judge training | 1 | 40GB | 1h |
+| `train_generator_sft.slurm` | T5-base SFT | 1 | 40GB | 1h |
+| `train_generator_rl.slurm` | NLPO RL fine-tuning | 1 | 40GB | 1h |
+
+---
+
+## 8. Critical Files
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `experiment/llama_3_8b_verbose.py` | Main experiment runner | ~2074 |
+| `scripts/dataset_tools/autored_successes_logger.py` | Success/failure logger + post-processor | ~350 |
+| `scripts/dataset_tools/analyze_dataset.py` | Feature mining + strategy analysis | ~550 |
+| `rl4lms/envs/text_generation/reward.py` | PIReward class | ~350 |
+| `rl4lms/envs/text_generation/policy/seq2seq_policy.py` | T5 policy | ~450 |
+| `rl4lms/envs/text_generation/policy/causal_policy.py` | Causal LM policy | ~400 |
+
+---
+
+## 9. Known Issues
+
+1. **Server Mode Incomplete:** `AUTORED_SERVER_MODE=1` skips model loading but has no remote inference path wired in
+2. **Generator Self-Assessment Inflation:** 56.6% success rate includes generator self-assessment; only 14.9% have ground truth leaked or verified
+3. **T5 Generator Still Available:** Original T5-base generator exists but is superseded by Llama-3.1-8B-Lexi
+4. **Judge Deterministic on Empty:** DistilBERT produces identical logits for empty responses (21/50 occurrences in initial test)
+
+---
+
+## 10. Next Steps
+
+1. **SFT Training:** Train on collected AutoRed-Successes dataset (291 positive, 138 verified)
+2. **Larger Benchmarks:** Run 1000-5000 round benchmarks with `--dataset-size` flag
+3. **Feature-Enhanced Generator:** Incorporate top discriminative features into attack generation
+4. **Strategy Optimization:** Focus on exception_discovery and instruction_leak (highest success rates)
+5. **Defense Complexity Analysis:** Test against harder defenses (currently 22.8% success rate on hard)
+
+---
+
+*Document generated on 2026-06-14*
+*Source: `/home/utsav/Github/Research/AutoRed/`*
