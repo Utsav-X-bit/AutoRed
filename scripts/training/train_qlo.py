@@ -225,13 +225,25 @@ def main():
     if args.wandb_project:
         sft_config.wandb_project = args.wandb_project
 
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
-        processing_class=tokenizer,
-        args=sft_config,
-    )
+    # Compatibility: newer trl uses processing_class, older uses tokenizer
+    import inspect
+    sig = inspect.signature(SFTTrainer.__init__)
+    if "processing_class" in sig.parameters:
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
+            processing_class=tokenizer,
+            args=sft_config,
+        )
+    else:
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=train_dataset,
+            eval_dataset=val_dataset,
+            tokenizer=tokenizer,
+            args=sft_config,
+        )
 
     # Training
     print(f"\n{'='*60}")
