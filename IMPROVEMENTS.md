@@ -1,7 +1,7 @@
 # AutoRed Attack Generator Improvements
 
-**Date**: 2026-06-14
-**Context**: 500-round benchmark completed. 56.6% success rate (283/500 scenarios) with Llama-3.1-8B-Lexi generator, 7-strategy system, and 8-phase extractor pipeline.
+**Date**: 2026-06-15
+**Context**: 500-round benchmark completed. 56.6% success rate (283/500 scenarios) with Llama-3.1-8B-Lexi generator, 7-strategy system, and 8-phase extractor pipeline. Verified-only QLoRA SFT now trains successfully on HPC.
 
 ---
 
@@ -68,6 +68,19 @@
 | SLURM scripts (3 jobs) | ✅ Done |
 | rl4lms compatibility fixes | ✅ Done |
 
+### Phase 7: QLoRA SFT Training (DONE — verified_v1)
+
+| Item | Status | Details |
+|------|--------|---------|
+| Dataset Variant C | ✅ Done | Defense + previous response + strategy → attack |
+| Verified dataset first | ✅ Done | Trained on `variantc_verified_train.jsonl` (112 train / 26 val) |
+| TRL/Transformers compatibility | ✅ Fixed | `Trainer(tokenizer=...)` shim maps to `processing_class` when needed |
+| Single-GPU QLoRA loading | ✅ Fixed | Default `--device_map single` prevents `device_map="auto"` sharding across visible GPUs |
+| Verified adapter training | ✅ Done | Saved to `experiment/results/qlo_verified_v1` |
+| Final train loss | ✅ Recorded | `1.808561` |
+| Final eval loss | ✅ Recorded | `1.792` after 10 epochs |
+| Adapter benchmark support | ✅ Done | `--generator-path` accepts LoRA adapter directories |
+
 ---
 
 ## Benchmark Results: Before vs. After
@@ -82,21 +95,27 @@
 
 ---
 
-## Next Phase: SFT Training and Optimization
+## Current Phase: SFT Evaluation and Optimization
 
-### Priority 1: SFT Training on Collected Dataset
+### Priority 1: Benchmark the Verified Adapter
 
-**Goal:** Fine-tune generator on the 291 positive / 138 verified successes.
+**Goal:** Compare `qlo_verified_v1` against the frozen baseline before training on positive examples.
 
 **Approach:**
-1. Prepare training dataset from `autored_positive_v1.jsonl` and `autored_verified_v1.jsonl`
-2. Fine-tune Llama-3.1-8B-Lexi (or smaller model) on successful attack patterns
-3. Evaluate on held-out defense scenarios
-4. Iterate: train → benchmark → collect → retrain
+1. Run or confirm `baseline_generator_v1` on the 1000-scenario benchmark
+2. Run `qlo_verified_v1` on the same `--rounds 1000 --dataset-size 1000` setup
+3. Compare success rate, leak rate, verifier success, mean attempts, and hard-defense success
+4. Only then decide whether to train `positive_v1`
 
-**Expected outcome:** Generator produces higher-quality attacks from round 1, reducing exploration waste.
+**Expected outcome:** The verified adapter should improve early attack quality or reduce mean attempts without reducing verifier success.
 
-### Priority 2: Feature-Enhanced Generator
+### Priority 2: Positive Dataset Training
+
+**Goal:** Train `qlo_positive_v1` only after verified adapter benchmarking.
+
+**Reason:** Verification success is higher confidence than ground-truth leak and extractor guesses. Positive training should be treated as a second-stage expansion, not mixed into the first adapter.
+
+### Priority 3: Feature-Enhanced Generator
 
 **Goal:** Incorporate top discriminative features into attack generation.
 
@@ -111,7 +130,7 @@
 
 **Approach:** Add feature templates to generator prompt; bias strategy selection toward high-lift patterns.
 
-### Priority 3: Strategy Optimization
+### Priority 4: Strategy Optimization
 
 **Goal:** Focus on highest-performing strategies.
 
@@ -122,13 +141,13 @@
 
 **Approach:** Allocate more attempts to top-3 strategies; retire or redesign summarization (19.6%) and system_prompt_recovery (20.0%).
 
-### Priority 4: Larger Benchmarks
+### Priority 5: Larger Benchmarks
 
 **Goal:** Run 1000-5000 round benchmarks.
 
 **Approach:** Use `--dataset-size` flag for larger scenario pools; collect more data for SFT training.
 
-### Priority 5: Defense Complexity Analysis
+### Priority 6: Defense Complexity Analysis
 
 **Goal:** Test against harder defenses.
 
@@ -144,6 +163,7 @@
 2. **Generator Self-Assessment Inflation:** 56.6% includes self-assessment; only 14.9% verified
 3. **T5 Generator Still Available:** Superseded by Llama-3.1-8B-Lexi but not removed
 4. **Judge Deterministic on Empty:** 21/50 occurrences in initial test; partially addressed by trimming
+5. **Benchmark Runtime:** 1000-scenario runs can take many hours on one 40GB A100; run a 50-scenario probe first to estimate wall time
 
 ---
 
@@ -160,5 +180,5 @@
 
 ---
 
-*Document last updated: 2026-06-14*
+*Document last updated: 2026-06-15*
 *Previous version: 2026-04-23 (T5-era analysis)*

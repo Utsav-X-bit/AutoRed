@@ -69,6 +69,28 @@ def patch_trainer_tokenizer_compat():
     Trainer.__init__ = compat_init
 
 
+def get_model_device_map(device_map_mode: str):
+    """Return a device map compatible with QLoRA SFT training.
+
+    For this project, one A100 is enough for 4-bit 8B QLoRA. Avoid
+    device_map="auto" by default because it may shard across visible GPUs,
+    after which Trainer can still attempt DataParallel from cuda:0.
+    """
+    if device_map_mode == "auto":
+        return "auto"
+    if torch.cuda.is_available():
+        return {"": torch.cuda.current_device()}
+    return None
+
+
+def disable_trainer_data_parallel(model):
+    """Prevent Trainer from wrapping quantized PEFT models in DataParallel."""
+    for obj in (model, getattr(model, "base_model", None), getattr(model, "model", None)):
+        if obj is not None:
+            obj.is_parallelizable = True
+            obj.model_parallel = True
+
+
 def load_dataset_from_jsonl(train_path, val_path=None):
     """Load train/val datasets from JSONL files."""
     print(f"Loading training data from {train_path}...")
@@ -151,6 +173,8 @@ def main():
                         help="LoRA dropout")
     parser.add_argument("--max_length", type=int, default=1024,
                         help="Max sequence length")
+    parser.add_argument("--device_map", choices=["single", "auto"], default="single",
+                        help="Use one CUDA device by default; 'auto' may shard across GPUs")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed")
     parser.add_argument("--wandb_project", type=str, default=None,
@@ -184,10 +208,15 @@ def main():
 
     # Load model
     print(f"\nLoading model: {args.model_name}")
+    device_map = get_model_device_map(args.device_map)
+    if torch.cuda.is_available():
+        print(f"  CUDA devices visible: {torch.cuda.device_count()}")
+        print(f"  Current CUDA device: {torch.cuda.current_device()}")
+    print(f"  Device map: {device_map}")
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
         quantization_config=bnb_config,
-        device_map="auto",
+        device_map=device_map,
         trust_remote_code=True,
     )
     print(f"  Model loaded, params: {sum(p.numel() for p in model.parameters()):,}")
@@ -212,6 +241,7 @@ def main():
     )
 
     model = get_peft_model(model, lora_config)
+    disable_trainer_data_parallel(model)
     model.print_trainable_parameters()
 
     # Load tokenizer

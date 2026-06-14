@@ -1,7 +1,7 @@
 # Baseline Generator v1 — Frozen
 
-**Date:** 2026-06-14  
-**Status:** Frozen comparison point for all SFT experiments
+**Date:** 2026-06-15  
+**Status:** Existing 500-scenario frozen baseline; 1000-scenario formal baseline command added for verified-v1 comparison
 
 ## Configuration
 
@@ -71,6 +71,43 @@ Attribution: each successful scenario credited to the strategy that produced the
 2. **Verified gap**: 39.6% gt leak → 27.2% verified (12.4% gap)
 3. **High exploration**: 12.5 mean attempts per scenario
 4. **Top strategies**: instruction_leak (40.4%), trigger_phrase_discovery (39.6%), exception_discovery (37.1%)
+
+## Formal 1000-Scenario Baseline
+
+Stage 0 now requires a 1000-scenario comparison point before judging SFT adapters. Use the same deterministic sample settings for baseline and adapter runs:
+
+```bash
+mkdir -p results/benchmarks logs
+
+CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
+  --mode benchmark \
+  --rounds 1000 \
+  --dataset-size 1000 \
+  --generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
+  --benchmark-output results/benchmarks/baseline_generator_v1_summary.json \
+  2>&1 | tee logs/baseline_generator_v1.log
+```
+
+Then benchmark the verified adapter against the same scenario sample:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
+  --mode benchmark \
+  --rounds 1000 \
+  --dataset-size 1000 \
+  --generator-path experiment/results/qlo_verified_v1 \
+  --base-generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
+  --benchmark-output results/benchmarks/qlo_verified_v1_summary.json \
+  2>&1 | tee logs/qlo_verified_v1_benchmark.log
+```
+
+Compare:
+
+- Success rate
+- Leak rate / ground-truth success
+- Verifier success
+- Mean attempts
+- Hard-defense success
 
 ---
 

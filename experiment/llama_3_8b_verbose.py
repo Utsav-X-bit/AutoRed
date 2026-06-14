@@ -69,6 +69,7 @@ LLAMA_PATH = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 # Phase 1 (Generator): Replace T5 with LLaMA-2-7B-Chat
 GENERATOR_PATH = "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
+BASE_GENERATOR_PATH = "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
 
 DISTILBERT_CKPT = "/nlsasfs/home/isea/isea13/AutoRed/pre_trained/pi_reward_model"
 
@@ -238,17 +239,35 @@ def load_decision_model(ckpt_path: str):
 # =============================================================================
 
 
-def load_gen_model(ckpt_path: str):
+def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
     """Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base)."""
     print(f"\n[LOAD] Loading Generator model (Llama-2-7B-Chat) from: {ckpt_path}")
     t0 = time.time()
-    tokenizer = AutoTokenizer.from_pretrained(ckpt_path, local_files_only=True, use_fast=False)
-    model = AutoModelForCausalLM.from_pretrained(
-        ckpt_path,
-        dtype=torch.float16,
-        device_map="auto",
-        local_files_only=True,
-    )
+    is_lora_adapter = (Path(ckpt_path) / "adapter_config.json").exists()
+    if is_lora_adapter:
+        print(f"[LOAD] Detected LoRA adapter; base model: {base_model_path}")
+        try:
+            from peft import PeftModel
+        except ImportError as exc:
+            raise ImportError("peft is required to load LoRA adapter generators") from exc
+
+        tokenizer_path = ckpt_path if (Path(ckpt_path) / "tokenizer_config.json").exists() else base_model_path
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, local_files_only=True, use_fast=False)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_path,
+            dtype=torch.float16,
+            device_map="auto",
+            local_files_only=True,
+        )
+        model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(ckpt_path, local_files_only=True, use_fast=False)
+        model = AutoModelForCausalLM.from_pretrained(
+            ckpt_path,
+            dtype=torch.float16,
+            device_map="auto",
+            local_files_only=True,
+        )
     model.eval()
     MODEL_LOAD_TIME["generator"] = time.time() - t0
     print(f"[LOAD] ✓ Llama-2-7B-Chat generator loaded ({MODEL_LOAD_TIME['generator']:.1f}s)")
@@ -2677,7 +2696,23 @@ if __name__ == "__main__":
         "--scenario-id", default="",
         help="Specific defense_id to run in single mode (example: 89021)"
     )
+    parser.add_argument(
+        "--generator-path", default=GENERATOR_PATH,
+        help="Generator model path or LoRA adapter directory"
+    )
+    parser.add_argument(
+        "--base-generator-path", default=BASE_GENERATOR_PATH,
+        help="Base model path used when --generator-path is a LoRA adapter"
+    )
+    parser.add_argument(
+        "--benchmark-output", default=BENCHMARK_LOG_PATH,
+        help="Where to save aggregate benchmark summary JSON"
+    )
     args = parser.parse_args()
+
+    GENERATOR_PATH = args.generator_path
+    BASE_GENERATOR_PATH = args.base_generator_path
+    BENCHMARK_LOG_PATH = args.benchmark_output
 
     # Reload dataset with requested size (handles both server and non-server mode)
     if args.dataset_size != _DEFAULT_DATASET_SIZE or defender_df is None:
@@ -2704,7 +2739,7 @@ if __name__ == "__main__":
         d_tokenizer, d_model = load_decision_model(DISTILBERT_CKPT)
 
         # Phase 1: Load LLaMA-2-7B-Chat generator (replaces T5)
-        gen_tokenizer, gen_model = load_gen_model(GENERATOR_PATH)
+        gen_tokenizer, gen_model = load_gen_model(GENERATOR_PATH, BASE_GENERATOR_PATH)
 
         # Phase 4: Create StopPointIdentifier (DistilBERT — frozen, Phase 5)
         judge = StopPointIdentifier(d_model, d_tokenizer)

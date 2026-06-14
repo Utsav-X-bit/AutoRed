@@ -1,7 +1,7 @@
 # AutoRed — Complete Change Log
 
-**Last Updated**: 2026-06-09  
-**Primary File**: `experiment/llama_3_8b_verbose.py` (~2074 lines)
+**Last Updated**: 2026-06-15  
+**Primary File**: `experiment/llama_3_8b_verbose.py` (~2770+ lines)
 
 ---
 
@@ -17,6 +17,8 @@
 8. [Extractor Overhaul (8 Phases)](#extractor-overhaul)
 9. [rl4lms Compatibility Fixes](#rl4lms-compatibility)
 10. [HPC Deployment](#hpc-deployment)
+11. [QLoRA SFT Training](#qlora-sft-training)
+12. [Benchmark Adapter Evaluation](#benchmark-adapter-evaluation)
 
 ---
 
@@ -279,6 +281,84 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
 
 ---
 
+## QLoRA SFT Training
+
+### Verified-v1 Adapter Training
+- **Dataset:** `scripts/training/sft_data/variantc_verified_train.jsonl`
+- **Validation:** `scripts/training/sft_data/variantc_verified_val.jsonl`
+- **Training examples:** 112
+- **Validation examples:** 26
+- **Base model:** `Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2`
+- **Output:** `experiment/results/qlo_verified_v1`
+- **Epochs:** 10
+- **Optimizer steps:** 40
+- **Final train loss:** 1.808561
+- **Final eval loss:** 1.792
+
+### Training Script Fixes
+- **File:** `scripts/training/train_qlo.py`
+- **TRL/Transformers compatibility:** Added a runtime shim that maps legacy `tokenizer=` to `processing_class=` when newer `transformers.Trainer` rejects `tokenizer`.
+- **Single-GPU QLoRA:** Added `--device_map {single,auto}` and defaulted to `single` to avoid `device_map="auto"` sharding across visible GPUs on HPC login/compute nodes.
+- **Trainer DataParallel guard:** Marks the PEFT model as model-parallel/parallelizable to prevent `Trainer` from wrapping a quantized adapter model with PyTorch DataParallel.
+
+### Successful Training Command
+```bash
+CUDA_VISIBLE_DEVICES=0 python scripts/training/train_qlo.py \
+  --dataset scripts/training/sft_data/variantc_verified_train.jsonl \
+  --val_dataset scripts/training/sft_data/variantc_verified_val.jsonl \
+  --output_dir experiment/results/qlo_verified_v1 \
+  --epochs 10 \
+  --batch_size 4 \
+  --gradient_accumulation 8 \
+  --learning_rate 2e-5 \
+  --run_name "qlo_verified_variantc_v1"
+```
+
+---
+
+## Benchmark Adapter Evaluation
+
+### Generator Path CLI
+- **File:** `experiment/llama_3_8b_verbose.py`
+- Added `--generator-path` to select either the baseline generator or a LoRA adapter directory.
+- Added `--base-generator-path` for adapter evaluation.
+- Added `--benchmark-output` so aggregate benchmark summaries can be written to named files instead of only `/tmp/autored_benchmark_results.json`.
+- `load_gen_model()` now detects `adapter_config.json` and loads the LoRA adapter with `peft.PeftModel`.
+
+### Baseline Benchmark Command
+```bash
+mkdir -p results/benchmarks logs
+
+CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
+  --mode benchmark \
+  --rounds 1000 \
+  --dataset-size 1000 \
+  --generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
+  --benchmark-output results/benchmarks/baseline_generator_v1_summary.json \
+  2>&1 | tee logs/baseline_generator_v1.log
+```
+
+### Verified Adapter Benchmark Command
+```bash
+CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
+  --mode benchmark \
+  --rounds 1000 \
+  --dataset-size 1000 \
+  --generator-path experiment/results/qlo_verified_v1 \
+  --base-generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
+  --benchmark-output results/benchmarks/qlo_verified_v1_summary.json \
+  2>&1 | tee logs/qlo_verified_v1_benchmark.log
+```
+
+### Metrics to Compare
+- Success rate
+- Leak rate / ground-truth success
+- Verifier success
+- Mean attempts
+- Hard-defense success
+
+---
+
 ## Architecture Evolution
 
 ### Before (Original AutoRed)
@@ -321,6 +401,15 @@ python experiment/llama_3_8b_verbose.py --mode extractor_benchmark
 
 # With generator validation
 python experiment/llama_3_8b_verbose.py --mode single --validate
+
+# Benchmark a LoRA adapter
+python experiment/llama_3_8b_verbose.py \
+  --mode benchmark \
+  --rounds 1000 \
+  --dataset-size 1000 \
+  --generator-path experiment/results/qlo_verified_v1 \
+  --base-generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
+  --benchmark-output results/benchmarks/qlo_verified_v1_summary.json
 ```
 
 ---
@@ -330,6 +419,7 @@ python experiment/llama_3_8b_verbose.py --mode single --validate
 | File | Changes |
 |------|---------|
 | `experiment/llama_3_8b_verbose.py` | Complete rewrite: generator upgrade, strategy system, extractor overhaul, dual counters, benchmark |
+| `scripts/training/train_qlo.py` | QLoRA SFT script; TRL/Transformers compatibility shim; single-GPU device-map default |
 | `rl4lms/algorithms/a2c/a2c.py` | gym namespace fix |
 | `rl4lms/algorithms/nlpo/nlpo.py` | gym namespace fix + param restoration |
 | `rl4lms/algorithms/ppo/ppo.py` | gym namespace fix |
