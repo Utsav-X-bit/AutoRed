@@ -35,7 +35,7 @@ from transformers import (
     TrainingArguments,
     set_seed,
 )
-from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 
 
 def load_dataset_from_jsonl(train_path, val_path=None):
@@ -220,6 +220,10 @@ def main():
     if args.wandb_project:
         training_args.wandb_project = args.wandb_project
 
+    # Ensure tokenizer has chat template for SFTTrainer
+    if tokenizer.chat_template is None:
+        tokenizer.chat_template = "{% for message in messages %}<|{{ message['role'] }}|>\n{{ message['content'] }}</s>\n{% endfor %}"
+
     # SFT Trainer
     print(f"\nSetting up SFTTrainer...")
     trainer = SFTTrainer(
@@ -229,7 +233,6 @@ def main():
         tokenizer=tokenizer,
         args=training_args,
         max_seq_length=args.max_length,
-        dataset_kwargs={"skip_prepare_dataset": True},
     )
 
     # Training
