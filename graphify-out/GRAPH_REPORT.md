@@ -1,7 +1,7 @@
 # Graph Report - /home/utsav/Github/Research/AutoRed  (2026-06-15)
 
 ## Corpus Check
-- 130 files · ~400,884 words
+- 130 files · ~401,034 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -1409,14 +1409,14 @@ _Questions this graph is uniquely positioned to answer:_
 - **What is the exact relationship between `AppErrorBoundary Component` and `ResizeHandle Component`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **Why does `AnalyticsPanel Component` connect `Community 14` to `Community 6`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **Why does `Tracker` connect `Community 0` to `Community 1`, `Community 4`, `Community 5`, `Community 8`, `Community 10`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `Seq2SeqLMActorCriticPolicy` connect `Community 0` to `Community 1`, `Community 4`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Are the 65 inferred relationships involving `RewardFunctionRegistry` (e.g. with `RewardFunction` and `BatchedRewardFunction`) actually correct?**
   _`RewardFunctionRegistry` has 65 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 37 inferred relationships involving `RewardFunction` (e.g. with `RewardIncreasingNumbers` and `RewardSentencesWithDates`) actually correct?**
   _`RewardFunction` has 37 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 43 inferred relationships involving `MeteorMetric` (e.g. with `T5Dataset` and `CommonGenPrefRM`) actually correct?**
   _`MeteorMetric` has 43 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 44 inferred relationships involving `MetricRegistry` (e.g. with `OnPolicyTrainer` and `SupervisedTrainer`) actually correct?**
-  _`MetricRegistry` has 44 INFERRED edges - model-reasoned connections that need verification._

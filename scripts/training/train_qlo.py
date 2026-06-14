@@ -21,6 +21,7 @@ Usage:
 """
 
 import argparse
+import inspect
 import json
 from pathlib import Path
 
@@ -32,9 +33,40 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    Trainer,
     set_seed,
 )
 from trl import SFTTrainer, SFTConfig
+
+
+def patch_trainer_tokenizer_compat():
+    """Handle TRL versions that pass tokenizer= to newer Transformers Trainer.
+
+    Transformers v5 replaced Trainer(tokenizer=...) with
+    Trainer(processing_class=...). Some TRL releases still call the old
+    keyword internally, which raises:
+      Trainer.__init__() got an unexpected keyword argument 'tokenizer'
+    """
+    trainer_sig = inspect.signature(Trainer.__init__)
+    if "tokenizer" in trainer_sig.parameters or "processing_class" not in trainer_sig.parameters:
+        return
+    if getattr(Trainer.__init__, "_autored_tokenizer_compat", False):
+        return
+
+    original_init = Trainer.__init__
+
+    def compat_init(self, *args, tokenizer=None, processing_class=None, **kwargs):
+        if processing_class is None and tokenizer is not None:
+            processing_class = tokenizer
+        return original_init(
+            self,
+            *args,
+            processing_class=processing_class,
+            **kwargs,
+        )
+
+    compat_init._autored_tokenizer_compat = True
+    Trainer.__init__ = compat_init
 
 
 def load_dataset_from_jsonl(train_path, val_path=None):
@@ -198,6 +230,7 @@ def main():
 
     # SFT Trainer
     print(f"\nSetting up SFTTrainer...")
+    patch_trainer_tokenizer_compat()
     sft_config = SFTConfig(
         output_dir=args.output_dir,
         num_train_epochs=args.epochs,
