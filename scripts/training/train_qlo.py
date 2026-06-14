@@ -192,33 +192,6 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    # Training arguments
-    training_args = TrainingArguments(
-        output_dir=args.output_dir,
-        num_train_epochs=args.epochs,
-        per_device_train_batch_size=args.batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation,
-        learning_rate=args.learning_rate,
-        warmup_ratio=0.05,
-        lr_scheduler_type="cosine",
-        weight_decay=0.01,
-        logging_steps=5,
-        save_strategy="epoch",
-        eval_strategy="epoch" if val_dataset else "no",
-        save_total_limit=3,
-        load_best_model_at_end=True if val_dataset else False,
-        metric_for_best_model="eval_loss" if val_dataset else None,
-        fp16=False,
-        bf16=True,
-        dataloader_pin_memory=False,
-        seed=args.seed,
-        report_to="wandb" if args.wandb_project else "none",
-        run_name=args.run_name,
-    )
-
-    if args.wandb_project:
-        training_args.wandb_project = args.wandb_project
-
     # Ensure tokenizer has chat template for SFTTrainer
     if tokenizer.chat_template is None:
         tokenizer.chat_template = "{% for message in messages %}<|{{ message['role'] }}|>\n{{ message['content'] }}</s>\n{% endfor %}"
