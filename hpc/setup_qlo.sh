@@ -14,6 +14,8 @@ mkdir -p logs
 mkdir -p experiment/results
 
 # Install training dependencies
+source .venv/bin/activate
+
 echo "Installing training dependencies..."
 uv pip install -r requirements_qlo.txt
 

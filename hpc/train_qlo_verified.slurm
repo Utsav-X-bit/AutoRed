@@ -5,14 +5,13 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
 #SBATCH --gres=gpu:A100-SXM4:1
 #SBATCH --time=4:00:00
-#SBATCH --partition=gpu
+#SBATCH --partition=airawatp
 
 # Setup
 mkdir -p logs
-source ../.venv/bin/activate
+source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
 
 # Hugging Face offline mode
 export HF_DATASETS_OFFLINE=1
@@ -22,11 +21,13 @@ export WANDB_MODE=offline
 echo "Starting QLoRA SFT training on verified dataset..."
 cd ..
 
+source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+
 # Dataset A: verified (138 samples, 112 train + 26 val)
-python scripts/training/train_qlo.py \
-    --dataset scripts/training/sft_data/variantc_verified_train.jsonl \
-    --val_dataset scripts/training/sft_data/variantc_verified_val.jsonl \
-    --output_dir experiment/results/qlo_verified_v1 \
+python /nlsasfs/home/isea/isea13/AutoRed/scripts/training/train_qlo.py \
+    --dataset /nlsasfs/home/isea/isea13/AutoRed/scripts/training/sft_data/variantc_verified_train.jsonl \
+    --val_dataset /nlsasfs/home/isea/isea13/AutoRed/scripts/training/sft_data/variantc_verified_val.jsonl \
+    --output_dir /nlsasfs/home/isea/isea13/AutoRed/experiment/results/qlo_verified_v1 \
     --epochs 10 \
     --batch_size 4 \
     --gradient_accumulation 8 \
