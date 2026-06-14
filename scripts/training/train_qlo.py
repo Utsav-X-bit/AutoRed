@@ -225,10 +225,12 @@ def main():
     if args.wandb_project:
         sft_config.wandb_project = args.wandb_project
 
-    # Compatibility: newer trl uses processing_class, older uses tokenizer
-    import inspect
-    sig = inspect.signature(SFTTrainer.__init__)
-    if "processing_class" in sig.parameters:
+    # Compatibility: try different trl API signatures
+    trainer = None
+    errors = []
+
+    # Attempt 1: SFTConfig + processing_class (trl >= 0.15)
+    try:
         trainer = SFTTrainer(
             model=model,
             train_dataset=train_dataset,
@@ -236,14 +238,70 @@ def main():
             processing_class=tokenizer,
             args=sft_config,
         )
-    else:
-        trainer = SFTTrainer(
-            model=model,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
-            tokenizer=tokenizer,
-            args=sft_config,
-        )
+        print(f"  Using SFTConfig + processing_class API")
+    except TypeError as e:
+        errors.append(str(e))
+
+    # Attempt 2: SFTConfig + tokenizer (trl ~0.12-0.14)
+    if trainer is None:
+        try:
+            trainer = SFTTrainer(
+                model=model,
+                train_dataset=train_dataset,
+                eval_dataset=val_dataset,
+                tokenizer=tokenizer,
+                args=sft_config,
+            )
+            print(f"  Using SFTConfig + tokenizer API")
+        except TypeError as e:
+            errors.append(str(e))
+
+    # Attempt 3: TrainingArguments + tokenizer + max_seq_length (trl < 0.12)
+    if trainer is None:
+        try:
+            from transformers import TrainingArguments
+            training_args = TrainingArguments(
+                output_dir=args.output_dir,
+                num_train_epochs=args.epochs,
+                per_device_train_batch_size=args.batch_size,
+                gradient_accumulation_steps=args.gradient_accumulation,
+                learning_rate=args.learning_rate,
+                warmup_ratio=0.05,
+                lr_scheduler_type="cosine",
+                weight_decay=0.01,
+                logging_steps=5,
+                save_strategy="epoch",
+                eval_strategy="epoch" if val_dataset else "no",
+                save_total_limit=3,
+                load_best_model_at_end=True if val_dataset else False,
+                metric_for_best_model="eval_loss" if val_dataset else None,
+                fp16=False,
+                bf16=True,
+                dataloader_pin_memory=False,
+                seed=args.seed,
+                report_to="wandb" if args.wandb_project else "none",
+                run_name=args.run_name,
+            )
+            if args.wandb_project:
+                training_args.wandb_project = args.wandb_project
+
+            trainer = SFTTrainer(
+                model=model,
+                train_dataset=train_dataset,
+                eval_dataset=val_dataset,
+                tokenizer=tokenizer,
+                args=training_args,
+                max_seq_length=args.max_length,
+            )
+            print(f"  Using TrainingArguments + max_seq_length API")
+        except TypeError as e:
+            errors.append(str(e))
+
+    if trainer is None:
+        print(f"\n  All SFTTrainer attempts failed:")
+        for e in errors:
+            print(f"    - {e}")
+        raise RuntimeError("Could not initialize SFTTrainer with any known API")
 
     # Training
     print(f"\n{'='*60}")
