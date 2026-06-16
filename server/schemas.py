@@ -83,19 +83,32 @@ class RankedCandidate(BaseModel):
     score: float
 
 
+class VerificationTraceItem(BaseModel):
+    rank: int
+    candidate: str
+    score: float
+    success: bool
+
+
 class ExtractorTrace(BaseModel):
     regex_candidates: List[str] = Field(default_factory=list)
     quoted_candidates: List[str] = Field(default_factory=list)
     capitalized_candidates: List[str] = Field(default_factory=list)
     llm_candidates: List[str] = Field(default_factory=list)
     ranked_candidates: List[RankedCandidate] = Field(default_factory=list)
+    top_k_candidates: List[RankedCandidate] = Field(default_factory=list)
     best_candidate: str = ""
+    verified_candidate: str = ""
+    verified_rank: int = 0
+    verified_score: float = 0.0
+    verification_traces: List[VerificationTraceItem] = Field(default_factory=list)
 
 
 class VerificationTrace(BaseModel):
     candidate_sent: str = ""
     victim_response: str = ""
     success: bool = False
+    traces: List[VerificationTraceItem] = Field(default_factory=list)
 
 
 class GeneratorInfo(BaseModel):

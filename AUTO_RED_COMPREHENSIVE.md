@@ -173,7 +173,7 @@ AutoRed/
 | **Generator** | T5-base (769M params) | Llama-3.1-8B-Lexi-Uncensored-V2 (8B params) |
 | **Victim** | Llama-3-8B (base) | Llama-3-8B-Instruct |
 | **Judge** | DistilBERT (64 tokens) | DistilBERT (256 tokens, trimmed input) |
-| **Extractor** | Simple substring match | 8-phase multi-layer pipeline |
+| **Extractor** | Simple substring match | Expanded multi-layer pipeline with normalization, failed-candidate memory, adaptive top-k verification, and traces |
 | **Strategies** | None (single approach) | 7 strategies with performance-based selection |
 | **Success Criteria** | Binary (access code in response) | 3-tier: ground_truth_leaked, generator_success, verification_success |
 | **Benchmark** | 70 rounds, 100 interactions | 500 rounds, variable interactions |
@@ -195,7 +195,7 @@ AutoRed/
 - **Strategy mutation:** `_mutate_attack()` wraps successful attacks in new strategy templates
 - **Best attack reuse:** When `best_score > 3`, generator refines the best attack instead of generating from scratch
 
-### 3.5 Multi-Layer Extractor Pipeline (8 Phases)
+### 3.5 Multi-Layer Extractor Pipeline
 
 | Phase | Component | Description |
 |-------|-----------|-------------|
@@ -204,9 +204,14 @@ AutoRed/
 | 3 | Quoted Text Extractor | Extracts all quoted strings (`"..."`) |
 | 4 | Capitalized Candidate Extractor | Extracts capitalized words with 60+ stop word filtering |
 | 5 | LLM Extractor | Broad JSON extraction covering password, access_code, trigger_phrase, authorized_person, condition |
-| 6 | Candidate Ranking | Scoring: secret keyword (+5), single word (+2), short phrase (+1), long sentence (-2) |
-| 7 | Verifier | Sends extracted candidate back to victim; returns `True` if victim responds with "Access Granted" |
-| 8 | Metrics (TP/FP/FN) | Tracks true positives, false positives, false negatives; computes Precision, Recall, F1 |
+| 6 | Candidate Normalization | Strips quotes, whitespace, duplicate spacing, and trailing punctuation before deduplication |
+| 7 | Failed-Candidate Memory | Previously failed verification candidates are suppressed and injected into the LLM extractor prompt as negative constraints |
+| 8 | Candidate Ranking | Scoring: secret keyword (+5), single word (+2), short phrase (+1), long sentence (-2), refusal terms demoted |
+| 9 | Adaptive Top-K Verifier | Sends ranked candidates back to victim; high-confidence candidates verify fewer items, low-confidence paths can verify more |
+| 10 | Verification Traces | Records candidate rank, value, score, and success for each verification attempt |
+| 11 | Metrics (TP/FP/FN) | Tracks true positives, false positives, false negatives; computes Precision, Recall, F1 |
+
+Detailed current behavior is documented in `docs/extractor-current.md`.
 
 ### 3.6 Current Directory Structure
 
@@ -401,7 +406,7 @@ All use `HF_DATASETS_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, `WANDB_MODE=offline`.
 - [x] Expand judge context from 64 to 256 tokens
 - [x] Fix all 5 critical bugs (state leakage, dummy probes, echo false positives, stuck judge, deterministic trap)
 - [x] Implement 7-strategy system with performance-based selection
-- [x] Build 8-phase multi-layer extractor pipeline
+- [x] Build expanded multi-layer extractor pipeline
 - [x] Add dual success counters (generator vs extractor)
 - [x] Implement strategy mutation and best-attack reuse
 - [x] TensorTrust-aligned generator prompt with 40-word limit
@@ -459,13 +464,13 @@ python scripts/dataset_tools/analyze_dataset.py --mode strategies
 
 ## 10. Conclusion
 
-This document summarizes the AutoRed framework, the extensive custom modifications made to the original implementation, and the results from the 500-round benchmark. The project evolved from a 0/50 success rate with the T5-base generator to a 56.6% success rate (283/500 scenarios) with the Llama-3.1-8B-Lexi generator, 7-strategy system, and 8-phase extractor pipeline.
+This document summarizes the AutoRed framework, the extensive custom modifications made to the original implementation, and the results from the 500-round benchmark. The project evolved from a 0/50 success rate with the T5-base generator to a 56.6% success rate (283/500 scenarios) with the Llama-3.1-8B-Lexi generator, 7-strategy system, and expanded extractor pipeline.
 
 **Key achievements since original paper:**
 - 10x generator model upgrade (769M → 8B params)
 - 7x benchmark scale increase (70 → 500 rounds)
 - 7-strategy performance-based attack system
-- 8-phase multi-layer extractor with verification
+- Expanded multi-layer extractor with normalization, failed-candidate memory, adaptive verification, and verification traces
 - Comprehensive dataset collection (6277 total attempts analyzed)
 - Feature mining identifying top discriminative attack patterns
 

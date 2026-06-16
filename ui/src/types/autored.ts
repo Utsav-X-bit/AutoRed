@@ -85,6 +85,7 @@ export interface ExtractorTrace {
   capitalized_candidates: string[];
   llm_candidates: string[];
   ranked_candidates: RankedCandidate[];
+  top_k_candidates: RankedCandidate[];
   best_candidate: string;
   verified_candidate: string | null;
   verified_rank: number;
@@ -96,6 +97,7 @@ export interface VerificationTrace {
   candidate_sent: string;
   victim_response: string;
   success: boolean;
+  traces: VerificationTraceItem[];
 }
 
 export interface GeneratorInfo {

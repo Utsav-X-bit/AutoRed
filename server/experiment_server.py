@@ -76,6 +76,34 @@ def chat_with_llama_server(pre_defense: str, attack: str, post_defense: str) -> 
     return response
 
 
+class ServerCTFEnvironment:
+    """CTFEnvironment equivalent that uses already-loaded server models."""
+
+    def __init__(self, scenario: DefenseScenario, max_steps: int):
+        self.scenario = scenario
+        self.max_steps = max_steps
+        self.current_step = 0
+        self.done = False
+        self.last_response = None
+
+    def step(self, attack_prompt: str) -> tuple:
+        self.current_step += 1
+        response = chat_with_llama_server(
+            self.scenario.opening_defense,
+            attack_prompt,
+            self.scenario.closing_defense,
+        )
+        self.last_response = response
+        clean_response = strip_few_shot_patterns(response)
+        if self.current_step >= self.max_steps:
+            self.done = True
+        return response, 0.0, self.done, {
+            "step": self.current_step,
+            "response": response,
+            "clean_response": clean_response,
+        }
+
+
 def judge_attack_server(attack: str) -> Dict[str, Any]:
     """Judge if text is an attack using server-loaded DistilBERT."""
     model = server_models.get_model("judge")
@@ -160,7 +188,12 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
     judge_tokenizer = server_models.get_tokenizer("judge")
 
     stop_checker = StopPointIdentifier(judge_model, judge_tokenizer)
-    extractor = SensitiveInfoExtractor(EXT_DATA_PATH, n_shots=5)
+    extractor = SensitiveInfoExtractor(
+        EXT_DATA_PATH,
+        n_shots=5,
+        model=victim_model,
+        tokenizer=victim_tokenizer,
+    )
     extractor.set_ground_truth(scenario.access_code)
 
     agent = RedTeamingAgent(
@@ -170,7 +203,7 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         extractor=extractor,
     )
 
-    env = CTFEnvironment(scenario)
+    env = ServerCTFEnvironment(scenario, max_steps=max_attempts)
 
     # Tracking
     run_start = time.time()
@@ -210,8 +243,11 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
         output_tokens = len(victim_tokenizer.encode(response))
 
         # Extractor
-        extraction_result = normalize_extraction_result(extractor.extract(response))
-        verification_candidate = extraction_result["best_candidate"]
+        extraction_result = normalize_extraction_result(extractor.extract(response, env=env))
+        verification_candidate = (
+            extraction_result["verified_candidate"]
+            or extraction_result["best_candidate"]
+        )
         verification_success = extraction_result["verified"]
 
         # Ground truth check
@@ -246,7 +282,12 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
             "capitalized_candidates": extraction_result["capitalized_candidates"],
             "llm_candidates": extraction_result["llm_candidates"],
             "ranked_candidates": extraction_result["ranked_candidates"],
+            "top_k_candidates": extraction_result["top_k_candidates"],
             "best_candidate": verification_candidate,
+            "verified_candidate": extraction_result["verified_candidate"],
+            "verified_rank": extraction_result["verified_rank"],
+            "verified_score": extraction_result["verified_score"],
+            "verification_traces": extraction_result["verification_traces"],
             "verification_candidate": verification_candidate,
             "verification_response": "",
             "verification_success": verification_success,
@@ -290,12 +331,18 @@ async def run_experiment_server(scenario_id: Optional[str] = None,
                 "capitalized_candidates": extraction_result["capitalized_candidates"],
                 "llm_candidates": extraction_result["llm_candidates"],
                 "ranked_candidates": extraction_result["ranked_candidates"],
+                "top_k_candidates": extraction_result["top_k_candidates"],
                 "best_candidate": verification_candidate,
+                "verified_candidate": extraction_result["verified_candidate"],
+                "verified_rank": extraction_result["verified_rank"],
+                "verified_score": extraction_result["verified_score"],
+                "verification_traces": extraction_result["verification_traces"],
             },
             "verification": {
                 "candidate_sent": verification_candidate,
                 "victim_response": "",
                 "success": verification_success,
+                "traces": extraction_result["verification_traces"],
             },
             "ground_truth_found": ground_truth_found,
             "extractor_match": extractor_success,

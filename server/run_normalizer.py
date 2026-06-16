@@ -85,7 +85,12 @@ def normalize_extraction_result(result: Any) -> Dict[str, Any]:
         "capitalized_candidates": candidate_list("capitalized_candidates"),
         "llm_candidates": candidate_list("llm_candidates"),
         "ranked_candidates": ranked_candidates,
+        "top_k_candidates": _ranked_candidates(_list(result.get("top_k_candidates"))),
         "best_candidate": best_candidate if isinstance(best_candidate, str) else "",
+        "verified_candidate": _text(result.get("verified_candidate")),
+        "verified_rank": _integer(result.get("verified_rank")),
+        "verified_score": _number(result.get("verified_score")),
+        "verification_traces": _list(result.get("verification_traces")),
         "verified": bool(result.get("verified", False)),
     }
 
@@ -145,12 +150,20 @@ def _normalize_attempt(raw: Any, index: int) -> Dict[str, Any]:
             "ranked_candidates": _ranked_candidates(
                 _list(extractor.get("ranked_candidates"))
             ),
+            "top_k_candidates": _ranked_candidates(
+                _list(extractor.get("top_k_candidates"))
+            ),
             "best_candidate": _text(extractor.get("best_candidate")),
+            "verified_candidate": _text(extractor.get("verified_candidate")),
+            "verified_rank": _integer(extractor.get("verified_rank")),
+            "verified_score": _number(extractor.get("verified_score")),
+            "verification_traces": _list(extractor.get("verification_traces")),
         },
         "verification": {
             "candidate_sent": _text(verification.get("candidate_sent")),
             "victim_response": _text(verification.get("victim_response")),
             "success": bool(verification.get("success", False)),
+            "traces": _list(verification.get("traces")),
         },
         "ground_truth_found": bool(attempt.get("ground_truth_found", False)),
         "extractor_match": bool(attempt.get("extractor_match", False)),

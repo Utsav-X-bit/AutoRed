@@ -1,5 +1,9 @@
 import { useRunStore } from '../store/runStore';
 
+function CandidateText({ value }: { value: string }) {
+  return <span className="whitespace-pre-wrap break-words">{value}</span>;
+}
+
 export default function ExtractorDebuggerTab() {
   const { selectedRun, selectedAttemptIndex } = useRunStore();
   if (!selectedRun) return null;
@@ -61,8 +65,8 @@ export default function ExtractorDebuggerTab() {
             </div>
             <div className="flex flex-wrap gap-1">
               {extractor.regex_candidates.map((c: string, i: number) => (
-                <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
-                  {c}
+                  <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
+                    <CandidateText value={c} />
                 </span>
               ))}
               {extractor.regex_candidates.length === 0 && <span className="text-xs text-slate-400">none</span>}
@@ -76,8 +80,8 @@ export default function ExtractorDebuggerTab() {
             </div>
             <div className="flex flex-wrap gap-1">
               {extractor.quoted_candidates.map((c: string, i: number) => (
-                <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
-                  {c}
+                  <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
+                    <CandidateText value={c} />
                 </span>
               ))}
               {extractor.quoted_candidates.length === 0 && <span className="text-xs text-slate-400">none</span>}
@@ -91,8 +95,8 @@ export default function ExtractorDebuggerTab() {
             </div>
             <div className="flex flex-wrap gap-1">
               {extractor.capitalized_candidates.map((c: string, i: number) => (
-                <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
-                  {c}
+                  <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-blue-50 text-blue-700'}`}>
+                    <CandidateText value={c} />
                 </span>
               ))}
               {extractor.capitalized_candidates.length === 0 && <span className="text-xs text-slate-400">none</span>}
@@ -108,8 +112,8 @@ export default function ExtractorDebuggerTab() {
             </div>
             <div className="flex flex-wrap gap-1">
               {extractor.llm_candidates.map((c: string, i: number) => (
-                <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                  {c}
+                  <span key={i} className={`px-2 py-0.5 text-xs rounded font-mono ${c.toLowerCase() === accessCode.toLowerCase() ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-indigo-50 text-indigo-700'}`}>
+                    <CandidateText value={c} />
                 </span>
               ))}
               {extractor.llm_candidates.length === 0 && <span className="text-xs text-slate-400">none</span>}
@@ -126,7 +130,7 @@ export default function ExtractorDebuggerTab() {
                   <div key={i} className={`flex items-center justify-between text-sm rounded px-3 py-1.5 ${isSelected ? 'bg-purple-50 border border-purple-200' : 'bg-slate-50'}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400 w-4">{i + 1}</span>
-                      <span className="font-mono text-slate-700">{rc.value}</span>
+                      <span className="font-mono text-slate-700 whitespace-pre-wrap break-words">{rc.value}</span>
                       {isGT && <span className="text-xs text-green-600">🎯 GT</span>}
                       {isSelected && <span className="text-xs text-purple-600">→ selected</span>}
                     </div>
@@ -142,7 +146,7 @@ export default function ExtractorDebuggerTab() {
             <p className="text-xs font-medium text-slate-700 mb-1">Layer 6: Final Selection</p>
             <div className={`p-3 rounded-lg border ${extractor_match ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold">{extractor.best_candidate || 'NONE'}</span>
+                <span className="font-mono font-bold whitespace-pre-wrap break-words">{extractor.best_candidate || 'NONE'}</span>
                 {extractor_match ? <span className="text-green-600 font-bold">✓ Correct</span> : <span className="text-red-600 font-bold">✗ Wrong</span>}
               </div>
             </div>
@@ -183,7 +187,7 @@ export default function ExtractorDebuggerTab() {
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-slate-50 border-slate-200 text-slate-700'
                         }`}>
-                          {trace.candidate}
+                          <CandidateText value={trace.candidate} />
                         </p>
                       </div>
                       <div>
@@ -203,7 +207,7 @@ export default function ExtractorDebuggerTab() {
                       <div>
                         <p className="text-xs text-green-700 font-medium">VERIFIED CANDIDATE</p>
                         <p className="font-mono font-bold text-green-900 text-lg">
-                          {extractor.verified_candidate}
+                          <CandidateText value={extractor.verified_candidate} />
                         </p>
                       </div>
                       <div className="text-right">

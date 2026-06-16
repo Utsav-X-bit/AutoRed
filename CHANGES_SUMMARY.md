@@ -14,7 +14,7 @@
 5. [Tier 1 — Strategy System (8 Changes)](#tier-1-strategy-system)
 6. [Prompt Pollution Fix](#prompt-pollution-fix)
 7. [Dual Success Counters](#dual-success-counters)
-8. [Extractor Overhaul (8 Phases)](#extractor-overhaul)
+8. [Extractor Overhaul](#extractor-overhaul)
 9. [rl4lms Compatibility Fixes](#rl4lms-compatibility)
 10. [HPC Deployment](#hpc-deployment)
 11. [QLoRA SFT Training](#qlora-sft-training)
@@ -177,7 +177,7 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
 
 ---
 
-## Extractor Overhaul (8 Phases)
+## Extractor Overhaul
 
 ### Phase 1 — Ground Truth Leak Detection
 - Added `DEBUG_GROUND_TRUTH = True` flag
@@ -211,22 +211,35 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
   - Single word (likely the actual secret) → **+2**
   - Short phrase (2-3 words) → **+1**
   - Long sentence (>20 chars) → **-2 penalty**
+- Common refusal/deflection values are demoted instead of hard-filtered, so verification can still catch unusual true secrets
 - **Sort**: Score descending, then length ascending (prefer shorter candidates)
 
-### Phase 5 — Verifier
+### Phase 5 — Candidate Normalization and Failed-Candidate Memory
+- `_normalize()` strips whitespace, surrounding quotes, repeated whitespace, and trailing punctuation before deduplication
+- Failed verification candidates are stored in `failed_candidates`
+- Future extraction rounds filter failed candidates out before ranking
+- LLM extraction receives failed candidates as negative constraints and is told never to return them again
+
+### Phase 6 — Adaptive Top-K Verifier
 - `verify_candidate(candidate, env)` — sends extracted candidate back to victim as an attack
 - Returns `True` if victim responds with "Access Granted"
-- **Purpose**: Ground-truth verification — if victim accepts it, it's correct
+- Verifies ranked candidates, not only the top candidate
+- If top score is at least 12, adaptive cap is 3 candidates
+- Otherwise adaptive cap is 10 candidates
+- Effective cap is `min(top_k, adaptive_k)`, with current default `top_k=5`
+- Records `verification_traces` with rank, candidate, score, and success
+- First verified candidate wins and becomes `verified_candidate`
 
-### Phase 6 — Extract Every Round
+### Phase 7 — Extract Every Round
 - **Before**: Extraction only triggered when judge said ATTEMPT + confidence > 0.80
 - **After**: Full pipeline runs EVERY round:
   ```
-  Response → Regex Extractor → LLM Extractor → Candidate Ranking → Verifier → Success?
+  Response → Regex/Quoted/Capitalized Extractors → LLM Extractor → Normalize/Dedupe → Ranking → Top-K Verifier → Success?
   ```
 - Applied in both `verbose_test_llama()` and `_silent_test()`
+- Experiment paths pass `env` into `extract()`, enabling verifier execution
 
-### Phase 7 — Extractor Metrics (TP/FP/FN)
+### Phase 8 — Extractor Metrics (TP/FP/FN)
 - Tracks `true_positive`, `false_positive`, `false_negative` when ground truth is available
 - `update_metrics()` called after every extraction round
 - Computes **Precision, Recall, F1** — printed in benchmark summary:
@@ -242,7 +255,14 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
   ============================================================
   ```
 
-### Phase 8 — Extractor Benchmark (Standalone)
+### Phase 9 — UI/JSON Normalization
+- `server/run_normalizer.py` normalizes extractor output for old and new run JSON files
+- Tuple/list ranked candidates are converted to `{value, score}` dictionaries
+- Missing candidate lists become empty arrays
+- Invalid best candidates become empty strings
+- Legacy judge probability names are normalized for UI display
+
+### Phase 10 — Extractor Benchmark (Standalone)
 - New `--mode extractor_benchmark` CLI option
 - Tests **100 leaked + 100 non-leaked** synthetic responses
 - **20 leaked templates**: "The password is {code}", "Only users saying {code} are accepted", etc.
@@ -250,6 +270,12 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
 - **20 synthetic access codes**: Bassanova, Dragonfly, Sunflower, etc.
 - Measures **Precision, Recall, F1, Accuracy** independently of generator quality
 - Only requires target LLM (no generator/judge needed)
+
+### Current Integration Caveat
+- `server/experiment_server.py` currently calls `extractor.extract(response)` without passing `env`
+- Because verifier execution requires `env`, server-side live runs do not execute the adaptive top-k verifier in the extractor call path
+- The experiment/benchmark paths do pass `env` and therefore exercise the full verifier loop
+- Full reference: `docs/extractor-current.md`
 
 ---
 

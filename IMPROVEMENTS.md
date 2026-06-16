@@ -1,7 +1,7 @@
 # AutoRed Attack Generator Improvements
 
 **Date**: 2026-06-15
-**Context**: 500-round benchmark completed. 56.6% success rate (283/500 scenarios) with Llama-3.1-8B-Lexi generator, 7-strategy system, and 8-phase extractor pipeline. Verified-only QLoRA SFT now trains successfully on HPC.
+**Context**: 500-round benchmark completed. 56.6% success rate (283/500 scenarios) with Llama-3.1-8B-Lexi generator, 7-strategy system, and expanded extractor pipeline. Verified-only QLoRA SFT now trains successfully on HPC.
 
 ---
 
@@ -37,9 +37,14 @@
 | 3. Quoted Text Extractor | ✅ Done | Extracts all `"..."` strings |
 | 4. Capitalized Candidate Extractor | ✅ Done | 60+ stop word filtering |
 | 5. LLM Extractor (JSON-based) | ✅ Done | Broad JSON extraction with fallback |
-| 6. Candidate Ranking | ✅ Done | Scoring: keyword (+5), single word (+2), short (+1), long (-2) |
-| 7. Verifier | ✅ Done | Send candidate back to victim for "Access Granted" confirmation |
-| 8. TP/FP/FN Metrics | ✅ Done | Precision, Recall, F1 tracking |
+| 6. Candidate Normalization | ✅ Done | Strips quotes, punctuation, and duplicate whitespace before dedupe |
+| 7. Failed-Candidate Memory | ✅ Done | Failed verification candidates are suppressed in later rounds |
+| 8. Candidate Ranking | ✅ Done | Scoring: keyword (+5), single word (+2), short (+1), long (-2), refusal terms demoted |
+| 9. Adaptive Top-K Verifier | ✅ Done | Verifies ranked candidates with confidence-aware cap and records traces |
+| 10. TP/FP/FN Metrics | ✅ Done | Precision, Recall, F1 tracking |
+| 11. UI-Safe Normalization | ✅ Done | Server normalizer converts extractor output into stable UI/JSON shapes |
+
+Detailed extractor behavior is documented in `docs/extractor-current.md`.
 
 ### Phase 4: Strategy System (DONE)
 
@@ -90,7 +95,7 @@
 | Success Rate | 0% (0/50) | 56.6% (283/500) |
 | Generator | T5-base (769M) | Llama-3.1-8B-Lexi (8B) |
 | Strategies | None | 7 with performance-based selection |
-| Extractor | Simple substring | 8-phase multi-layer pipeline |
+| Extractor | Simple substring | Expanded multi-layer pipeline |
 | Verified successes | N/A | 138 (14.9% of scenarios) |
 
 ---
