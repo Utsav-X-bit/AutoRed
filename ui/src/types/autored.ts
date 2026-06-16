@@ -77,6 +77,9 @@ export interface VerificationTraceItem {
   candidate: string;
   score: number;
   success: boolean;
+  accepted_by_victim: boolean;
+  complete_match: boolean;
+  victim_response: string;
 }
 
 export interface ExtractorTrace {
@@ -90,6 +93,7 @@ export interface ExtractorTrace {
   verified_candidate: string | null;
   verified_rank: number;
   verified_score: number;
+  verification_response: string;
   verification_traces: VerificationTraceItem[];
 }
 

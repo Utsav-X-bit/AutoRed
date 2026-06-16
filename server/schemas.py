@@ -88,6 +88,9 @@ class VerificationTraceItem(BaseModel):
     candidate: str
     score: float
     success: bool
+    accepted_by_victim: bool = False
+    complete_match: bool = False
+    victim_response: str = ""
 
 
 class ExtractorTrace(BaseModel):
@@ -101,6 +104,7 @@ class ExtractorTrace(BaseModel):
     verified_candidate: str = ""
     verified_rank: int = 0
     verified_score: float = 0.0
+    verification_response: str = ""
     verification_traces: List[VerificationTraceItem] = Field(default_factory=list)
 
 

@@ -30,6 +30,9 @@ export default function ExtractorCard({ attempt }: { attempt: Attempt }) {
   const { extractor } = attempt;
   const isWrong = extractor.best_candidate && attempt.ground_truth_found && !attempt.extractor_match;
   const verifiedCandidate = extractor.verified_candidate;
+  const lastTrace = extractor.verification_traces[extractor.verification_traces.length - 1];
+  const successfulTrace = extractor.verification_traces.find((trace) => trace.success);
+  const responseTrace = successfulTrace || lastTrace;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -106,6 +109,28 @@ export default function ExtractorCard({ attempt }: { attempt: Attempt }) {
             rank {extractor.verified_rank || '-'} · score {extractor.verified_score || 0}
           </span>
         </div>
+        {responseTrace && (
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                responseTrace.accepted_by_victim ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+              }`}>
+                victim accepted: {responseTrace.accepted_by_victim ? 'yes' : 'no'}
+              </span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                responseTrace.complete_match ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                complete match: {responseTrace.complete_match ? 'yes' : 'no'}
+              </span>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Verifier Victim Response</p>
+              <p className="font-mono text-xs bg-white rounded px-2 py-1 border border-slate-200 whitespace-pre-wrap break-words">
+                {responseTrace.victim_response || extractor.verification_response || '—'}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -52,6 +52,25 @@ def _ranked_candidates(values: Iterable[Any]) -> List[Dict[str, Any]]:
     return normalized
 
 
+def _verification_traces(values: Iterable[Any]) -> List[Dict[str, Any]]:
+    normalized = []
+    for item in values:
+        trace = _dict(item)
+        candidate = _text(trace.get("candidate"))
+        if not candidate:
+            continue
+        normalized.append({
+            "rank": _integer(trace.get("rank")),
+            "candidate": candidate,
+            "score": _number(trace.get("score")),
+            "success": bool(trace.get("success", False)),
+            "accepted_by_victim": bool(trace.get("accepted_by_victim", False)),
+            "complete_match": bool(trace.get("complete_match", False)),
+            "victim_response": _text(trace.get("victim_response")),
+        })
+    return normalized
+
+
 def _judge_probabilities(value: Any) -> Dict[str, float]:
     probabilities = _dict(value)
     return {
@@ -90,7 +109,10 @@ def normalize_extraction_result(result: Any) -> Dict[str, Any]:
         "verified_candidate": _text(result.get("verified_candidate")),
         "verified_rank": _integer(result.get("verified_rank")),
         "verified_score": _number(result.get("verified_score")),
-        "verification_traces": _list(result.get("verification_traces")),
+        "verification_response": _text(result.get("verification_response")),
+        "verification_traces": _verification_traces(
+            _list(result.get("verification_traces"))
+        ),
         "verified": bool(result.get("verified", False)),
     }
 
@@ -157,13 +179,19 @@ def _normalize_attempt(raw: Any, index: int) -> Dict[str, Any]:
             "verified_candidate": _text(extractor.get("verified_candidate")),
             "verified_rank": _integer(extractor.get("verified_rank")),
             "verified_score": _number(extractor.get("verified_score")),
-            "verification_traces": _list(extractor.get("verification_traces")),
+            "verification_response": _text(extractor.get("verification_response")),
+            "verification_traces": _verification_traces(
+                _list(extractor.get("verification_traces"))
+            ),
         },
         "verification": {
             "candidate_sent": _text(verification.get("candidate_sent")),
-            "victim_response": _text(verification.get("victim_response")),
+            "victim_response": _text(
+                verification.get("victim_response"),
+                _text(extractor.get("verification_response")),
+            ),
             "success": bool(verification.get("success", False)),
-            "traces": _list(verification.get("traces")),
+            "traces": _verification_traces(_list(verification.get("traces"))),
         },
         "ground_truth_found": bool(attempt.get("ground_truth_found", False)),
         "extractor_match": bool(attempt.get("extractor_match", False)),

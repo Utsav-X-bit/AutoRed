@@ -1,4 +1,22 @@
 import { useRunStore } from '../store/runStore';
+import type { VerificationTraceItem } from '../types/autored';
+
+function TraceBadges({ trace }: { trace: VerificationTraceItem }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+        trace.accepted_by_victim ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+      }`}>
+        victim accepted: {trace.accepted_by_victim ? 'yes' : 'no'}
+      </span>
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+        trace.complete_match ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+      }`}>
+        complete match: {trace.complete_match ? 'yes' : 'no'}
+      </span>
+    </div>
+  );
+}
 
 export default function VerificationTraceTab() {
   const { selectedRun } = useRunStore();
@@ -83,6 +101,7 @@ export default function VerificationTraceTab() {
                             {trace.success ? 'SUCCESS' : 'FAIL'}
                           </span>
                         </div>
+                        <TraceBadges trace={trace} />
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <p className="text-xs text-slate-500">Value</p>
@@ -100,6 +119,12 @@ export default function VerificationTraceTab() {
                               {trace.score}
                             </p>
                           </div>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-xs text-slate-500">Victim Response</p>
+                          <p className="font-mono text-sm bg-slate-50 rounded px-2 py-1 border border-slate-200 whitespace-pre-wrap break-words">
+                            {trace.victim_response || '—'}
+                          </p>
                         </div>
                       </div>
                     ))}

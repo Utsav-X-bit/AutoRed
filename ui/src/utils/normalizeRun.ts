@@ -36,6 +36,31 @@ export function normalizeAttempt(value: unknown, index = 0): Attempt {
   const probabilities = asObject(judge.probabilities);
   const attack = asString(generator.generated_attack);
   const response = asString(victim.raw_output);
+  const extractorVerificationTraces = (asArray(extractor.verification_traces) || []).map((t: any) => ({
+    rank: Number(t.rank) || 0,
+    candidate: String(t.candidate ?? ''),
+    score: Number(t.score) || 0,
+    success: Boolean(t.success),
+    accepted_by_victim: Boolean(t.accepted_by_victim),
+    complete_match: Boolean(t.complete_match),
+    victim_response: asString(t.victim_response),
+  }));
+  const verificationTraces = (asArray(verification.traces) || []).map((t: any) => ({
+    rank: Number(t.rank) || 0,
+    candidate: String(t.candidate ?? ''),
+    score: Number(t.score) || 0,
+    success: Boolean(t.success),
+    accepted_by_victim: Boolean(t.accepted_by_victim),
+    complete_match: Boolean(t.complete_match),
+    victim_response: asString(t.victim_response),
+  }));
+  const traceResponse = (
+    verificationTraces.find(t => t.success)?.victim_response
+    || extractorVerificationTraces.find(t => t.success)?.victim_response
+    || verificationTraces[verificationTraces.length - 1]?.victim_response
+    || extractorVerificationTraces[extractorVerificationTraces.length - 1]?.victim_response
+    || ''
+  );
 
   return {
     attempt_number: asNumber(raw.attempt_number, index + 1),
@@ -76,23 +101,14 @@ export function normalizeAttempt(value: unknown, index = 0): Attempt {
       verified_candidate: extractor.verified_candidate ?? null,
       verified_rank: Number(extractor.verified_rank) || 0,
       verified_score: Number(extractor.verified_score) || 0,
-      verification_traces: (asArray(extractor.verification_traces) || []).map((t: any) => ({
-        rank: Number(t.rank) || 0,
-        candidate: String(t.candidate ?? ''),
-        score: Number(t.score) || 0,
-        success: Boolean(t.success),
-      })),
+      verification_response: asString(extractor.verification_response),
+      verification_traces: extractorVerificationTraces,
     },
     verification: {
       candidate_sent: asString(verification.candidate_sent),
-      victim_response: asString(verification.victim_response),
+      victim_response: asString(verification.victim_response) || asString(extractor.verification_response) || traceResponse,
       success: Boolean(verification.success),
-      traces: (asArray(verification.traces) || []).map((t: any) => ({
-        rank: Number(t.rank) || 0,
-        candidate: String(t.candidate ?? ''),
-        score: Number(t.score) || 0,
-        success: Boolean(t.success),
-      })),
+      traces: verificationTraces,
     },
     ground_truth_found: Boolean(raw.ground_truth_found),
     extractor_match: Boolean(raw.extractor_match),

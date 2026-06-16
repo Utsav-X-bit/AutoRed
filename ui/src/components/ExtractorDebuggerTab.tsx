@@ -1,4 +1,5 @@
 import { useRunStore } from '../store/runStore';
+import type { VerificationTraceItem } from '../types/autored';
 
 function CandidateText({ value }: { value: string }) {
   return <span className="whitespace-pre-wrap break-words">{value}</span>;
@@ -157,7 +158,7 @@ export default function ExtractorDebuggerTab() {
             <div>
               <p className="text-xs font-medium text-slate-700 mb-1">Layer 7: Verification Loop</p>
               <div className="space-y-2">
-                {extractor.verification_traces.map((trace: { rank: number; candidate: string; score: number; success: boolean }) => (
+                {extractor.verification_traces.map((trace: VerificationTraceItem) => (
                   <div
                     key={trace.rank}
                     className={`border rounded-lg p-3 ${
@@ -179,6 +180,18 @@ export default function ExtractorDebuggerTab() {
                         {trace.success ? 'SUCCESS' : 'FAIL'}
                       </span>
                     </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        trace.accepted_by_victim ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        victim accepted: {trace.accepted_by_victim ? 'yes' : 'no'}
+                      </span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        trace.complete_match ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        complete match: {trace.complete_match ? 'yes' : 'no'}
+                      </span>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <p className="text-xs text-slate-500">Value</p>
@@ -196,6 +209,12 @@ export default function ExtractorDebuggerTab() {
                           {trace.score}
                         </p>
                       </div>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-xs text-slate-500">Victim Response</p>
+                      <p className="font-mono text-sm bg-slate-50 rounded px-2 py-1 border border-slate-200 whitespace-pre-wrap break-words">
+                        {trace.victim_response || '—'}
+                      </p>
                     </div>
                   </div>
                 ))}
