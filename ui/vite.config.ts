@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': 'http://localhost:8001',
+      '/api': 'http://scn26-10g:8001',
       '/ws': {
-        target: 'http://localhost:8001',
+        target: 'http://scn26-10g:8001',
         ws: true,
       },
     },
