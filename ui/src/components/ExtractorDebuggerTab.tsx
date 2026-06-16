@@ -147,6 +147,77 @@ export default function ExtractorDebuggerTab() {
               </div>
             </div>
           </div>
+
+          {/* Layer 7: Verification Loop */}
+          {extractor.verification_traces && extractor.verification_traces.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-slate-700 mb-1">Layer 7: Verification Loop</p>
+              <div className="space-y-2">
+                {extractor.verification_traces.map((trace: { rank: number; candidate: string; score: number; success: boolean }) => (
+                  <div
+                    key={trace.rank}
+                    className={`border rounded-lg p-3 ${
+                      trace.success ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                          trace.success ? 'bg-green-200 text-green-800' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          #{trace.rank}
+                        </span>
+                        <span className="text-sm font-medium text-slate-700">Candidate #{trace.rank}</span>
+                      </div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        trace.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {trace.success ? 'SUCCESS' : 'FAIL'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-xs text-slate-500">Value</p>
+                        <p className={`font-mono text-sm rounded px-2 py-1 border ${
+                          trace.success
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}>
+                          {trace.candidate}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Score</p>
+                        <p className="font-mono text-sm bg-slate-50 rounded px-2 py-1 border border-slate-200">
+                          {trace.score}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Verified Candidate Summary */}
+                {extractor.verified_candidate && (
+                  <div className="bg-green-100 border border-green-300 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-green-700 font-medium">VERIFIED CANDIDATE</p>
+                        <p className="font-mono font-bold text-green-900 text-lg">
+                          {extractor.verified_candidate}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-green-700">Verified Rank</p>
+                        <p className="font-bold text-green-900 text-lg">
+                          {extractor.verified_rank}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

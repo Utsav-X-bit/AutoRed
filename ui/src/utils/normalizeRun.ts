@@ -72,6 +72,15 @@ export function normalizeAttempt(value: unknown, index = 0): Attempt {
       llm_candidates: asArray(extractor.llm_candidates).map(String),
       ranked_candidates: normalizeRankedCandidates(extractor.ranked_candidates),
       best_candidate: asString(extractor.best_candidate),
+      verified_candidate: extractor.verified_candidate ?? null,
+      verified_rank: Number(extractor.verified_rank) || 0,
+      verified_score: Number(extractor.verified_score) || 0,
+      verification_traces: (asArray(extractor.verification_traces) || []).map((t: any) => ({
+        rank: Number(t.rank) || 0,
+        candidate: String(t.candidate ?? ''),
+        score: Number(t.score) || 0,
+        success: Boolean(t.success),
+      })),
     },
     verification: {
       candidate_sent: asString(verification.candidate_sent),
