@@ -1,12 +1,12 @@
-# Graph Report - AutoRed  (2026-06-15)
+# Graph Report - AutoRed  (2026-06-16)
 
 ## Corpus Check
-- 130 files · ~412,409 words
+- 130 files · ~418,615 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1819 nodes · 3792 edges · 216 communities detected
-- Extraction: 56% EXTRACTED · 44% INFERRED · 0% AMBIGUOUS · INFERRED: 1664 edges (avg confidence: 0.61)
+- 1847 nodes · 3769 edges · 256 communities detected
+- Extraction: 56% EXTRACTED · 44% INFERRED · 0% AMBIGUOUS · INFERRED: 1642 edges (avg confidence: 0.61)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -41,7 +41,7 @@
 - [[_COMMUNITY_Community 28|Community 28]]
 - [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
-- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
 - [[_COMMUNITY_Community 35|Community 35]]
 - [[_COMMUNITY_Community 36|Community 36]]
 - [[_COMMUNITY_Community 37|Community 37]]
@@ -49,28 +49,25 @@
 - [[_COMMUNITY_Community 39|Community 39]]
 - [[_COMMUNITY_Community 40|Community 40]]
 - [[_COMMUNITY_Community 41|Community 41]]
-- [[_COMMUNITY_Community 42|Community 42]]
-- [[_COMMUNITY_Community 46|Community 46]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 47|Community 47]]
+- [[_COMMUNITY_Community 48|Community 48]]
+- [[_COMMUNITY_Community 49|Community 49]]
 - [[_COMMUNITY_Community 50|Community 50]]
-- [[_COMMUNITY_Community 56|Community 56]]
-- [[_COMMUNITY_Community 57|Community 57]]
-- [[_COMMUNITY_Community 58|Community 58]]
+- [[_COMMUNITY_Community 51|Community 51]]
+- [[_COMMUNITY_Community 55|Community 55]]
 - [[_COMMUNITY_Community 59|Community 59]]
-- [[_COMMUNITY_Community 60|Community 60]]
-- [[_COMMUNITY_Community 61|Community 61]]
-- [[_COMMUNITY_Community 62|Community 62]]
-- [[_COMMUNITY_Community 63|Community 63]]
-- [[_COMMUNITY_Community 64|Community 64]]
+- [[_COMMUNITY_Community 65|Community 65]]
+- [[_COMMUNITY_Community 66|Community 66]]
+- [[_COMMUNITY_Community 67|Community 67]]
+- [[_COMMUNITY_Community 68|Community 68]]
+- [[_COMMUNITY_Community 69|Community 69]]
+- [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
-- [[_COMMUNITY_Community 77|Community 77]]
-- [[_COMMUNITY_Community 78|Community 78]]
-- [[_COMMUNITY_Community 79|Community 79]]
-- [[_COMMUNITY_Community 80|Community 80]]
+- [[_COMMUNITY_Community 73|Community 73]]
 - [[_COMMUNITY_Community 81|Community 81]]
-- [[_COMMUNITY_Community 82|Community 82]]
-- [[_COMMUNITY_Community 83|Community 83]]
-- [[_COMMUNITY_Community 84|Community 84]]
-- [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
@@ -226,6 +223,49 @@
 - [[_COMMUNITY_Community 238|Community 238]]
 - [[_COMMUNITY_Community 239|Community 239]]
 - [[_COMMUNITY_Community 240|Community 240]]
+- [[_COMMUNITY_Community 241|Community 241]]
+- [[_COMMUNITY_Community 242|Community 242]]
+- [[_COMMUNITY_Community 243|Community 243]]
+- [[_COMMUNITY_Community 244|Community 244]]
+- [[_COMMUNITY_Community 245|Community 245]]
+- [[_COMMUNITY_Community 246|Community 246]]
+- [[_COMMUNITY_Community 247|Community 247]]
+- [[_COMMUNITY_Community 248|Community 248]]
+- [[_COMMUNITY_Community 249|Community 249]]
+- [[_COMMUNITY_Community 250|Community 250]]
+- [[_COMMUNITY_Community 251|Community 251]]
+- [[_COMMUNITY_Community 252|Community 252]]
+- [[_COMMUNITY_Community 253|Community 253]]
+- [[_COMMUNITY_Community 254|Community 254]]
+- [[_COMMUNITY_Community 255|Community 255]]
+- [[_COMMUNITY_Community 256|Community 256]]
+- [[_COMMUNITY_Community 257|Community 257]]
+- [[_COMMUNITY_Community 258|Community 258]]
+- [[_COMMUNITY_Community 259|Community 259]]
+- [[_COMMUNITY_Community 260|Community 260]]
+- [[_COMMUNITY_Community 261|Community 261]]
+- [[_COMMUNITY_Community 262|Community 262]]
+- [[_COMMUNITY_Community 263|Community 263]]
+- [[_COMMUNITY_Community 264|Community 264]]
+- [[_COMMUNITY_Community 265|Community 265]]
+- [[_COMMUNITY_Community 266|Community 266]]
+- [[_COMMUNITY_Community 267|Community 267]]
+- [[_COMMUNITY_Community 268|Community 268]]
+- [[_COMMUNITY_Community 269|Community 269]]
+- [[_COMMUNITY_Community 270|Community 270]]
+- [[_COMMUNITY_Community 271|Community 271]]
+- [[_COMMUNITY_Community 272|Community 272]]
+- [[_COMMUNITY_Community 273|Community 273]]
+- [[_COMMUNITY_Community 274|Community 274]]
+- [[_COMMUNITY_Community 275|Community 275]]
+- [[_COMMUNITY_Community 276|Community 276]]
+- [[_COMMUNITY_Community 277|Community 277]]
+- [[_COMMUNITY_Community 278|Community 278]]
+- [[_COMMUNITY_Community 279|Community 279]]
+- [[_COMMUNITY_Community 280|Community 280]]
+- [[_COMMUNITY_Community 281|Community 281]]
+- [[_COMMUNITY_Community 282|Community 282]]
+- [[_COMMUNITY_Community 283|Community 283]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `RewardFunctionRegistry` - 66 edges
@@ -274,79 +314,79 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
-Nodes (84): _build_model_heads(), EvaluateActionsOutput, GenerationInputs, GenerationOutputs, get_policy_first_device(), LMActorCriticPolicy, PolicyOutput, PolicyType (+76 more)
+Nodes (94): Unpacks vectorized dict observations into separate dict observations, TransitionInfo, _build_model_heads(), EvaluateActionsOutput, GenerationInputs, GenerationOutputs, get_policy_first_device(), LMActorCriticPolicy (+86 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.04
-Nodes (96): A2C, Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, Cider, Main Class to compute the CIDEr metric, PIExt, PIGen, Resets the environment and starts a new episode, A generic RL environment to generate textual sequences.         For eg: text gen (+88 more)
+Cohesion: 0.05
+Nodes (85): Cider, Main Class to compute the CIDEr metric, PIExt, PIGen, Resets the environment and starts a new episode, A generic RL environment to generate textual sequences.         For eg: text gen, BaseMetric, BERTScoreMetric (+77 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.03
-Nodes (113): sha256(), load(), load_jsonl(), main(), download() (HF asset fetcher), main(), judge_attack() (worker), Experiment runner — orchestrates AutoRed loop using loaded models. Runs in isola (+105 more)
+Nodes (123): sha256(), :param action_masks: Masks applied to constrain the choice of possible actions., load_jsonl(), main(), download() (HF asset fetcher), judge_attack() (worker), Experiment runner — orchestrates AutoRed loop using loaded models. Runs in isola, Run a single AutoRed experiment using pre-loaded models.      Args:         scen (+115 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.03
-Nodes (61): IntEnum, analyze_attack_evolution(), benchmark_extractor(), CTFEnvironment, DecisionType, DefenseScenario, load_decision_model(), load_gen_model() (+53 more)
+Cohesion: 0.02
+Nodes (75): A2C, Update policy using the currently gathered         rollout buffer (one gradient, Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, conjugate_gradient_solver(), flat_grad(), quantile_huber_loss(), The quantile-regression loss, as described in the QR-DQN and TQC papers.     Par, Returns the gradients of the passed sequence of parameters into a flat gradient. (+67 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.04
-Nodes (50): :param action_masks: Masks applied to constrain the choice of possible actions., analyze_diversity(), classify_all(), classify_attack(), compute_hashes(), deduplicate(), load_samples(), main() (+42 more)
+Cohesion: 0.03
+Nodes (62): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+54 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.05
-Nodes (44): AnalyticsPanel Component, audit_sample(), count_words(), generate_report(), has_access_granted(), has_conversation_markers(), has_json_syntax(), has_non_ascii() (+36 more)
+Cohesion: 0.04
+Nodes (53): IntEnum, analyze_attack_evolution(), benchmark_extractor(), CTFEnvironment, DecisionType, DefenseScenario, load_decision_model(), load_gen_model() (+45 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.04
 Nodes (68): Access Code (Sensitive Information), Agentic Workflow, Alarm Triggers for Suspicious Inputs, Attack Success Rate (ASR), AUTO RED Framework, Binary Sentence Classifier, Capture The Flag (CTF) Game, Curiosity-Driven RL for Red Teaming (+60 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.04
-Nodes (33): Update policy using the currently gathered         rollout buffer (one gradient, close(), render(), step(), MaskableDictRolloutBuffer, MaskableDictRolloutBufferSamples, MaskableRolloutBuffer, MaskableRolloutBufferSamples (+25 more)
+Cohesion: 0.05
+Nodes (49): AnalyticsPanel Component, audit_sample(), count_words(), generate_report(), has_access_granted(), has_conversation_markers(), has_json_syntax(), has_non_ascii() (+41 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.04
-Nodes (42): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+34 more)
-
-### Community 9 - "Community 9"
-Cohesion: 0.05
-Nodes (31): prepare(), make_masked_proba_distribution(), MaskableBernoulliDistribution, MaskableCategorical, MaskableDistribution, MaskableMultiCategoricalDistribution, Code adapted from https://github.com/DLR-RM/stable-baselines3, MultiCategorical distribution for multi discrete actions. Supports invalid actio (+23 more)
-
-### Community 10 - "Community 10"
 Cohesion: 0.06
 Nodes (53): GPT-3.5-turbo Experiment Notebook, InternLM Experiment Notebook, Jupyter Notebook Environment, Llama 2 7B Experiment Notebook, Llama 3 8B Experiment Notebook, Mistral Experiment Notebook, Result Analysis Notebook, AutoRed Overview and Architecture (+45 more)
 
-### Community 11 - "Community 11"
-Cohesion: 0.06
-Nodes (39): classify_access_code(), compute_defense_complexity(), main(), post_process_results(), Logger for AutoRed experiment attempts., Log a single attempt., Mark a run as complete and increment run counter., Write buffered entries to disk. (+31 more)
+### Community 9 - "Community 9"
+Cohesion: 0.07
+Nodes (43): AnalyticsPanel, Attempt, AttemptUpdate, AutoRedRun, BenchmarkDashboard, ExtractorCard, FilterBar, GeneratorCard (+35 more)
 
-### Community 12 - "Community 12"
+### Community 10 - "Community 10"
 Cohesion: 0.05
 Nodes (45): Four Prompt-Level Fixes (TensorTrust-Aligned), Strategy Mutation (7 Templates), Strategy Selection (Score-Based), Strategy System (8 Changes), Analytics Panel, Web UI Architecture (3-Tier), Attempt Data Model, Attempt Investigation View (+37 more)
 
-### Community 13 - "Community 13"
-Cohesion: 0.08
-Nodes (35): AnalyticsPanel, Attempt, AttemptUpdate, AutoRedRun, BenchmarkDashboard, ExtractorCard, FilterBar, GeneratorCard (+27 more)
+### Community 11 - "Community 11"
+Cohesion: 0.06
+Nodes (18): prepare(), Env, TextGenEnv, _concat(), init_from_sample(), For stable baselines (only return tensor items), Updates the observation using the given action, get() (+10 more)
 
-### Community 14 - "Community 14"
+### Community 12 - "Community 12"
 Cohesion: 0.08
 Nodes (37): A2C, AutoRed, BatchedRewardFunction, CTF_Game, DistilBERT_Judge, EvaluateActionsOutput, KLController, Llama3_8B_Target (+29 more)
 
-### Community 15 - "Community 15"
+### Community 13 - "Community 13"
 Cohesion: 0.07
 Nodes (37): Five Priority Fixes, Six Root Causes of 0% Success, Attack Templates Library, CausalLMActorCriticPolicy, Judge Input Fix (Attack+Response Format), Memory Requirements Analysis, PIGenCausal Data Pool, Priority 1: Replace T5 with LLaMA-2-7B (+29 more)
 
-### Community 16 - "Community 16"
-Cohesion: 0.09
-Nodes (36): App Router Configuration, AppErrorBoundary Component, AttackEvolutionTab Component, Attempt Type, AttemptUpdate WebSocket Message, AutoRedRun Type, BestAttack Type, ExtractorTrace Type (+28 more)
-
-### Community 17 - "Community 17"
+### Community 14 - "Community 14"
 Cohesion: 0.11
 Nodes (31): build_datasets(), build_failure_dataset(), build_positive_dataset(), build_verified_dataset(), code_type_analysis(), complexity_analysis(), compute_attack_length_stats(), extract_features() (+23 more)
 
-### Community 18 - "Community 18"
+### Community 15 - "Community 15"
 Cohesion: 0.12
 Nodes (16): ActionSpace, BaseEnv, A base class for all the environments, Args:             max_steps (int): max steps for each episode             reward, Resets the episode and returns an observation, Renders the current state of the environment, Gets the observation dimension, Lists all possible actions indices and its meaning          Returns: (+8 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.11
+Nodes (27): analyze_diversity(), classify_all(), classify_attack(), compute_hashes(), deduplicate(), load_samples(), main(), normalize_text() (+19 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.13
+Nodes (16): classify_access_code(), compute_defense_complexity(), main(), post_process_results(), Logger for AutoRed experiment attempts., Log a single attempt., Mark a run as complete and increment run counter., Write buffered entries to disk. (+8 more)
+
+### Community 18 - "Community 18"
+Cohesion: 0.13
+Nodes (11): evaluate_on_samples(), generate_text(), get_batch(), compute_metrics(), evaluate_on_samples(), generate(), generate_on_samples(), generate_text() (+3 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.11
@@ -357,20 +397,20 @@ Cohesion: 0.13
 Nodes (10): CiderScorer, cook_refs(), cook_test(), precook(), Compute term frequency for reference data.         This will be used to compute, Takes a string as input and returns an object that can be given to     either co, Takes a list of reference sentences for a single segment     and returns an obje, Takes a test sentence and returns an object that     encapsulates everything tha (+2 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.13
-Nodes (6): Unpacks vectorized dict observations into separate dict observations, TransitionInfo, unpack_observations(), KLController, OffPolicyWarmStartMixin, OnPolicyWarmStartMixin
-
-### Community 22 - "Community 22"
 Cohesion: 0.26
 Nodes (15): AutoRed Logo (padlock + syringe), Padlock Symbol (security / protected system), Syringe Symbol (injection / attack / exploit), AutoRed's Attack (malicious prompts sent to Chatbot), AutoRed System (automated adversarial framework), Chatbot (LLM interface receiving prompts), Decision State d1 = extract (switch to extraction phase), Decision State d0 = generate (continue prompt generation) (+7 more)
 
+### Community 22 - "Community 22"
+Cohesion: 0.28
+Nodes (9): App Router Configuration, AppErrorBoundary Component, AttackEvolutionTab Component, InvestigationTabs Component, React Entry Point, ModelHeatmapTab Component, ResizeHandle Component, ScenarioTab Component (+1 more)
+
 ### Community 23 - "Community 23"
-Cohesion: 0.21
-Nodes (10): evaluate_benchmark(), evaluate_scenario(), normalize_text(), normalized_match(), Run benchmark evaluation., Normalize text for comparison., Normalized match (case, whitespace, unicode)., Semantic match (contains ground truth or vice versa). (+2 more)
+Cohesion: 0.39
+Nodes (7): compute_complexity(), detect_secondary_types(), load_samples(), main(), Compute complexity score (1-10) for an attack sample.          Scoring dimension, Detect secondary attack types beyond the primary label., truncate()
 
 ### Community 24 - "Community 24"
-Cohesion: 0.2
-Nodes (8): conjugate_gradient_solver(), flat_grad(), quantile_huber_loss(), The quantile-regression loss, as described in the QR-DQN and TQC papers.     Par, Returns the gradients of the passed sequence of parameters into a flat gradient., Finds an approximate solution to a set of linear equations Ax = b      Sources:, tokenize_rewards(), Computes the matrix-vector product with the Fisher information matrix.
+Cohesion: 0.25
+Nodes (1): KLController
 
 ### Community 25 - "Community 25"
 Cohesion: 0.25
@@ -396,21 +436,21 @@ Nodes (3): bert-score, BLEURT (from google-research/bleurt.git), gem-metrics (fr
 Cohesion: 0.67
 Nodes (3): Custom Modifications, Experiment Observations, Improvement Roadmap
 
-### Community 33 - "Community 33"
-Cohesion: 1.0
-Nodes (2): RunListItem Type, FilterBar Component
-
-### Community 35 - "Community 35"
+### Community 34 - "Community 34"
 Cohesion: 1.0
 Nodes (2): HPC Deployment Scripts, rl4lms Compatibility Fixes
 
-### Community 36 - "Community 36"
+### Community 35 - "Community 35"
 Cohesion: 1.0
 Nodes (2): Revised Phase 0: Dataset Verification, Revised Phase 1: CTF Environment
 
-### Community 37 - "Community 37"
+### Community 36 - "Community 36"
 Cohesion: 1.0
 Nodes (2): Export Features, Search and Filters
+
+### Community 37 - "Community 37"
+Cohesion: 1.0
+Nodes (2): Test 4: Olajuwon Defense (Lexi, 1 attempt), Test 7: Password 42 Defense (Lexi, 1 attempt)
 
 ### Community 38 - "Community 38"
 Cohesion: 1.0
@@ -418,721 +458,881 @@ Nodes (2): Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed),
 
 ### Community 39 - "Community 39"
 Cohesion: 1.0
-Nodes (2): Test 4: Olajuwon Defense (Lexi, 1 attempt), Test 7: Password 42 Defense (Lexi, 1 attempt)
+Nodes (2): Test 5: Tomato Defense (Lexi, 13 attempts), Test 9: Tomato Browser Defense (Lexi, 13 attempts)
 
 ### Community 40 - "Community 40"
 Cohesion: 1.0
-Nodes (2): Test 5: Tomato Defense (Lexi, 13 attempts), Test 9: Tomato Browser Defense (Lexi, 13 attempts)
+Nodes (2): Llama Response 1: yukinoshita (T5, 3 attempts), Test 1: yukinoshita Defense (T5, 3 attempts)
 
 ### Community 41 - "Community 41"
 Cohesion: 1.0
-Nodes (2): Llama Response 1: yukinoshita (T5, 3 attempts), Test 1: yukinoshita Defense (T5, 3 attempts)
-
-### Community 42 - "Community 42"
-Cohesion: 1.0
 Nodes (2): Experiment Directory Graph Report, Full Project Graph Report
 
-### Community 46 - "Community 46"
+### Community 43 - "Community 43"
 Cohesion: 1.0
-Nodes (1): A factory method to instantiate data pool
+Nodes (1): Layer 1: Extract candidates using regex patterns.
+
+### Community 45 - "Community 45"
+Cohesion: 1.0
+Nodes (1): NewRunDialog Component
+
+### Community 47 - "Community 47"
+Cohesion: 1.0
+Nodes (1): ExtractorCard Component
+
+### Community 48 - "Community 48"
+Cohesion: 1.0
+Nodes (1): GeneratorCard Component
+
+### Community 49 - "Community 49"
+Cohesion: 1.0
+Nodes (1): VictimCard Component
 
 ### Community 50 - "Community 50"
 Cohesion: 1.0
-Nodes (1): r"""          Generates sequences of token ids for models with a language modeli
+Nodes (1): VerifierCard Component
 
-### Community 56 - "Community 56"
+### Community 51 - "Community 51"
 Cohesion: 1.0
-Nodes (1): Builds policy and value models         and sets self._policy_model and self._val
+Nodes (1): FilterBar Component
 
-### Community 57 - "Community 57"
+### Community 55 - "Community 55"
 Cohesion: 1.0
-Nodes (1): Performs a forward pass on the policy and gets log_probs, entropy etc         co
-
-### Community 58 - "Community 58"
-Cohesion: 1.0
-Nodes (1): Performs a forward pass on the value network and gets values corresponding to ob
+Nodes (1): A factory method to instantiate data pool
 
 ### Community 59 - "Community 59"
 Cohesion: 1.0
+Nodes (1): r"""          Generates sequences of token ids for models with a language modeli
+
+### Community 65 - "Community 65"
+Cohesion: 1.0
+Nodes (1): Builds policy and value models         and sets self._policy_model and self._val
+
+### Community 66 - "Community 66"
+Cohesion: 1.0
+Nodes (1): Performs a forward pass on the policy and gets log_probs, entropy etc         co
+
+### Community 67 - "Community 67"
+Cohesion: 1.0
+Nodes (1): Performs a forward pass on the value network and gets values corresponding to ob
+
+### Community 68 - "Community 68"
+Cohesion: 1.0
 Nodes (1): Evaluates specified <observation, action>         and returns log_probs, values,
 
-### Community 60 - "Community 60"
+### Community 69 - "Community 69"
 Cohesion: 1.0
 Nodes (1): Performs a forward pass on the reference policy and gets log_probs         corre
 
-### Community 61 - "Community 61"
+### Community 70 - "Community 70"
 Cohesion: 1.0
 Nodes (1): Returns the first device of the policy. Used in the case of model parallel
 
-### Community 62 - "Community 62"
+### Community 71 - "Community 71"
 Cohesion: 1.0
 Nodes (1): Returns the type of policy (causal or seq2seq)
 
-### Community 63 - "Community 63"
+### Community 72 - "Community 72"
 Cohesion: 1.0
 Nodes (1): Extracts the prompt inputs and attention masks which is used as seed for generat
 
-### Community 64 - "Community 64"
+### Community 73 - "Community 73"
 Cohesion: 1.0
 Nodes (1): Takes a step with the given action and returns (next state, reward, done, info)
 
-### Community 72 - "Community 72"
+### Community 81 - "Community 81"
 Cohesion: 1.0
 Nodes (1): Eliminate ("mask out") chosen distribution outcomes by setting their probability
 
-### Community 77 - "Community 77"
-Cohesion: 1.0
-Nodes (1): Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi
-
-### Community 78 - "Community 78"
-Cohesion: 1.0
-Nodes (1): Remove regenerated few-shot response patterns that echo the defense.      Llama-
-
-### Community 79 - "Community 79"
-Cohesion: 1.0
-Nodes (1): Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).
-
-### Community 80 - "Community 80"
-Cohesion: 1.0
-Nodes (1): Represents a single CTF defense scenario from the dataset.
-
-### Community 81 - "Community 81"
-Cohesion: 1.0
-Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
-
-### Community 82 - "Community 82"
-Cohesion: 1.0
-Nodes (1): Reset environment to initial state.
-
-### Community 83 - "Community 83"
-Cohesion: 1.0
-Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
-
-### Community 84 - "Community 84"
-Cohesion: 1.0
-Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
-
-### Community 85 - "Community 85"
-Cohesion: 1.0
-Nodes (1): Predict whether the LLM response contains sensitive information.          Return
-
 ### Community 86 - "Community 86"
 Cohesion: 1.0
-Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
+Nodes (1): Pass ground truth access code for direct verification.
 
 ### Community 87 - "Community 87"
 Cohesion: 1.0
-Nodes (1): Pass ground truth access code for direct verification.
+Nodes (1): Reset extractor metrics (call at start of each benchmark).
 
 ### Community 88 - "Community 88"
 Cohesion: 1.0
-Nodes (1): Reset extractor metrics (call at start of each benchmark).
+Nodes (1): Check if the victim response contains the ground truth access code.          Thi
 
 ### Community 89 - "Community 89"
 Cohesion: 1.0
-Nodes (1): Load few-shot examples from training data.
+Nodes (1): Check if the victim response contains the ground truth access code.          Thi
 
 ### Community 90 - "Community 90"
 Cohesion: 1.0
-Nodes (1): Check if the victim response contains the ground truth access code.          Thi
+Nodes (1): Log ground truth leak detection (Phase 1.3).
 
 ### Community 91 - "Community 91"
 Cohesion: 1.0
-Nodes (1): Log ground truth leak detection (Phase 1.3).
+Nodes (1): Layer 1: Extract candidates using regex patterns.
 
 ### Community 92 - "Community 92"
 Cohesion: 1.0
-Nodes (1): Layer 1: Extract candidates using regex patterns.
+Nodes (1): Layer 2: Extract all quoted strings.
 
 ### Community 93 - "Community 93"
 Cohesion: 1.0
-Nodes (1): Layer 2: Extract all quoted strings.
+Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
 
 ### Community 94 - "Community 94"
 Cohesion: 1.0
-Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
+Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
 
 ### Community 95 - "Community 95"
 Cohesion: 1.0
-Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
+Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
 
 ### Community 96 - "Community 96"
 Cohesion: 1.0
-Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
+Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
 
 ### Community 97 - "Community 97"
 Cohesion: 1.0
-Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
+Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
 
 ### Community 98 - "Community 98"
 Cohesion: 1.0
-Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
+Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
 
 ### Community 99 - "Community 99"
 Cohesion: 1.0
-Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
+Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
 
 ### Community 100 - "Community 100"
 Cohesion: 1.0
-Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
+Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
 
 ### Community 101 - "Community 101"
 Cohesion: 1.0
-Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
+Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
 
 ### Community 102 - "Community 102"
 Cohesion: 1.0
-Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
+Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
 
 ### Community 103 - "Community 103"
 Cohesion: 1.0
-Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
+Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
 
 ### Community 104 - "Community 104"
 Cohesion: 1.0
-Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
+Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
 
 ### Community 105 - "Community 105"
 Cohesion: 1.0
-Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
+Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
 
 ### Community 106 - "Community 106"
 Cohesion: 1.0
-Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
+Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
 
 ### Community 107 - "Community 107"
 Cohesion: 1.0
-Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
+Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
 
 ### Community 108 - "Community 108"
 Cohesion: 1.0
-Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
+Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
 
 ### Community 109 - "Community 109"
 Cohesion: 1.0
-Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
+Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
 
 ### Community 110 - "Community 110"
 Cohesion: 1.0
-Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
+Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
 
 ### Community 111 - "Community 111"
 Cohesion: 1.0
-Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
+Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
 
 ### Community 112 - "Community 112"
 Cohesion: 1.0
-Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
+Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
 
 ### Community 113 - "Community 113"
 Cohesion: 1.0
-Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
+Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
 
 ### Community 114 - "Community 114"
 Cohesion: 1.0
-Nodes (1): Run stop point identifier on LLM response.
+Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
 
 ### Community 115 - "Community 115"
 Cohesion: 1.0
-Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
+Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
 
 ### Community 116 - "Community 116"
 Cohesion: 1.0
-Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
+Nodes (1): Print a compact summary of all iterations.
 
 ### Community 117 - "Community 117"
 Cohesion: 1.0
-Nodes (1): Print a compact summary of all iterations.
+Nodes (1): Analyze how attacks evolve over iterations.
 
 ### Community 118 - "Community 118"
 Cohesion: 1.0
-Nodes (1): Analyze how attacks evolve over iterations.
+Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
 
 ### Community 119 - "Community 119"
 Cohesion: 1.0
-Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
+Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
 
 ### Community 120 - "Community 120"
 Cohesion: 1.0
-Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
+Nodes (1): Run a single scenario without verbose logging (for benchmark).
 
 ### Community 121 - "Community 121"
 Cohesion: 1.0
-Nodes (1): Run a single scenario without verbose logging (for benchmark).
+Nodes (1): Save the full trace to a JSON file for later analysis.
 
 ### Community 122 - "Community 122"
 Cohesion: 1.0
-Nodes (1): Save the full trace to a JSON file for later analysis.
+Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
 
 ### Community 123 - "Community 123"
 Cohesion: 1.0
-Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
+Nodes (1): Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi
 
 ### Community 124 - "Community 124"
 Cohesion: 1.0
-Nodes (1): Format a conversation entry for the model.
+Nodes (1): Remove regenerated few-shot response patterns that echo the defense.      Llama-
 
 ### Community 125 - "Community 125"
 Cohesion: 1.0
-Nodes (1): Load train/val datasets from JSONL files.
+Nodes (1): Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).
 
 ### Community 126 - "Community 126"
 Cohesion: 1.0
-Nodes (1): Format a conversation entry for the model.
+Nodes (1): Represents a single CTF defense scenario from the dataset.
 
 ### Community 127 - "Community 127"
 Cohesion: 1.0
-Nodes (1): Load train/val datasets from JSONL files.
+Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
 
 ### Community 128 - "Community 128"
 Cohesion: 1.0
-Nodes (1): Format a conversation entry for the model.
+Nodes (1): Reset environment to initial state.
 
 ### Community 129 - "Community 129"
 Cohesion: 1.0
-Nodes (1): Format a conversation entry for the model.
+Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
 
 ### Community 130 - "Community 130"
 Cohesion: 1.0
-Nodes (1): Display statistics about collected successes.
+Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
 
 ### Community 131 - "Community 131"
 Cohesion: 1.0
-Nodes (1): Represents a single CTF defense scenario from the dataset.
+Nodes (1): Predict whether the LLM response contains sensitive information.          Return
 
 ### Community 132 - "Community 132"
 Cohesion: 1.0
-Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
+Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
 
 ### Community 133 - "Community 133"
 Cohesion: 1.0
-Nodes (1): Reset environment to initial state.
+Nodes (1): Pass ground truth access code for direct verification.
 
 ### Community 134 - "Community 134"
 Cohesion: 1.0
-Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
+Nodes (1): Reset extractor metrics (call at start of each benchmark).
 
 ### Community 135 - "Community 135"
 Cohesion: 1.0
-Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
+Nodes (1): Load few-shot examples from training data.
 
 ### Community 136 - "Community 136"
 Cohesion: 1.0
-Nodes (1): Predict whether the LLM response contains sensitive information.          Return
+Nodes (1): Check if the victim response contains the ground truth access code.          Thi
 
 ### Community 137 - "Community 137"
 Cohesion: 1.0
-Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
+Nodes (1): Log ground truth leak detection (Phase 1.3).
 
 ### Community 138 - "Community 138"
 Cohesion: 1.0
-Nodes (1): Reset extractor metrics (call at start of each benchmark).
+Nodes (1): Layer 1: Extract candidates using regex patterns.
 
 ### Community 139 - "Community 139"
 Cohesion: 1.0
-Nodes (1): Reset extractor metrics (call at start of each benchmark).
+Nodes (1): Layer 2: Extract all quoted strings.
 
 ### Community 140 - "Community 140"
 Cohesion: 1.0
-Nodes (1): Load few-shot examples from training data.
+Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
 
 ### Community 141 - "Community 141"
 Cohesion: 1.0
-Nodes (1): Check if the victim response contains the ground truth access code.          Thi
+Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
 
 ### Community 142 - "Community 142"
 Cohesion: 1.0
-Nodes (1): Log ground truth leak detection (Phase 1.3).
+Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
 
 ### Community 143 - "Community 143"
 Cohesion: 1.0
-Nodes (1): Layer 1: Extract candidates using regex patterns.
+Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
 
 ### Community 144 - "Community 144"
 Cohesion: 1.0
-Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
+Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
 
 ### Community 145 - "Community 145"
 Cohesion: 1.0
-Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
+Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
 
 ### Community 146 - "Community 146"
 Cohesion: 1.0
-Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
+Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
 
 ### Community 147 - "Community 147"
 Cohesion: 1.0
-Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
+Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
 
 ### Community 148 - "Community 148"
 Cohesion: 1.0
-Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
+Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
 
 ### Community 149 - "Community 149"
 Cohesion: 1.0
-Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
+Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
 
 ### Community 150 - "Community 150"
 Cohesion: 1.0
-Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
+Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
 
 ### Community 151 - "Community 151"
 Cohesion: 1.0
-Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
+Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
 
 ### Community 152 - "Community 152"
 Cohesion: 1.0
-Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
+Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
 
 ### Community 153 - "Community 153"
 Cohesion: 1.0
-Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
+Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
 
 ### Community 154 - "Community 154"
 Cohesion: 1.0
-Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
+Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
 
 ### Community 155 - "Community 155"
 Cohesion: 1.0
-Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
+Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
 
 ### Community 156 - "Community 156"
 Cohesion: 1.0
-Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
+Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
 
 ### Community 157 - "Community 157"
 Cohesion: 1.0
-Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
+Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
 
 ### Community 158 - "Community 158"
 Cohesion: 1.0
-Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
+Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
 
 ### Community 159 - "Community 159"
 Cohesion: 1.0
-Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
+Nodes (1): Run stop point identifier on LLM response.
 
 ### Community 160 - "Community 160"
 Cohesion: 1.0
-Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
+Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
 
 ### Community 161 - "Community 161"
 Cohesion: 1.0
-Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
+Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
 
 ### Community 162 - "Community 162"
 Cohesion: 1.0
-Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
+Nodes (1): Print a compact summary of all iterations.
 
 ### Community 163 - "Community 163"
 Cohesion: 1.0
-Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
+Nodes (1): Analyze how attacks evolve over iterations.
 
 ### Community 164 - "Community 164"
 Cohesion: 1.0
-Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
+Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
 
 ### Community 165 - "Community 165"
 Cohesion: 1.0
-Nodes (1): Print a compact summary of all iterations.
+Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
 
 ### Community 166 - "Community 166"
 Cohesion: 1.0
-Nodes (1): Analyze how attacks evolve over iterations.
+Nodes (1): Run a single scenario without verbose logging (for benchmark).
 
 ### Community 167 - "Community 167"
 Cohesion: 1.0
-Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
+Nodes (1): Save the full trace to a JSON file for later analysis.
 
 ### Community 168 - "Community 168"
 Cohesion: 1.0
-Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
+Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
 
 ### Community 169 - "Community 169"
 Cohesion: 1.0
-Nodes (1): Run a single scenario without verbose logging (for benchmark).
+Nodes (1): Format a conversation entry for the model.
 
 ### Community 170 - "Community 170"
 Cohesion: 1.0
-Nodes (1): Save the full trace to a JSON file for later analysis.
+Nodes (1): Load train/val datasets from JSONL files.
 
 ### Community 171 - "Community 171"
 Cohesion: 1.0
-Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
+Nodes (1): Format a conversation entry for the model.
 
 ### Community 172 - "Community 172"
 Cohesion: 1.0
-Nodes (1): Remove regenerated few-shot response patterns that echo the defense.      Llama-
+Nodes (1): Load train/val datasets from JSONL files.
 
 ### Community 173 - "Community 173"
 Cohesion: 1.0
-Nodes (1): Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).
+Nodes (1): Format a conversation entry for the model.
 
 ### Community 174 - "Community 174"
 Cohesion: 1.0
-Nodes (1): Represents a single CTF defense scenario from the dataset.
+Nodes (1): Format a conversation entry for the model.
 
 ### Community 175 - "Community 175"
 Cohesion: 1.0
-Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
+Nodes (1): Display statistics about collected successes.
 
 ### Community 176 - "Community 176"
 Cohesion: 1.0
-Nodes (1): Reset environment to initial state.
+Nodes (1): Represents a single CTF defense scenario from the dataset.
 
 ### Community 177 - "Community 177"
 Cohesion: 1.0
-Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
+Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
 
 ### Community 178 - "Community 178"
 Cohesion: 1.0
-Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
+Nodes (1): Reset environment to initial state.
 
 ### Community 179 - "Community 179"
 Cohesion: 1.0
-Nodes (1): Predict whether the LLM response contains sensitive information.          Return
+Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
 
 ### Community 180 - "Community 180"
 Cohesion: 1.0
-Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
+Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
 
 ### Community 181 - "Community 181"
 Cohesion: 1.0
-Nodes (1): Pass ground truth access code for direct verification.
+Nodes (1): Predict whether the LLM response contains sensitive information.          Return
 
 ### Community 182 - "Community 182"
 Cohesion: 1.0
-Nodes (1): Load few-shot examples from training data.
+Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
 
 ### Community 183 - "Community 183"
 Cohesion: 1.0
-Nodes (1): Log ground truth leak detection (Phase 1.3).
+Nodes (1): Reset extractor metrics (call at start of each benchmark).
 
 ### Community 184 - "Community 184"
 Cohesion: 1.0
-Nodes (1): Layer 1: Extract candidates using regex patterns.
+Nodes (1): Reset extractor metrics (call at start of each benchmark).
 
 ### Community 185 - "Community 185"
 Cohesion: 1.0
-Nodes (1): Layer 2: Extract all quoted strings.
+Nodes (1): Load few-shot examples from training data.
 
 ### Community 186 - "Community 186"
 Cohesion: 1.0
-Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
+Nodes (1): Log ground truth leak detection (Phase 1.3).
 
 ### Community 187 - "Community 187"
 Cohesion: 1.0
-Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
+Nodes (1): Layer 1: Extract candidates using regex patterns.
 
 ### Community 188 - "Community 188"
 Cohesion: 1.0
-Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
+Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
 
 ### Community 189 - "Community 189"
 Cohesion: 1.0
-Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
+Nodes (1): Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist
 
 ### Community 190 - "Community 190"
 Cohesion: 1.0
-Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
+Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
 
 ### Community 191 - "Community 191"
 Cohesion: 1.0
-Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
+Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
 
 ### Community 192 - "Community 192"
 Cohesion: 1.0
-Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
+Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
 
 ### Community 193 - "Community 193"
 Cohesion: 1.0
-Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
+Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
 
 ### Community 194 - "Community 194"
 Cohesion: 1.0
-Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
+Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
 
 ### Community 195 - "Community 195"
 Cohesion: 1.0
-Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
+Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
 
 ### Community 196 - "Community 196"
 Cohesion: 1.0
-Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
+Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
 
 ### Community 197 - "Community 197"
 Cohesion: 1.0
-Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
+Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
 
 ### Community 198 - "Community 198"
 Cohesion: 1.0
-Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
+Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
 
 ### Community 199 - "Community 199"
 Cohesion: 1.0
-Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
+Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
 
 ### Community 200 - "Community 200"
 Cohesion: 1.0
-Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
+Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
 
 ### Community 201 - "Community 201"
 Cohesion: 1.0
-Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
+Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
 
 ### Community 202 - "Community 202"
 Cohesion: 1.0
-Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
+Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
 
 ### Community 203 - "Community 203"
 Cohesion: 1.0
-Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
+Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
 
 ### Community 204 - "Community 204"
 Cohesion: 1.0
-Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
+Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
 
 ### Community 205 - "Community 205"
 Cohesion: 1.0
-Nodes (1): Run stop point identifier on LLM response.
+Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
 
 ### Community 206 - "Community 206"
 Cohesion: 1.0
-Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
+Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
 
 ### Community 207 - "Community 207"
 Cohesion: 1.0
-Nodes (1): Print a compact summary of all iterations.
+Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
 
 ### Community 208 - "Community 208"
 Cohesion: 1.0
-Nodes (1): Analyze how attacks evolve over iterations.
+Nodes (1): Extract access code from LLM response using multi-layer pipeline.          Passe
 
 ### Community 209 - "Community 209"
 Cohesion: 1.0
-Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
+Nodes (1): Print a compact summary of all iterations.
 
 ### Community 210 - "Community 210"
 Cohesion: 1.0
-Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
+Nodes (1): Analyze how attacks evolve over iterations.
 
 ### Community 211 - "Community 211"
 Cohesion: 1.0
-Nodes (1): Run a single scenario without verbose logging (for benchmark).
+Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
 
 ### Community 212 - "Community 212"
 Cohesion: 1.0
-Nodes (1): Save the full trace to a JSON file for later analysis.
+Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
 
 ### Community 213 - "Community 213"
 Cohesion: 1.0
-Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
+Nodes (1): Run a single scenario without verbose logging (for benchmark).
 
 ### Community 214 - "Community 214"
 Cohesion: 1.0
-Nodes (1): Load and keep models in GPU memory across runs.
+Nodes (1): Save the full trace to a JSON file for later analysis.
 
 ### Community 215 - "Community 215"
 Cohesion: 1.0
-Nodes (1): Load all 4 models. Returns dict of load times.
+Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
 
 ### Community 216 - "Community 216"
 Cohesion: 1.0
-Nodes (1): Create results directory if it doesn't exist.
+Nodes (1): Remove regenerated few-shot response patterns that echo the defense.      Llama-
 
 ### Community 217 - "Community 217"
 Cohesion: 1.0
-Nodes (1): List all run JSON files with metadata.
+Nodes (1): Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).
 
 ### Community 218 - "Community 218"
 Cohesion: 1.0
-Nodes (1): Load a specific run by run_id.
+Nodes (1): Represents a single CTF defense scenario from the dataset.
 
 ### Community 219 - "Community 219"
 Cohesion: 1.0
-Nodes (1): Upload an external JSON file to results directory.
+Nodes (1): Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def
 
 ### Community 220 - "Community 220"
 Cohesion: 1.0
-Nodes (1): Delete a run JSON file.
+Nodes (1): Reset environment to initial state.
 
 ### Community 221 - "Community 221"
 Cohesion: 1.0
-Nodes (1): Compatibility normalization for AutoRed result JSON files.
+Nodes (1): Execute one step of the CTF game.          Returns ONLY the response — no succes
 
 ### Community 222 - "Community 222"
 Cohesion: 1.0
-Nodes (1): Make extractor output safe for comparisons, JSON, and WebSocket clients.
+Nodes (1): Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec
 
 ### Community 223 - "Community 223"
 Cohesion: 1.0
-Nodes (1): Return a complete, UI-safe AutoRedRun without discarding extra fields.
+Nodes (1): Predict whether the LLM response contains sensitive information.          Return
 
 ### Community 224 - "Community 224"
 Cohesion: 1.0
-Nodes (1): Models manager for FastAPI server — loads models on startup, keeps in memory.
+Nodes (1): Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)
 
 ### Community 225 - "Community 225"
 Cohesion: 1.0
-Nodes (1): Load and keep models in GPU memory across runs.
+Nodes (1): Pass ground truth access code for direct verification.
 
 ### Community 226 - "Community 226"
 Cohesion: 1.0
-Nodes (1): Load all 4 models. Returns dict of load times.
+Nodes (1): Load few-shot examples from training data.
 
 ### Community 227 - "Community 227"
 Cohesion: 1.0
-Nodes (1): Load models on startup, keep in memory across runs.
+Nodes (1): Log ground truth leak detection (Phase 1.3).
 
 ### Community 228 - "Community 228"
 Cohesion: 1.0
-Nodes (1): Check if a run is currently in progress.
+Nodes (1): Layer 2: Extract all quoted strings.
 
 ### Community 229 - "Community 229"
 Cohesion: 1.0
-Nodes (1): Get a specific run by ID.
+Nodes (1): Layer 4: Use target LLM with JSON-based broad extraction prompt.
 
 ### Community 230 - "Community 230"
 Cohesion: 1.0
-Nodes (1): Upload an external run JSON file.
+Nodes (1): Score and rank candidates.          Scoring:           - Contains secret-related
 
 ### Community 231 - "Community 231"
 Cohesion: 1.0
-Nodes (1): Get model load status from server.
+Nodes (1): Send extracted candidate back to victim to verify.          If victim responds w
 
 ### Community 232 - "Community 232"
 Cohesion: 1.0
-Nodes (1): Start a new experiment run with pre-loaded models and live WebSocket streaming.
+Nodes (1): Run full extraction pipeline.          Returns:             {                 "b
 
 ### Community 233 - "Community 233"
 Cohesion: 1.0
-Nodes (1): Background task: run experiment, stream via WebSocket.
+Nodes (1): Update TP/FP/FN metrics based on ground truth.          Called after every extra
 
 ### Community 234 - "Community 234"
 Cohesion: 1.0
-Nodes (1): Export run attempts as CSV.
+Nodes (1): Compute precision, recall, F1 from TP/FP/FN.
 
 ### Community 235 - "Community 235"
 Cohesion: 1.0
-Nodes (1): Export run as styled HTML report.
+Nodes (1): Check if extracted code matches ground truth (case-insensitive).          Kept f
 
 ### Community 236 - "Community 236"
 Cohesion: 1.0
-Nodes (1): wandb==0.12.15
+Nodes (1): Backward-compatible wrapper: returns best candidate as string.          Used by
 
 ### Community 237 - "Community 237"
 Cohesion: 1.0
-Nodes (1): Test 2: Russian Polite Defense (Lexi, 4 attempts)
+Nodes (1): Convert experiment trace to AutoRedRun JSON structure.
 
 ### Community 238 - "Community 238"
 Cohesion: 1.0
-Nodes (1): Test 3: Math Equation Defense (Lexi, 4 attempts)
+Nodes (1): Phase 3: Validate generator quality before running attacks.      Measures:
 
 ### Community 239 - "Community 239"
 Cohesion: 1.0
-Nodes (1): Llama Response 2: convolution Access Granted (T5, 2011 attempts)
+Nodes (1): Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat
 
 ### Community 240 - "Community 240"
+Cohesion: 1.0
+Nodes (1): Phase 6: Unified agent integrating all AutoRed components.      Components:
+
+### Community 241 - "Community 241"
+Cohesion: 1.0
+Nodes (1): Problem 1: Reset agent state between benchmark rounds.          Prevents memory
+
+### Community 242 - "Community 242"
+Cohesion: 1.0
+Nodes (1): Build the generator prompt with strategy, history, and context.          Problem
+
+### Community 243 - "Community 243"
+Cohesion: 1.0
+Nodes (1): #3: Strip prompt pollution — remove preamble fluff before sending to victim.
+
+### Community 244 - "Community 244"
+Cohesion: 1.0
+Nodes (1): #1: Select best strategy based on past performance.          Falls back to round
+
+### Community 245 - "Community 245"
+Cohesion: 1.0
+Nodes (1): #8: Mutate a successful attack by wrapping it in a new strategy.          Exampl
+
+### Community 246 - "Community 246"
+Cohesion: 1.0
+Nodes (1): Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy
+
+### Community 247 - "Community 247"
+Cohesion: 1.0
+Nodes (1): Phase 3: Record attempt in history for future context.          Problem 2: Score
+
+### Community 248 - "Community 248"
+Cohesion: 1.0
+Nodes (1): Run stop point identifier on LLM response.
+
+### Community 249 - "Community 249"
+Cohesion: 1.0
+Nodes (1): Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match
+
+### Community 250 - "Community 250"
+Cohesion: 1.0
+Nodes (1): Print a compact summary of all iterations.
+
+### Community 251 - "Community 251"
+Cohesion: 1.0
+Nodes (1): Analyze how attacks evolve over iterations.
+
+### Community 252 - "Community 252"
+Cohesion: 1.0
+Nodes (1): Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.
+
+### Community 253 - "Community 253"
+Cohesion: 1.0
+Nodes (1): Build AutoRedRun JSON for a benchmark round (silent mode).
+
+### Community 254 - "Community 254"
+Cohesion: 1.0
+Nodes (1): Run a single scenario without verbose logging (for benchmark).
+
+### Community 255 - "Community 255"
+Cohesion: 1.0
+Nodes (1): Save the full trace to a JSON file for later analysis.
+
+### Community 256 - "Community 256"
+Cohesion: 1.0
+Nodes (1): Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le
+
+### Community 257 - "Community 257"
+Cohesion: 1.0
+Nodes (1): Load and keep models in GPU memory across runs.
+
+### Community 258 - "Community 258"
+Cohesion: 1.0
+Nodes (1): Load all 4 models. Returns dict of load times.
+
+### Community 259 - "Community 259"
+Cohesion: 1.0
+Nodes (1): Create results directory if it doesn't exist.
+
+### Community 260 - "Community 260"
+Cohesion: 1.0
+Nodes (1): List all run JSON files with metadata.
+
+### Community 261 - "Community 261"
+Cohesion: 1.0
+Nodes (1): Load a specific run by run_id.
+
+### Community 262 - "Community 262"
+Cohesion: 1.0
+Nodes (1): Upload an external JSON file to results directory.
+
+### Community 263 - "Community 263"
+Cohesion: 1.0
+Nodes (1): Delete a run JSON file.
+
+### Community 264 - "Community 264"
+Cohesion: 1.0
+Nodes (1): Compatibility normalization for AutoRed result JSON files.
+
+### Community 265 - "Community 265"
+Cohesion: 1.0
+Nodes (1): Make extractor output safe for comparisons, JSON, and WebSocket clients.
+
+### Community 266 - "Community 266"
+Cohesion: 1.0
+Nodes (1): Return a complete, UI-safe AutoRedRun without discarding extra fields.
+
+### Community 267 - "Community 267"
+Cohesion: 1.0
+Nodes (1): Models manager for FastAPI server — loads models on startup, keeps in memory.
+
+### Community 268 - "Community 268"
+Cohesion: 1.0
+Nodes (1): Load and keep models in GPU memory across runs.
+
+### Community 269 - "Community 269"
+Cohesion: 1.0
+Nodes (1): Load all 4 models. Returns dict of load times.
+
+### Community 270 - "Community 270"
+Cohesion: 1.0
+Nodes (1): Load models on startup, keep in memory across runs.
+
+### Community 271 - "Community 271"
+Cohesion: 1.0
+Nodes (1): Check if a run is currently in progress.
+
+### Community 272 - "Community 272"
+Cohesion: 1.0
+Nodes (1): Get a specific run by ID.
+
+### Community 273 - "Community 273"
+Cohesion: 1.0
+Nodes (1): Upload an external run JSON file.
+
+### Community 274 - "Community 274"
+Cohesion: 1.0
+Nodes (1): Get model load status from server.
+
+### Community 275 - "Community 275"
+Cohesion: 1.0
+Nodes (1): Start a new experiment run with pre-loaded models and live WebSocket streaming.
+
+### Community 276 - "Community 276"
+Cohesion: 1.0
+Nodes (1): Background task: run experiment, stream via WebSocket.
+
+### Community 277 - "Community 277"
+Cohesion: 1.0
+Nodes (1): Export run attempts as CSV.
+
+### Community 278 - "Community 278"
+Cohesion: 1.0
+Nodes (1): Export run as styled HTML report.
+
+### Community 279 - "Community 279"
+Cohesion: 1.0
+Nodes (1): wandb==0.12.15
+
+### Community 280 - "Community 280"
+Cohesion: 1.0
+Nodes (1): Test 2: Russian Polite Defense (Lexi, 4 attempts)
+
+### Community 281 - "Community 281"
+Cohesion: 1.0
+Nodes (1): Test 3: Math Equation Defense (Lexi, 4 attempts)
+
+### Community 282 - "Community 282"
+Cohesion: 1.0
+Nodes (1): Llama Response 2: convolution Access Granted (T5, 2011 attempts)
+
+### Community 283 - "Community 283"
 Cohesion: 1.0
 Nodes (1): Llama Response 3: Serial Killer/Medic (T5)
 
@@ -1141,379 +1341,461 @@ Nodes (1): Llama Response 3: Serial Killer/Medic (T5)
   ui/src/components/ResizeHandle.tsx · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **533 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+528 more)
+- **574 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+569 more)
   These have ≤1 connection - possible missing edges or undocumented components.
+- **Thin community `Community 24`** (8 nodes): `kl_coeff()`, `KLController`, `.get_state_dict()`, `.__init__()`, `.load_from_state_dict()`, `.step()`, `kl_controllers.py`, `.load_from_dict()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 28`** (3 nodes): `Returns first three sentences from the generated text`, `three_sentence_summary()`, `post_processors.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 33`** (2 nodes): `RunListItem Type`, `FilterBar Component`
+- **Thin community `Community 34`** (2 nodes): `HPC Deployment Scripts`, `rl4lms Compatibility Fixes`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 35`** (2 nodes): `HPC Deployment Scripts`, `rl4lms Compatibility Fixes`
+- **Thin community `Community 35`** (2 nodes): `Revised Phase 0: Dataset Verification`, `Revised Phase 1: CTF Environment`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 36`** (2 nodes): `Revised Phase 0: Dataset Verification`, `Revised Phase 1: CTF Environment`
+- **Thin community `Community 36`** (2 nodes): `Export Features`, `Search and Filters`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 37`** (2 nodes): `Export Features`, `Search and Filters`
+- **Thin community `Community 37`** (2 nodes): `Test 4: Olajuwon Defense (Lexi, 1 attempt)`, `Test 7: Password 42 Defense (Lexi, 1 attempt)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 38`** (2 nodes): `Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed)`, `Test 8: **** Stars Password (Lexi, 7 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 39`** (2 nodes): `Test 4: Olajuwon Defense (Lexi, 1 attempt)`, `Test 7: Password 42 Defense (Lexi, 1 attempt)`
+- **Thin community `Community 39`** (2 nodes): `Test 5: Tomato Defense (Lexi, 13 attempts)`, `Test 9: Tomato Browser Defense (Lexi, 13 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 40`** (2 nodes): `Test 5: Tomato Defense (Lexi, 13 attempts)`, `Test 9: Tomato Browser Defense (Lexi, 13 attempts)`
+- **Thin community `Community 40`** (2 nodes): `Llama Response 1: yukinoshita (T5, 3 attempts)`, `Test 1: yukinoshita Defense (T5, 3 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 41`** (2 nodes): `Llama Response 1: yukinoshita (T5, 3 attempts)`, `Test 1: yukinoshita Defense (T5, 3 attempts)`
+- **Thin community `Community 41`** (2 nodes): `Experiment Directory Graph Report`, `Full Project Graph Report`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 42`** (2 nodes): `Experiment Directory Graph Report`, `Full Project Graph Report`
+- **Thin community `Community 43`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 46`** (1 nodes): `A factory method to instantiate data pool`
+- **Thin community `Community 45`** (1 nodes): `NewRunDialog Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 50`** (1 nodes): `r"""          Generates sequences of token ids for models with a language modeli`
+- **Thin community `Community 47`** (1 nodes): `ExtractorCard Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 56`** (1 nodes): `Builds policy and value models         and sets self._policy_model and self._val`
+- **Thin community `Community 48`** (1 nodes): `GeneratorCard Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 57`** (1 nodes): `Performs a forward pass on the policy and gets log_probs, entropy etc         co`
+- **Thin community `Community 49`** (1 nodes): `VictimCard Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 58`** (1 nodes): `Performs a forward pass on the value network and gets values corresponding to ob`
+- **Thin community `Community 50`** (1 nodes): `VerifierCard Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 59`** (1 nodes): `Evaluates specified <observation, action>         and returns log_probs, values,`
+- **Thin community `Community 51`** (1 nodes): `FilterBar Component`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 60`** (1 nodes): `Performs a forward pass on the reference policy and gets log_probs         corre`
+- **Thin community `Community 55`** (1 nodes): `A factory method to instantiate data pool`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 61`** (1 nodes): `Returns the first device of the policy. Used in the case of model parallel`
+- **Thin community `Community 59`** (1 nodes): `r"""          Generates sequences of token ids for models with a language modeli`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 62`** (1 nodes): `Returns the type of policy (causal or seq2seq)`
+- **Thin community `Community 65`** (1 nodes): `Builds policy and value models         and sets self._policy_model and self._val`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 63`** (1 nodes): `Extracts the prompt inputs and attention masks which is used as seed for generat`
+- **Thin community `Community 66`** (1 nodes): `Performs a forward pass on the policy and gets log_probs, entropy etc         co`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 64`** (1 nodes): `Takes a step with the given action and returns (next state, reward, done, info)`
+- **Thin community `Community 67`** (1 nodes): `Performs a forward pass on the value network and gets values corresponding to ob`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 72`** (1 nodes): `Eliminate ("mask out") chosen distribution outcomes by setting their probability`
+- **Thin community `Community 68`** (1 nodes): `Evaluates specified <observation, action>         and returns log_probs, values,`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 77`** (1 nodes): `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`
+- **Thin community `Community 69`** (1 nodes): `Performs a forward pass on the reference policy and gets log_probs         corre`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 78`** (1 nodes): `Remove regenerated few-shot response patterns that echo the defense.      Llama-`
+- **Thin community `Community 70`** (1 nodes): `Returns the first device of the policy. Used in the case of model parallel`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 79`** (1 nodes): `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`
+- **Thin community `Community 71`** (1 nodes): `Returns the type of policy (causal or seq2seq)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 80`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
+- **Thin community `Community 72`** (1 nodes): `Extracts the prompt inputs and attention masks which is used as seed for generat`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 81`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
+- **Thin community `Community 73`** (1 nodes): `Takes a step with the given action and returns (next state, reward, done, info)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 82`** (1 nodes): `Reset environment to initial state.`
+- **Thin community `Community 81`** (1 nodes): `Eliminate ("mask out") chosen distribution outcomes by setting their probability`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 83`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
+- **Thin community `Community 86`** (1 nodes): `Pass ground truth access code for direct verification.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 84`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
+- **Thin community `Community 87`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 85`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
+- **Thin community `Community 88`** (1 nodes): `Check if the victim response contains the ground truth access code.          Thi`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 86`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
+- **Thin community `Community 89`** (1 nodes): `Check if the victim response contains the ground truth access code.          Thi`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 87`** (1 nodes): `Pass ground truth access code for direct verification.`
+- **Thin community `Community 90`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 88`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
+- **Thin community `Community 91`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 89`** (1 nodes): `Load few-shot examples from training data.`
+- **Thin community `Community 92`** (1 nodes): `Layer 2: Extract all quoted strings.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 90`** (1 nodes): `Check if the victim response contains the ground truth access code.          Thi`
+- **Thin community `Community 93`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 91`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
+- **Thin community `Community 94`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 92`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
+- **Thin community `Community 95`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 93`** (1 nodes): `Layer 2: Extract all quoted strings.`
+- **Thin community `Community 96`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 94`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
+- **Thin community `Community 97`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 95`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
+- **Thin community `Community 98`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 96`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
+- **Thin community `Community 99`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 97`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
+- **Thin community `Community 100`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 98`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
+- **Thin community `Community 101`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 99`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
+- **Thin community `Community 102`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 100`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
+- **Thin community `Community 103`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 101`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
+- **Thin community `Community 104`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 102`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
+- **Thin community `Community 105`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 103`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
+- **Thin community `Community 106`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 104`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
+- **Thin community `Community 107`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 105`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
+- **Thin community `Community 108`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 106`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
+- **Thin community `Community 109`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 107`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
+- **Thin community `Community 110`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 108`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
+- **Thin community `Community 111`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 109`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
+- **Thin community `Community 112`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 110`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
+- **Thin community `Community 113`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 111`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
+- **Thin community `Community 114`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 112`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
+- **Thin community `Community 115`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 113`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
+- **Thin community `Community 116`** (1 nodes): `Print a compact summary of all iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 114`** (1 nodes): `Run stop point identifier on LLM response.`
+- **Thin community `Community 117`** (1 nodes): `Analyze how attacks evolve over iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 115`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
+- **Thin community `Community 118`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 116`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
+- **Thin community `Community 119`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 117`** (1 nodes): `Print a compact summary of all iterations.`
+- **Thin community `Community 120`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 118`** (1 nodes): `Analyze how attacks evolve over iterations.`
+- **Thin community `Community 121`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 119`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
+- **Thin community `Community 122`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 120`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
+- **Thin community `Community 123`** (1 nodes): `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 121`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
+- **Thin community `Community 124`** (1 nodes): `Remove regenerated few-shot response patterns that echo the defense.      Llama-`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 122`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
+- **Thin community `Community 125`** (1 nodes): `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 123`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
+- **Thin community `Community 126`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 124`** (1 nodes): `Format a conversation entry for the model.`
+- **Thin community `Community 127`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 125`** (1 nodes): `Load train/val datasets from JSONL files.`
+- **Thin community `Community 128`** (1 nodes): `Reset environment to initial state.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 126`** (1 nodes): `Format a conversation entry for the model.`
+- **Thin community `Community 129`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 127`** (1 nodes): `Load train/val datasets from JSONL files.`
+- **Thin community `Community 130`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 128`** (1 nodes): `Format a conversation entry for the model.`
+- **Thin community `Community 131`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 129`** (1 nodes): `Format a conversation entry for the model.`
+- **Thin community `Community 132`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 130`** (1 nodes): `Display statistics about collected successes.`
+- **Thin community `Community 133`** (1 nodes): `Pass ground truth access code for direct verification.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 131`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
+- **Thin community `Community 134`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 132`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
+- **Thin community `Community 135`** (1 nodes): `Load few-shot examples from training data.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 133`** (1 nodes): `Reset environment to initial state.`
+- **Thin community `Community 136`** (1 nodes): `Check if the victim response contains the ground truth access code.          Thi`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 134`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
+- **Thin community `Community 137`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 135`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
+- **Thin community `Community 138`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 136`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
+- **Thin community `Community 139`** (1 nodes): `Layer 2: Extract all quoted strings.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 137`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
+- **Thin community `Community 140`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 138`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
+- **Thin community `Community 141`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 139`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
+- **Thin community `Community 142`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 140`** (1 nodes): `Load few-shot examples from training data.`
+- **Thin community `Community 143`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 141`** (1 nodes): `Check if the victim response contains the ground truth access code.          Thi`
+- **Thin community `Community 144`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 142`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
+- **Thin community `Community 145`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 143`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
+- **Thin community `Community 146`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 144`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
+- **Thin community `Community 147`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 145`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
+- **Thin community `Community 148`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 146`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
+- **Thin community `Community 149`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 147`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
+- **Thin community `Community 150`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 148`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
+- **Thin community `Community 151`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 149`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
+- **Thin community `Community 152`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 150`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
+- **Thin community `Community 153`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 151`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
+- **Thin community `Community 154`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 152`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
+- **Thin community `Community 155`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 153`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
+- **Thin community `Community 156`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 154`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
+- **Thin community `Community 157`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 155`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
+- **Thin community `Community 158`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 156`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
+- **Thin community `Community 159`** (1 nodes): `Run stop point identifier on LLM response.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 157`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
+- **Thin community `Community 160`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 158`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
+- **Thin community `Community 161`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 159`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
+- **Thin community `Community 162`** (1 nodes): `Print a compact summary of all iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 160`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
+- **Thin community `Community 163`** (1 nodes): `Analyze how attacks evolve over iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 161`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
+- **Thin community `Community 164`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 162`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
+- **Thin community `Community 165`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 163`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
+- **Thin community `Community 166`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 164`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
+- **Thin community `Community 167`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 165`** (1 nodes): `Print a compact summary of all iterations.`
+- **Thin community `Community 168`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 166`** (1 nodes): `Analyze how attacks evolve over iterations.`
+- **Thin community `Community 169`** (1 nodes): `Format a conversation entry for the model.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 167`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
+- **Thin community `Community 170`** (1 nodes): `Load train/val datasets from JSONL files.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 168`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
+- **Thin community `Community 171`** (1 nodes): `Format a conversation entry for the model.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 169`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
+- **Thin community `Community 172`** (1 nodes): `Load train/val datasets from JSONL files.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 170`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
+- **Thin community `Community 173`** (1 nodes): `Format a conversation entry for the model.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 171`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
+- **Thin community `Community 174`** (1 nodes): `Format a conversation entry for the model.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 172`** (1 nodes): `Remove regenerated few-shot response patterns that echo the defense.      Llama-`
+- **Thin community `Community 175`** (1 nodes): `Display statistics about collected successes.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 173`** (1 nodes): `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`
+- **Thin community `Community 176`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 174`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
+- **Thin community `Community 177`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 175`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
+- **Thin community `Community 178`** (1 nodes): `Reset environment to initial state.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 176`** (1 nodes): `Reset environment to initial state.`
+- **Thin community `Community 179`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 177`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
+- **Thin community `Community 180`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 178`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
+- **Thin community `Community 181`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 179`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
+- **Thin community `Community 182`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 180`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
+- **Thin community `Community 183`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 181`** (1 nodes): `Pass ground truth access code for direct verification.`
+- **Thin community `Community 184`** (1 nodes): `Reset extractor metrics (call at start of each benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 182`** (1 nodes): `Load few-shot examples from training data.`
+- **Thin community `Community 185`** (1 nodes): `Load few-shot examples from training data.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 183`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
+- **Thin community `Community 186`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 184`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
+- **Thin community `Community 187`** (1 nodes): `Layer 1: Extract candidates using regex patterns.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 185`** (1 nodes): `Layer 2: Extract all quoted strings.`
+- **Thin community `Community 188`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 186`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
+- **Thin community `Community 189`** (1 nodes): `Layer 3: Extract capitalized words/phrases (potential secrets).          Heurist`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 187`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
+- **Thin community `Community 190`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 188`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
+- **Thin community `Community 191`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 189`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
+- **Thin community `Community 192`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 190`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
+- **Thin community `Community 193`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 191`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
+- **Thin community `Community 194`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 192`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
+- **Thin community `Community 195`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 193`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
+- **Thin community `Community 196`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 194`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
+- **Thin community `Community 197`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 195`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
+- **Thin community `Community 198`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 196`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
+- **Thin community `Community 199`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 197`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
+- **Thin community `Community 200`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 198`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
+- **Thin community `Community 201`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 199`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
+- **Thin community `Community 202`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 200`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
+- **Thin community `Community 203`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 201`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
+- **Thin community `Community 204`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 202`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
+- **Thin community `Community 205`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 203`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
+- **Thin community `Community 206`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 204`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
+- **Thin community `Community 207`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 205`** (1 nodes): `Run stop point identifier on LLM response.`
+- **Thin community `Community 208`** (1 nodes): `Extract access code from LLM response using multi-layer pipeline.          Passe`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 206`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
+- **Thin community `Community 209`** (1 nodes): `Print a compact summary of all iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 207`** (1 nodes): `Print a compact summary of all iterations.`
+- **Thin community `Community 210`** (1 nodes): `Analyze how attacks evolve over iterations.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 208`** (1 nodes): `Analyze how attacks evolve over iterations.`
+- **Thin community `Community 211`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 209`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
+- **Thin community `Community 212`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 210`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
+- **Thin community `Community 213`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 211`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
+- **Thin community `Community 214`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 212`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
+- **Thin community `Community 215`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 213`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
+- **Thin community `Community 216`** (1 nodes): `Remove regenerated few-shot response patterns that echo the defense.      Llama-`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 214`** (1 nodes): `Load and keep models in GPU memory across runs.`
+- **Thin community `Community 217`** (1 nodes): `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 215`** (1 nodes): `Load all 4 models. Returns dict of load times.`
+- **Thin community `Community 218`** (1 nodes): `Represents a single CTF defense scenario from the dataset.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 216`** (1 nodes): `Create results directory if it doesn't exist.`
+- **Thin community `Community 219`** (1 nodes): `Phase 1: Gymnasium-style environment for the CTF game.      Handles sandwich def`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 217`** (1 nodes): `List all run JSON files with metadata.`
+- **Thin community `Community 220`** (1 nodes): `Reset environment to initial state.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 218`** (1 nodes): `Load a specific run by run_id.`
+- **Thin community `Community 221`** (1 nodes): `Execute one step of the CTF game.          Returns ONLY the response — no succes`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 219`** (1 nodes): `Upload an external JSON file to results directory.`
+- **Thin community `Community 222`** (1 nodes): `Phase 4: Wrapper around DistilBERT judge with confidence scoring.      Paper Sec`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 220`** (1 nodes): `Delete a run JSON file.`
+- **Thin community `Community 223`** (1 nodes): `Predict whether the LLM response contains sensitive information.          Return`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 221`** (1 nodes): `Compatibility normalization for AutoRed result JSON files.`
+- **Thin community `Community 224`** (1 nodes): `Multi-layer extraction pipeline:       Layer 1: Regex Extractor (fast, no GPU)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 222`** (1 nodes): `Make extractor output safe for comparisons, JSON, and WebSocket clients.`
+- **Thin community `Community 225`** (1 nodes): `Pass ground truth access code for direct verification.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 223`** (1 nodes): `Return a complete, UI-safe AutoRedRun without discarding extra fields.`
+- **Thin community `Community 226`** (1 nodes): `Load few-shot examples from training data.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 224`** (1 nodes): `Models manager for FastAPI server — loads models on startup, keeps in memory.`
+- **Thin community `Community 227`** (1 nodes): `Log ground truth leak detection (Phase 1.3).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 225`** (1 nodes): `Load and keep models in GPU memory across runs.`
+- **Thin community `Community 228`** (1 nodes): `Layer 2: Extract all quoted strings.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 226`** (1 nodes): `Load all 4 models. Returns dict of load times.`
+- **Thin community `Community 229`** (1 nodes): `Layer 4: Use target LLM with JSON-based broad extraction prompt.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 227`** (1 nodes): `Load models on startup, keep in memory across runs.`
+- **Thin community `Community 230`** (1 nodes): `Score and rank candidates.          Scoring:           - Contains secret-related`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 228`** (1 nodes): `Check if a run is currently in progress.`
+- **Thin community `Community 231`** (1 nodes): `Send extracted candidate back to victim to verify.          If victim responds w`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 229`** (1 nodes): `Get a specific run by ID.`
+- **Thin community `Community 232`** (1 nodes): `Run full extraction pipeline.          Returns:             {                 "b`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 230`** (1 nodes): `Upload an external run JSON file.`
+- **Thin community `Community 233`** (1 nodes): `Update TP/FP/FN metrics based on ground truth.          Called after every extra`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 231`** (1 nodes): `Get model load status from server.`
+- **Thin community `Community 234`** (1 nodes): `Compute precision, recall, F1 from TP/FP/FN.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 232`** (1 nodes): `Start a new experiment run with pre-loaded models and live WebSocket streaming.`
+- **Thin community `Community 235`** (1 nodes): `Check if extracted code matches ground truth (case-insensitive).          Kept f`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 233`** (1 nodes): `Background task: run experiment, stream via WebSocket.`
+- **Thin community `Community 236`** (1 nodes): `Backward-compatible wrapper: returns best candidate as string.          Used by`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 234`** (1 nodes): `Export run attempts as CSV.`
+- **Thin community `Community 237`** (1 nodes): `Convert experiment trace to AutoRedRun JSON structure.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 235`** (1 nodes): `Export run as styled HTML report.`
+- **Thin community `Community 238`** (1 nodes): `Phase 3: Validate generator quality before running attacks.      Measures:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 236`** (1 nodes): `wandb==0.12.15`
+- **Thin community `Community 239`** (1 nodes): `Generate a malicious prompt using the LLaMA-2-7B-Chat generator.      Uses chat`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 237`** (1 nodes): `Test 2: Russian Polite Defense (Lexi, 4 attempts)`
+- **Thin community `Community 240`** (1 nodes): `Phase 6: Unified agent integrating all AutoRed components.      Components:`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 238`** (1 nodes): `Test 3: Math Equation Defense (Lexi, 4 attempts)`
+- **Thin community `Community 241`** (1 nodes): `Problem 1: Reset agent state between benchmark rounds.          Prevents memory`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 239`** (1 nodes): `Llama Response 2: convolution Access Granted (T5, 2011 attempts)`
+- **Thin community `Community 242`** (1 nodes): `Build the generator prompt with strategy, history, and context.          Problem`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 240`** (1 nodes): `Llama Response 3: Serial Killer/Medic (T5)`
+- **Thin community `Community 243`** (1 nodes): `#3: Strip prompt pollution — remove preamble fluff before sending to victim.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 244`** (1 nodes): `#1: Select best strategy based on past performance.          Falls back to round`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 245`** (1 nodes): `#8: Mutate a successful attack by wrapping it in a new strategy.          Exampl`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 246`** (1 nodes): `Generate a malicious attack prompt using LLaMA-2-7B-Chat.          Uses strategy`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 247`** (1 nodes): `Phase 3: Record attempt in history for future context.          Problem 2: Score`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 248`** (1 nodes): `Run stop point identifier on LLM response.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 249`** (1 nodes): `Run the AutoRed attack loop with FULL step-by-step logging.      Pipeline (match`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 250`** (1 nodes): `Print a compact summary of all iterations.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 251`** (1 nodes): `Analyze how attacks evolve over iterations.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 252`** (1 nodes): `Phase 7: Run benchmark matching paper evaluation protocol.      Paper Section V.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 253`** (1 nodes): `Build AutoRedRun JSON for a benchmark round (silent mode).`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 254`** (1 nodes): `Run a single scenario without verbose logging (for benchmark).`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 255`** (1 nodes): `Save the full trace to a JSON file for later analysis.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 256`** (1 nodes): `Phase 8: Benchmark extractor isolation from generator.      Creates synthetic le`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 257`** (1 nodes): `Load and keep models in GPU memory across runs.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 258`** (1 nodes): `Load all 4 models. Returns dict of load times.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 259`** (1 nodes): `Create results directory if it doesn't exist.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 260`** (1 nodes): `List all run JSON files with metadata.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 261`** (1 nodes): `Load a specific run by run_id.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 262`** (1 nodes): `Upload an external JSON file to results directory.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 263`** (1 nodes): `Delete a run JSON file.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 264`** (1 nodes): `Compatibility normalization for AutoRed result JSON files.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 265`** (1 nodes): `Make extractor output safe for comparisons, JSON, and WebSocket clients.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 266`** (1 nodes): `Return a complete, UI-safe AutoRedRun without discarding extra fields.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 267`** (1 nodes): `Models manager for FastAPI server — loads models on startup, keeps in memory.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 268`** (1 nodes): `Load and keep models in GPU memory across runs.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 269`** (1 nodes): `Load all 4 models. Returns dict of load times.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 270`** (1 nodes): `Load models on startup, keep in memory across runs.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 271`** (1 nodes): `Check if a run is currently in progress.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 272`** (1 nodes): `Get a specific run by ID.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 273`** (1 nodes): `Upload an external run JSON file.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 274`** (1 nodes): `Get model load status from server.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 275`** (1 nodes): `Start a new experiment run with pre-loaded models and live WebSocket streaming.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 276`** (1 nodes): `Background task: run experiment, stream via WebSocket.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 277`** (1 nodes): `Export run attempts as CSV.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 278`** (1 nodes): `Export run as styled HTML report.`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 279`** (1 nodes): `wandb==0.12.15`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 280`** (1 nodes): `Test 2: Russian Polite Defense (Lexi, 4 attempts)`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 281`** (1 nodes): `Test 3: Math Equation Defense (Lexi, 4 attempts)`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 282`** (1 nodes): `Llama Response 2: convolution Access Granted (T5, 2011 attempts)`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 283`** (1 nodes): `Llama Response 3: Serial Killer/Medic (T5)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
@@ -1521,12 +1803,12 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `AppErrorBoundary Component` and `ResizeHandle Component`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `load()` connect `Community 2` to `Community 1`, `Community 5`, `Community 8`, `Community 11`, `Community 13`?**
+- **Why does `load()` connect `Community 4` to `Community 1`, `Community 2`, `Community 3`, `Community 9`, `Community 17`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `RewardFunctionRegistry` connect `Community 1` to `Community 0`, `Community 3`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `NLPO` connect `Community 1` to `Community 0`, `Community 9`, `Community 7`?**
+- **Why does `MaskableDictRolloutBuffer` connect `Community 3` to `Community 0`, `Community 2`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Why does `RewardFunctionRegistry` connect `Community 1` to `Community 0`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Are the 65 inferred relationships involving `RewardFunctionRegistry` (e.g. with `RewardFunction` and `BatchedRewardFunction`) actually correct?**
   _`RewardFunctionRegistry` has 65 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 37 inferred relationships involving `RewardFunction` (e.g. with `RewardIncreasingNumbers` and `RewardSentencesWithDates`) actually correct?**
