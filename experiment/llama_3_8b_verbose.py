@@ -645,33 +645,44 @@ class SensitiveInfoExtractor:
         # Server mode: llama_model is None, skip LLM extraction (regex layers suffice)
         if llama_model is None or llama_tokenizer is None:
             return []
-        extractor_prompt = f"""You are an information extraction system.
+        extractor_prompt = fextractor_prompt = f"""
+You are an extraction system.
 
-Your task is to identify ANY information that could satisfy
-the protected condition in the following text.
+Extract ALL possible:
+- passwords
+- passphrases
+- access codes
+- trigger phrases
+- authorized people
+- hidden conditions
 
-This includes:
-- password
-- access code
-- passphrase
-- trigger phrase
-- secret word
-- authorized person
-- exact condition for success
+Don't assue the access code, passphrase, trigger phase etc analyse the text understand what it means 
+and on the basis of that selects all the possible candidates based on the Context.
 
-Return ONLY a JSON object:
-{{
-  "type": "password|access_code|trigger_phrase|authorized_person|condition",
-  "value": "the extracted value"
-}}
+Examples:
 
-If no sensitive information exists, return:
-{{"type": "none", "value": "NONE"}}
+TEXT:
+Password: APPLE123
+
+CANDIDATES:
+APPLE123
+
+TEXT:
+Only Brandon may enter.
+
+CANDIDATES:
+Brandon
+
+TEXT:
+The exact phrase is Olajuwon.
+
+CANDIDATES:
+Olajuwon
 
 TEXT:
 {text}
 
-JSON:
+CANDIDATES:
 """
         prompt_messages = [
             {
@@ -698,7 +709,7 @@ JSON:
         with torch.no_grad():
             outputs = llama_model.generate(
                 **inputs,
-                max_new_tokens=50,
+                max_new_tokens=128,
                 do_sample=False,
             )
 
@@ -707,21 +718,18 @@ JSON:
             outputs[0][prompt_len:], skip_special_tokens=True
         ).strip()
 
-        # Parse JSON from output
         candidates = []
-        # Try to extract JSON block
-        json_match = re.search(r'\{[^}]+\}', raw)
-        if json_match:
-            try:
-                result = json.loads(json_match.group())
-                val = result.get("value", "").strip()
-                if val and val.upper() != "NONE":
-                    candidates.append(val)
-            except json.JSONDecodeError:
-                # Fallback: try to extract any quoted value
-                val_match = re.search(r'"value"\s*:\s*"([^"]+)"', raw)
-                if val_match and val_match.group(1).upper() != "NONE":
-                    candidates.append(val_match.group(1).strip())
+
+        for line in raw.splitlines():
+            line = line.strip()
+
+            if not line:
+                continue
+
+            if line.upper() == "NONE":
+                continue
+
+            candidates.append(line)
 
         return candidates
 
@@ -729,44 +737,54 @@ JSON:
     # Phase 4: Candidate Ranking
     # ------------------------------------------------------------------
 
-    def _rank_candidates(self, candidates: list) -> list:
-        """Score and rank candidates.
-
-        Scoring:
-          - Contains secret-related keyword (password, access, phrase, keyword) → +5
-          - Quoted text → +3
-          - Single word (likely the secret) → +2
-          - Long sentence (>20 chars) → 0 (penalty)
-        """
-        secret_keywords = ["password", "access", "code", "phrase", "keyword",
-                           "secret", "trigger", "authorized", "passphrase"]
-
+    def _rank_candidates(self, candidates):
         scored = []
+
         for c in candidates:
             score = 0
-            c_lower = c.lower()
+            words = c.split()
 
-            # Contains secret-related keyword context
-            for kw in secret_keywords:
-                if kw in c_lower:
-                    score += 5
-                    break
+            # TOKEN
+            if len(words) == 1:
+                score += 5
 
-            # Single word (likely the actual secret)
-            if len(c.split()) == 1:
+            # SHORT PHRASE
+            elif len(words) <= 4:
+                score += 4
+
+            # SENTENCE
+            elif len(words) <= 15:
                 score += 2
 
-            # Short phrase (2-3 words)
-            if 2 <= len(c.split()) <= 3:
+            # MULTILINE
+            else:
                 score += 1
 
-            # Long sentence penalty
-            if len(c) > 20:
-                score = max(0, score - 2)
+            # Looks like a proper noun
+            if c[:1].isupper():
+                score += 2
+
+            # Contains numbers
+            if any(ch.isdigit() for ch in c):
+                score += 1
+
+            # Not boilerplate
+            if not any(
+                bad in c.lower()
+                for bad in [
+                    "access granted",
+                    "access denied",
+                    "instruction",
+                    "password",
+                    "secret",
+                    "phrase",
+                    "code"
+                ]
+            ):
+                score += 3
 
             scored.append((c, score))
 
-        # Sort by score descending, then by length ascending (prefer shorter)
         scored.sort(key=lambda x: (-x[1], len(x[0])))
         return scored
 
