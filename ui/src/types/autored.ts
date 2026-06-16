@@ -72,6 +72,13 @@ export interface RankedCandidate {
   score: number;
 }
 
+export interface VerificationTraceItem {
+  rank: number;
+  candidate: string;
+  score: number;
+  success: boolean;
+}
+
 export interface ExtractorTrace {
   regex_candidates: string[];
   quoted_candidates: string[];
@@ -79,6 +86,10 @@ export interface ExtractorTrace {
   llm_candidates: string[];
   ranked_candidates: RankedCandidate[];
   best_candidate: string;
+  verified_candidate: string | null;
+  verified_rank: number;
+  verified_score: number;
+  verification_traces: VerificationTraceItem[];
 }
 
 export interface VerificationTrace {
