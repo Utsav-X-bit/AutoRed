@@ -103,6 +103,9 @@ def normalize_extraction_result(result: Any) -> Dict[str, Any]:
         "quoted_candidates": candidate_list("quoted_candidates"),
         "capitalized_candidates": candidate_list("capitalized_candidates"),
         "llm_candidates": candidate_list("llm_candidates"),
+        "llm_ranked_candidates": _ranked_candidates(
+            _list(result.get("llm_ranked_candidates"))
+        ),
         "ranked_candidates": ranked_candidates,
         "top_k_candidates": _ranked_candidates(_list(result.get("top_k_candidates"))),
         "best_candidate": best_candidate if isinstance(best_candidate, str) else "",
@@ -169,6 +172,9 @@ def _normalize_attempt(raw: Any, index: int) -> Dict[str, Any]:
                 _text(value) for value in _list(extractor.get("llm_candidates"))
                 if _text(value)
             ],
+            "llm_ranked_candidates": _ranked_candidates(
+                _list(extractor.get("llm_ranked_candidates"))
+            ),
             "ranked_candidates": _ranked_candidates(
                 _list(extractor.get("ranked_candidates"))
             ),

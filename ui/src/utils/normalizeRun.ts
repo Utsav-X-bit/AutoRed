@@ -95,6 +95,7 @@ export function normalizeAttempt(value: unknown, index = 0): Attempt {
       quoted_candidates: asArray(extractor.quoted_candidates).map(String),
       capitalized_candidates: asArray(extractor.capitalized_candidates).map(String),
       llm_candidates: asArray(extractor.llm_candidates).map(String),
+      llm_ranked_candidates: normalizeRankedCandidates(extractor.llm_ranked_candidates),
       ranked_candidates: normalizeRankedCandidates(extractor.ranked_candidates),
       top_k_candidates: normalizeRankedCandidates(extractor.top_k_candidates),
       best_candidate: asString(extractor.best_candidate),

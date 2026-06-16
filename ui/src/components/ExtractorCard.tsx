@@ -64,6 +64,21 @@ export default function ExtractorCard({ attempt }: { attempt: Attempt }) {
         </div>
       </div>
 
+      {extractor.llm_ranked_candidates.length > 0 && (
+        <div className="mb-3">
+          <p className="text-xs text-slate-500 mb-1.5">LLM Context Rank</p>
+          <div className="space-y-1">
+            {extractor.llm_ranked_candidates.map((rc, i) => (
+              <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-2 text-sm bg-indigo-50 rounded px-3 py-1.5 border border-indigo-100">
+                <span className="text-xs font-bold text-indigo-700">#{i + 1}</span>
+                <span className="font-mono text-indigo-900 whitespace-pre-wrap break-words">{rc.value}</span>
+                <span className="text-xs text-indigo-700">context: {rc.score}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div>
         <p className="text-xs text-slate-500 mb-1.5">Ranked Candidates</p>
         <div className="space-y-1">

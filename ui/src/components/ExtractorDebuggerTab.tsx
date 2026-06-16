@@ -121,6 +121,27 @@ export default function ExtractorDebuggerTab() {
             </div>
           </div>
 
+          {extractor.llm_ranked_candidates.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-slate-700 mb-1">Layer 4b: LLM Context Rank</p>
+              <div className="space-y-1">
+                {extractor.llm_ranked_candidates.map((rc: { value: string; score: number }, i: number) => {
+                  const isGT = rc.value.toLowerCase() === accessCode.toLowerCase();
+                  return (
+                    <div key={i} className={`flex items-center justify-between text-sm rounded px-3 py-1.5 ${isGT ? 'bg-green-50 border border-green-200' : 'bg-indigo-50 border border-indigo-100'}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400 w-4">{i + 1}</span>
+                        <span className="font-mono text-slate-700 whitespace-pre-wrap break-words">{rc.value}</span>
+                        {isGT && <span className="text-xs text-green-600">GT</span>}
+                      </div>
+                      <span className="text-xs text-indigo-700">context {rc.score}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <p className="text-xs font-medium text-slate-700 mb-1">Layer 5: Ranked Candidates</p>
             <div className="space-y-1">

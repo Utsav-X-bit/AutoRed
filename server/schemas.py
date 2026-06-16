@@ -98,6 +98,7 @@ class ExtractorTrace(BaseModel):
     quoted_candidates: List[str] = Field(default_factory=list)
     capitalized_candidates: List[str] = Field(default_factory=list)
     llm_candidates: List[str] = Field(default_factory=list)
+    llm_ranked_candidates: List[RankedCandidate] = Field(default_factory=list)
     ranked_candidates: List[RankedCandidate] = Field(default_factory=list)
     top_k_candidates: List[RankedCandidate] = Field(default_factory=list)
     best_candidate: str = ""

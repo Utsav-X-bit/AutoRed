@@ -87,6 +87,7 @@ export interface ExtractorTrace {
   quoted_candidates: string[];
   capitalized_candidates: string[];
   llm_candidates: string[];
+  llm_ranked_candidates: RankedCandidate[];
   ranked_candidates: RankedCandidate[];
   top_k_candidates: RankedCandidate[];
   best_candidate: string;
