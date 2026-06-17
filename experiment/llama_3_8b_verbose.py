@@ -2414,7 +2414,8 @@ def analyze_attack_evolution(trace: list):
 
 
 def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
-                  verbose: bool = False) -> dict:
+                  verbose: bool = False,
+                  worker_id: int = 0, num_workers: int = 1) -> dict:
     """
     Phase 7: Run benchmark matching paper evaluation protocol.
 
@@ -2423,6 +2424,11 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
       - 100 max interactions per round
       - Success rate = successes / total
       - Defense rate = 1 - success rate
+
+    Multi-worker support:
+      - worker_id: 0-based index of this worker
+      - num_workers: total number of parallel workers
+      - Each worker processes a disjoint slice of scenarios
 
     Returns:
         {
@@ -2434,7 +2440,10 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
         }
     """
     print("\n" + "=" * 80)
-    print(f"🏁 BENCHMARK: {n_rounds} Rounds × {MAX_INTERACTIONS} Max Interactions")
+    if num_workers > 1:
+        print(f"🏁 BENCHMARK (Worker {worker_id}/{num_workers}): {n_rounds} Rounds × {MAX_INTERACTIONS} Max Interactions")
+    else:
+        print(f"🏁 BENCHMARK: {n_rounds} Rounds × {MAX_INTERACTIONS} Max Interactions")
     print("=" * 80)
 
     results = []
@@ -2459,6 +2468,19 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
         scenarios_df = defender_df.sample(n=n_rounds, random_state=42, replace=True)
     else:
         scenarios_df = defender_df.sample(n=n_rounds, random_state=42)
+
+    # Multi-worker: slice scenarios for this worker
+    if num_workers > 1:
+        scenarios_list = scenarios_df.reset_index(drop=True).to_dict('records')
+        per_worker = len(scenarios_list) // num_workers
+        remainder = len(scenarios_list) % num_workers
+        # Distribute remainder across first 'remainder' workers
+        start = worker_id * per_worker + min(worker_id, remainder)
+        end = start + per_worker + (1 if worker_id < remainder else 0)
+        worker_scenarios = scenarios_list[start:end]
+        print(f"\n  [WORKER] Processing scenarios {start}-{end-1} ({len(worker_scenarios)} scenarios)")
+        scenarios_df = pd.DataFrame(worker_scenarios)
+        n_rounds = len(scenarios_df)  # Actual rounds for this worker
 
     for round_idx, (_, row) in enumerate(tqdm(
         scenarios_df.iterrows(), total=n_rounds, desc="Benchmark"
@@ -2544,6 +2566,8 @@ def run_benchmark(agent: RedTeamingAgent, n_rounds: int = BENCHMARK_ROUNDS,
             "target_model": "Llama-3-8B-Instruct",
             "n_rounds": n_rounds,
             "max_interactions": MAX_INTERACTIONS,
+            "worker_id": worker_id if num_workers > 1 else None,
+            "num_workers": num_workers if num_workers > 1 else None,
         },
         "success_rate": success_rate,
         "defense_rate": defense_rate,
@@ -3131,6 +3155,14 @@ if __name__ == "__main__":
         "--benchmark-output", default=BENCHMARK_LOG_PATH,
         help="Where to save aggregate benchmark summary JSON"
     )
+    parser.add_argument(
+        "--worker-id", type=int, default=0,
+        help="Worker ID for multi-GPU parallel benchmark (0-based, default: 0)"
+    )
+    parser.add_argument(
+        "--num-workers", type=int, default=1,
+        help="Total number of workers for parallel benchmark (default: 1)"
+    )
     args = parser.parse_args()
 
     GENERATOR_PATH = args.generator_path
@@ -3229,5 +3261,14 @@ if __name__ == "__main__":
             print(f"{'=' * 80}")
 
         elif args.mode == "benchmark":
-            # Phase 7: Run benchmark
-            benchmark = run_benchmark(agent, n_rounds=args.rounds, verbose=False)
+            # Phase 7: Run benchmark (supports multi-worker parallel mode)
+            if args.num_workers > 1:
+                print(f"\n[WORKER] Multi-GPU mode: worker {args.worker_id}/{args.num_workers}")
+                print(f"[WORKER] Total rounds: {args.rounds}, per-worker: {args.rounds // args.num_workers}")
+            benchmark = run_benchmark(
+                agent,
+                n_rounds=args.rounds,
+                verbose=False,
+                worker_id=getattr(args, 'worker_id', 0),
+                num_workers=getattr(args, 'num_workers', 1),
+            )
