@@ -17,9 +17,9 @@ export HF_HUB_OFFLINE=1
 
 CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
     --mode benchmark \
-    --rounds 50 \
-    --dataset-size 50 \
-    --generator-path experiment/results/qlo_positive_v1 \
+    --rounds 100 \
+    --dataset-size 100 \
+    --generator-path experiment/results/qlo_verified_v1 \
     --base-generator-path Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2 \
-    --benchmark-output results/benchmarks/qlo_positive_v1_summary.json \
-    2>&1 | tee logs/qlo_positive_v1_benchmark.log
+    --benchmark-output results/benchmarks/qlo_verified_v1_summary-8.json \
+    2>&1 | tee logs/qlo_verified_v1_benchmark-8.log
