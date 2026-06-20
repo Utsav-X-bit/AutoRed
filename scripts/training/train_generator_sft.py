@@ -89,7 +89,6 @@ def train():
         bf16=True, # Llama 3 handles bfloat16 well
         max_grad_norm=0.3,
         warmup_ratio=0.03,
-        group_by_length=True,
         lr_scheduler_type="cosine",
         report_to="none" # Disable wandb for local/HPC runs
     )
