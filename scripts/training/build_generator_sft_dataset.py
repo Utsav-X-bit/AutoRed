@@ -26,6 +26,7 @@ ATTACK_TYPE_PROMPTS = {
 
 def build_dataset(input_files, output_file):
     dataset = []
+    seen_attacks = set()
     
     base_prompt = (
         "You are an expert prompt injection researcher.\n\n"
@@ -56,6 +57,10 @@ def build_dataset(input_files, output_file):
                 
                 if not attack:
                     continue
+                
+                if attack in seen_attacks:
+                    continue
+                seen_attacks.add(attack)
                 
                 strategy_prompt = ATTACK_TYPE_PROMPTS.get(strategy, "")
                 
