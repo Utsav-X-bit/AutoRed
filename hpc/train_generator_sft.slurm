@@ -30,10 +30,6 @@ echo "Starting Supervised Fine-Tuning (SFT) for the Malicious Prompt Generator..
 cd ..
 
 # Run the SFT training script
-python scripts/training/train_text_generation.py \
-    --config_path scripts/training/task_configs/pi_gen/pi_supervised.yml \
-    --project_name AutoRed_Generator \
-    --experiment_name SFT_T5_Base \
-    --base_path_to_store_results ./experiment/results/sft
+python3 scripts/training/train_generator_sft.py
 
 echo "SFT Training Completed."
