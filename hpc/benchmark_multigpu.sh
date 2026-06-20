@@ -16,8 +16,6 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:A100-SXM4:4
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=128G
 #SBATCH --time=7-00:00:00
 #SBATCH --output=benchmark_multigpu_%j.out
 #SBATCH --error=benchmark_multigpu_%j.err
