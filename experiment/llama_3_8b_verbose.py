@@ -115,6 +115,7 @@ if not _SERVER_MODE:
         torch_dtype=torch.float16,
         device_map={"": device},
         local_files_only=True,
+        load_in_4bit=True,
     )
     llama_tokenizer = AutoTokenizer.from_pretrained(
         LLAMA_PATH,
@@ -122,6 +123,10 @@ if not _SERVER_MODE:
         use_fast=False,
     )
     MODEL_LOAD_TIME["victim"] = time.time() - t0
+    if hasattr(llama_model, "generation_config"):
+        llama_model.generation_config.max_length = 4096
+    if hasattr(llama_model, "config"):
+        llama_model.config.max_length = 4096
     print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
 else:
     print("[LOAD] Server mode — skipping module-level model load")
@@ -158,6 +163,7 @@ def chat_with_llama_batch(
         outputs = llama_model.generate(
             **inputs,
             max_new_tokens=200,
+            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -204,6 +210,7 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
         outputs = llama_model.generate(
             **inputs,
             max_new_tokens=200,
+            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -321,6 +328,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             torch_dtype=torch.float16,
             device_map={"": device},
             local_files_only=True,
+            load_in_4bit=True,
         )
         model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
     else:
@@ -332,8 +340,13 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             torch_dtype=torch.float16,
             device_map={"": device},
             local_files_only=True,
+            load_in_4bit=True,
         )
     model.eval()
+    if hasattr(model, "generation_config"):
+        model.generation_config.max_length = 4096
+    if hasattr(model, "config"):
+        model.config.max_length = 4096
     MODEL_LOAD_TIME["generator"] = time.time() - t0
     print(
         f"[LOAD] ✓ Llama-2-7B-Chat generator loaded ({MODEL_LOAD_TIME['generator']:.1f}s)"
@@ -1067,7 +1080,7 @@ class SensitiveInfoExtractor:
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
+            outputs = mdl.generate(**inputs, max_new_tokens=180, max_length=4096, do_sample=False)
 
         prompt_len = inputs["input_ids"].shape[1]
         raw = tkr.decode(outputs[0][prompt_len:], skip_special_tokens=True).strip()
@@ -1926,6 +1939,7 @@ def inference_gen_model_verbose_batch(
         outputs = gen_model.generate(
             **inputs,
             max_new_tokens=128,
+            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -1975,6 +1989,7 @@ def inference_gen_model_verbose(gen_model, gen_tokenizer, prompt_text: str) -> d
         outputs = gen_model.generate(
             **inputs,
             max_new_tokens=128,
+            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -3028,7 +3043,7 @@ def run_benchmark(
         scenarios_df = pd.DataFrame(worker_scenarios)
         n_rounds = len(scenarios_df)  # Actual rounds for this worker
 
-    BATCH_SIZE = 16
+    BATCH_SIZE = 8
     for batch_start in tqdm(range(0, n_rounds, BATCH_SIZE), desc="Benchmark Batches"):
         batch_df = scenarios_df.iloc[batch_start : batch_start + BATCH_SIZE]
         batch_scenarios = []
@@ -3462,7 +3477,7 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
+            outputs = mdl.generate(**inputs, max_new_tokens=180, max_length=4096, do_sample=False)
 
         tkr.padding_side = orig_padding
 
