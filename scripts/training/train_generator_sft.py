@@ -5,8 +5,21 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    TrainingArguments
+    TrainingArguments,
+    Trainer
 )
+
+# Monkey-patch Trainer to fix trl vs transformers 5.x incompatibility
+if not hasattr(Trainer, "_original_init"):
+    Trainer._original_init = Trainer.__init__
+    def patched_init(self, *args, **kwargs):
+        if "tokenizer" in kwargs and "processing_class" not in kwargs:
+            kwargs["processing_class"] = kwargs.pop("tokenizer")
+        elif "tokenizer" in kwargs and "processing_class" in kwargs:
+            del kwargs["tokenizer"]
+        Trainer._original_init(self, *args, **kwargs)
+    Trainer.__init__ = patched_init
+
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
 
@@ -100,7 +113,7 @@ def train():
         peft_config=peft_config,
         dataset_text_field="text",
         max_seq_length=1024,
-        processing_class=tokenizer,
+        tokenizer=tokenizer,
         args=training_args,
     )
 
