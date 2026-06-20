@@ -10,11 +10,11 @@ This work presents **AutoRed**, an innovative learning framework developed to au
 **AutoRed** consists 
 
 - **One high-level model for decision-making**:
-  - The **Stop Point Identifier** is a trained binary classifier that determines whether the current stage should proceed with an attack or an extraction task.
+  - The **Stop Point Identifier** is a DistilBERT-based binary classifier that determines whether the current stage should proceed with an attack or conditionally execute the extraction pipeline.
 
-- **Two low-level models for prompt injection attack tasks**:
-  - The **Malicious Prompt Generator** is trained using Supervised Fine-Tuning (SFT) and Reinforcement Learning (RL) to generate a diverse range of malicious prompt injection attacks.
-  - The **Sensitive Information Extractor** is a few-shot engineered GPT-3.5-turbo model designed to extract sensitive data.
+- **Two low-level modules for prompt injection attack tasks**:
+  - The **Malicious Prompt Generator** (now upgraded to Llama-3.1-8B-Lexi-Uncensored-V2) is designed to generate a diverse range of malicious prompt injection attacks using 7 distinct strategies and mutation logic.
+  - The **Sensitive Information Extractor** is a multi-layer pipeline combining Regex patterns, capitalized words extraction, and an LLM-based fallback, followed by a verifier loop to accurately extract and confirm sensitive data.
 
 
 

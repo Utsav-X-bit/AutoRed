@@ -1,6 +1,6 @@
 # AutoRed — Complete Change Log
 
-**Last Updated**: 2026-06-15  
+**Last Updated**: 2026-06-20  
 **Primary File**: `experiment/llama_3_8b_verbose.py` (~2770+ lines)
 
 ---
@@ -19,6 +19,8 @@
 10. [HPC Deployment](#hpc-deployment)
 11. [QLoRA SFT Training](#qlora-sft-training)
 12. [Benchmark Adapter Evaluation](#benchmark-adapter-evaluation)
+13. [Multi-GPU Batched Benchmark](#multi-gpu-batched-benchmark)
+14. [Judge Extractor Bypass](#judge-extractor-bypass)
 
 ---
 
@@ -230,14 +232,13 @@ Extractor Success:  ✅ YES / ❌ NO  (extractor found correct code)
 - Records `verification_traces` with rank, candidate, score, and success
 - First verified candidate wins and becomes `verified_candidate`
 
-### Phase 7 — Extract Every Round
-- **Before**: Extraction only triggered when judge said ATTEMPT + confidence > 0.80
-- **After**: Full pipeline runs EVERY round:
+### Phase 7 — Extract Conditionally
+- **Before**: Full pipeline ran EVERY round, wasting time on ATTACK outputs.
+- **After**: Judge executes *after* the victim generates its response and only evaluates the victim's output. If the judge outputs ATTEMPT, the multi-layer extractor runs. If the judge outputs ATTACK, the extractor pipeline is bypassed.
   ```
-  Response → Regex/Quoted/Capitalized Extractors → LLM Extractor → Normalize/Dedupe → Ranking → Top-K Verifier → Success?
+  Response → Judge → (If ATTEMPT) → Regex/Quoted/Capitalized Extractors → LLM Extractor → Normalize/Dedupe → Ranking → Top-K Verifier → Success?
   ```
-- Applied in both `verbose_test_llama()` and `_silent_test()`
-- Experiment paths pass `env` into `extract()`, enabling verifier execution
+- Applied in both `verbose_test_llama()` and `_silent_test()` and `_silent_test_batch()`
 
 ### Phase 8 — Extractor Metrics (TP/FP/FN)
 - Tracks `true_positive`, `false_positive`, `false_negative` when ground truth is available
@@ -385,6 +386,31 @@ CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \
 
 ---
 
+## Multi-GPU Batched Benchmark
+
+### Batching Architecture
+- Added `chat_with_llama_batch()` for concurrent victim LLM generation (batch size up to 16/32).
+- Added `generate_attack_batch()` for concurrent attack generation.
+- Added `_silent_test_batch()` execution path to process a full batch of 16 scenarios simultaneously.
+
+### HPC 4-GPU Script
+- Created `hpc/autored_benchmark_4gpu.slurm` which splits a 1000-scenario pool across 4 parallel GPU workers.
+- Merges the benchmark JSON summaries output by each worker natively.
+
+---
+
+## Judge Extractor Bypass
+
+### Shifted Evaluation
+- The DistilBERT Judge originally evaluated the *previous* response from the victim.
+- Now, it correctly evaluates the victim's *current* response after it has been generated.
+
+### Conditional Extractor execution
+- Integrated an optimization: If the Judge classifies the Victim's output as an `ATTACK` (no access code leaked), the heavy Multi-Layer Extractor pipeline is completely bypassed.
+- This results in a massive speed up during the multi-GPU batched benchmark.
+
+---
+
 ## Architecture Evolution
 
 ### Before (Original AutoRed)
@@ -400,7 +426,7 @@ Victim LLM (Instruct, chat template)
        ↓
 DistilBERT Judge (256 tokens, trimmed input)
        ↓
-Multi-Layer Extractor Pipeline:
+Conditional Multi-Layer Extractor Pipeline (Runs on ATTEMPT only):
   ├─ Regex Extractor (12 patterns)
   ├─ Quoted Text Extractor
   ├─ Capitalized Candidate Extractor

@@ -1,7 +1,7 @@
 # GEMINI.md: AutoRed — Current State
 
-**Last Updated:** 2026-06-14
-**Status:** Active research project — 500-round benchmark completed, dataset analysis done
+**Last Updated:** 2026-06-20
+**Status:** Active research project — Multi-GPU batched benchmarking implemented, dataset analysis done
 
 ---
 
@@ -27,9 +27,9 @@ AutoRed is an automated framework for red teaming Large Language Models (LLMs). 
 │         │      ▼                                                │
 │  Strategy Feedback ← DistilBERT Judge ← Llama-3-8B-Instruct     │
 │  (scoring system)   (256 tokens)      (victim, defended)        │
-│                              │                                   │
 │                              ▼                                   │
-│              Multi-Layer Extractor Pipeline                      │
+│         Conditional Multi-Layer Extractor Pipeline               │
+│         (Only executes if Judge predicts ATTEMPT)                │
 │              ├─ Ground Truth Leak Check                          │
 │              ├─ 12 Regex Patterns                                │
 │              ├─ Quoted Text Extraction                           │
@@ -118,13 +118,19 @@ AutoRed/
 python experiment/llama_3_8b_verbose.py --mode single
 ```
 
-### Benchmark Mode
+### Benchmark Mode (Batched)
 ```bash
 # 500-round benchmark (default dataset size: 1000)
 python experiment/llama_3_8b_verbose.py --mode benchmark --rounds 500
 
 # Larger dataset pool
 python experiment/llama_3_8b_verbose.py --mode benchmark --rounds 500 --dataset-size 5000
+```
+
+### Multi-GPU Benchmark via SLURM
+```bash
+# Run 1000 rounds distributed across 4 GPUs (with optional QLoRA adapter)
+sbatch hpc/autored_benchmark_4gpu.slurm 1000 "experiment/results/qlo_verified_v1" "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
 ```
 
 ### Post-Processing Results
@@ -197,6 +203,7 @@ python scripts/dataset_tools/analyze_dataset.py --mode strategies # Strategy ana
 | `train_reward_model.slurm` | DistilBERT judge training | 1 | 40GB | 1h |
 | `train_generator_sft.slurm` | T5-base SFT | 1 | 40GB | 1h |
 | `train_generator_rl.slurm` | NLPO RL fine-tuning | 1 | 40GB | 1h |
+| `autored_benchmark_4gpu.slurm` | 4-GPU Batched Benchmark | 4 | 160GB| 2h |
 
 ---
 
