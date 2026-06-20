@@ -112,7 +112,7 @@ if not _SERVER_MODE:
     t0 = time.time()
     llama_model = AutoModelForCausalLM.from_pretrained(
         LLAMA_PATH,
-        dtype=torch.float16,
+        torch_dtype=torch.float16,
         device_map="auto",
         local_files_only=True,
     )
@@ -318,7 +318,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         )
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_path,
-            dtype=torch.float16,
+            torch_dtype=torch.float16,
             device_map="auto",
             local_files_only=True,
         )
@@ -329,7 +329,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         )
         model = AutoModelForCausalLM.from_pretrained(
             ckpt_path,
-            dtype=torch.float16,
+            torch_dtype=torch.float16,
             device_map="auto",
             local_files_only=True,
         )
