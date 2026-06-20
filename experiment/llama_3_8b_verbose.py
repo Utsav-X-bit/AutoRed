@@ -113,7 +113,7 @@ if not _SERVER_MODE:
     llama_model = AutoModelForCausalLM.from_pretrained(
         LLAMA_PATH,
         torch_dtype=torch.float16,
-        device_map="auto",
+        device_map={"": device},
         local_files_only=True,
     )
     llama_tokenizer = AutoTokenizer.from_pretrained(
@@ -319,7 +319,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_path,
             torch_dtype=torch.float16,
-            device_map="auto",
+            device_map={"": device},
             local_files_only=True,
         )
         model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
@@ -330,7 +330,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         model = AutoModelForCausalLM.from_pretrained(
             ckpt_path,
             torch_dtype=torch.float16,
-            device_map="auto",
+            device_map={"": device},
             local_files_only=True,
         )
     model.eval()
