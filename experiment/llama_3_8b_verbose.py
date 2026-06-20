@@ -525,7 +525,8 @@ def categorize_defense_detailed(opening: str, closing: str):
         categories.append("trigger_phrase")
         
     primary = categories[0]
-    return primary
+    secondary = list(set(categories[1:]))
+    return primary, secondary
 
 @dataclass
 class DefenseScenario:
@@ -538,11 +539,35 @@ class DefenseScenario:
     defense_complexity: str = "UNKNOWN"
     defense_type: str = "UNKNOWN"
     
+    primary_type: str = "UNKNOWN"
+    secondary_flags: list = field(default_factory=list)
+    
     def __post_init__(self):
         if self.defense_type == "UNKNOWN":
-            self.defense_type = categorize_defense_detailed(self.opening_defense, self.closing_defense)
+            primary, secondary = categorize_defense_detailed(self.opening_defense, self.closing_defense)
+            self.defense_type = primary
+            self.primary_type = primary
+            self.secondary_flags = secondary
+        elif self.primary_type == "UNKNOWN":
+            primary, secondary = categorize_defense_detailed(self.opening_defense, self.closing_defense)
+            self.primary_type = primary
+            self.secondary_flags = secondary
 
-
+class StrategyPredictor(torch.nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, 128),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(128, 64),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(64, output_dim)
+        )
+        
+    def forward(self, x):
+        return self.net(x)
 class CTFEnvironment:
     """
     Phase 1: Gymnasium-style environment for the CTF game.
@@ -1997,6 +2022,10 @@ class RedTeamingAgent:
         self.gen_model = gen_model
         self.gen_tokenizer = gen_tokenizer
         self.extractor = extractor
+        self.strategy_predictor = None
+        self.feature_vocab = {}
+        self.label_vocab = {}
+        self.reverse_label_vocab = {}
 
         # Phase 3: Attack memory (keep last 3 attempts with scores)
         self.history = []
@@ -2024,6 +2053,23 @@ class RedTeamingAgent:
         if os.path.exists(kb_path):
             with open(kb_path, "r") as f:
                 self.knowledge_base = json.load(f)
+
+        # Load Strategy Predictor if available
+        pred_path = os.path.join("experiment", "strategy_predictor.pth")
+        feat_path = os.path.join("experiment", "feature_vocab.json")
+        lab_path = os.path.join("experiment", "label_vocab.json")
+        
+        if os.path.exists(pred_path) and os.path.exists(feat_path) and os.path.exists(lab_path):
+            with open(feat_path, "r") as f:
+                self.feature_vocab = json.load(f)
+            with open(lab_path, "r") as f:
+                self.label_vocab = json.load(f)
+            self.reverse_label_vocab = {v: k for k, v in self.label_vocab.items()}
+            
+            self.strategy_predictor = StrategyPredictor(len(self.feature_vocab), len(self.label_vocab))
+            self.strategy_predictor.load_state_dict(torch.load(pred_path, map_location=device))
+            self.strategy_predictor.to(device)
+            self.strategy_predictor.eval()
 
     def reset(self):
         """
@@ -2147,42 +2193,52 @@ class RedTeamingAgent:
             cleaned = lines[1].strip()
         return cleaned
 
-    def _select_strategy(self, defense_type: str = "UNKNOWN") -> str:
+    def _select_strategy(self, scenario: DefenseScenario) -> str:
         """#1: Select best strategy based on past performance with Weighted Sampling.
         
-        Reads from Knowledge Base. Ranks strategies, takes Top 5, adds unattempted 
-        strategies with baseline weight, and samples one.
+        Uses StrategyPredictor if available. Falls back to Knowledge Base.
         """
         import random
-
-        # Base case if we have zero history at all during the run, 
-        # but KB should provide data. We only use round-robin if KB is completely empty.
-        if not self.knowledge_base and not self.history:
-            return ATTACK_TYPES[self.attempt_counter % len(ATTACK_TYPES)]
-
-        # 1. Get KB stats for this defense type
-        kb_stats = self.knowledge_base.get(defense_type, {})
         
-        # 2. Score strategies based on KB success rates + local runtime stats
         strategy_scores = {}
+        
+        if self.strategy_predictor is not None:
+            # Phase 5: Strategy Predictor
+            feat_vec = torch.zeros(len(self.feature_vocab)).to(device)
+            
+            prim = f"primary:{scenario.primary_type}"
+            if prim in self.feature_vocab:
+                feat_vec[self.feature_vocab[prim]] = 1.0
+                
+            for sec in scenario.secondary_flags:
+                sec_feat = f"secondary:{sec}"
+                if sec_feat in self.feature_vocab:
+                    feat_vec[self.feature_vocab[sec_feat]] = 1.0
+                    
+            with torch.no_grad():
+                logits = self.strategy_predictor(feat_vec.unsqueeze(0))
+                probs = torch.softmax(logits, dim=1).squeeze(0)
+                
+            for i, p in enumerate(probs):
+                strat_name = self.reverse_label_vocab[i]
+                strategy_scores[strat_name] = p.item() * 100.0  # scale to roughly match KB percentage
+        else:
+            # Fallback to KB
+            kb_stats = self.knowledge_base.get(scenario.defense_type, {})
+            for s in ATTACK_TYPES:
+                strategy_scores[s] = kb_stats.get(s, 0.0)
+
+        # 2. Add Local run score
         for s in ATTACK_TYPES:
-            # KB historical score
-            kb_score = kb_stats.get(s, 0.0)
-            
-            # Local run score (if any)
-            st = self.strategy_stats[s]
+            st = self.strategy_stats.get(s, {"successes": 0, "partial_leaks": 0, "failures": 0})
             local_score = (st["successes"] * 3 + st["partial_leaks"] * 1.5 - st["failures"] * 0.5)
-            
-            # Combine scores (normalize local score to be roughly on same scale if needed, 
-            # here we just add a small fraction of local score to the KB success rate percentage)
-            strategy_scores[s] = kb_score + max(0, local_score * 0.1)
+            strategy_scores[s] = strategy_scores.get(s, 0.0) + max(0, local_score * 0.1)
 
         # 3. Take Top 5 by score
         sorted_strats = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
         top5 = sorted_strats[:5]
 
-        # 4. Ensure unexplored strategies (0 score) have a baseline weight 
-        # so they can be discovered.
+        # 4. Ensure unexplored strategies have a baseline weight 
         weights = []
         choices = []
         baseline_weight = 5.0 # 5% chance baseline for new/unexplored strategies
@@ -2224,7 +2280,7 @@ class RedTeamingAgent:
         return mutations.get(strategy, attack)
 
     def generate_attack(
-        self, defense_type: str = "UNKNOWN", previous_attack: str = "", previous_response: str = ""
+        self, scenario: DefenseScenario, previous_attack: str = "", previous_response: str = ""
     ) -> dict:
         """
         Generate a malicious attack prompt using LLaMA-2-7B-Chat.
@@ -2234,7 +2290,7 @@ class RedTeamingAgent:
         self.attempt_counter += 1
 
         # #1: Select best strategy via Weighted Sampling
-        strategy = self._select_strategy(defense_type)
+        strategy = self._select_strategy(scenario)
 
         # #5: Reuse successful attack — refine best instead of generating from scratch
         if self.best_attack and self.best_score > 3 and self.attempt_counter > 1:
@@ -2461,7 +2517,7 @@ def verbose_test_llama(
 
         # Response-aware generation with history
         gen_result = agent.generate_attack(
-            previous_attack=last_attack, previous_response=last_response
+            scenario, previous_attack=last_attack, previous_response=last_response
         )
         attack = gen_result["generated_attack"]
         strategy = gen_result.get("strategy", "unknown")
@@ -3563,16 +3619,16 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
 
 
 def generate_attack_batch(
-    agents: list, defense_types: list, previous_attacks: list, previous_responses: list
+    agents: list, scenarios: list, previous_attacks: list, previous_responses: list
 ) -> list:
     if not agents:
         return []
     prompts = []
-    for agent, d_type, prev_attack, prev_resp in zip(
-        agents, defense_types, previous_attacks, previous_responses
+    for agent, scenario, prev_attack, prev_resp in zip(
+        agents, scenarios, previous_attacks, previous_responses
     ):
         agent.attempt_counter += 1
-        strategy = agent._select_strategy(d_type)
+        strategy = agent._select_strategy(scenario)
         if agent.best_attack and agent.best_score > 3 and agent.attempt_counter > 1:
             attack_base = agent._mutate_attack(agent.best_attack, strategy)
             prompt_text = (
@@ -3661,7 +3717,7 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
 
         gen_results = generate_attack_batch(
             [agents[idx] for idx in active_indices],
-            [envs[idx].scenario.defense_type for idx in active_indices],
+            [envs[idx].scenario for idx in active_indices],
             [last_attacks[idx] for idx in active_indices],
             [last_responses[idx] for idx in active_indices],
         )
