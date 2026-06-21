@@ -146,7 +146,7 @@ def _load_models():
     t0 = time.time()
     llama_model = LLM(
         model=LLAMA_PATH,
-        gpu_memory_utilization=0.40,
+        gpu_memory_utilization=0.50,
         tensor_parallel_size=1,
         max_model_len=2048,
         enforce_eager=False,
