@@ -22,6 +22,13 @@ Every intermediate step is logged for full traceability.
 """
 
 import os
+
+# --- HPC / Conda GCC Workaround for Triton Compilation ---
+# Conda's GCC doesn't search /usr/include by default, which breaks Triton when it 
+# tries to compile driver.c using system Python's headers. We force it here.
+os.environ["C_INCLUDE_PATH"] = "/usr/include:" + os.environ.get("C_INCLUDE_PATH", "")
+os.environ["CPLUS_INCLUDE_PATH"] = "/usr/include:" + os.environ.get("CPLUS_INCLUDE_PATH", "")
+
 import sys
 import json
 import argparse
@@ -31,6 +38,8 @@ import datetime
 from typing import List, Dict, Any, Tuple
 
 import torch
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 import pandas as pd
 from tqdm import tqdm
 
