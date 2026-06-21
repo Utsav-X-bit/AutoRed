@@ -116,7 +116,12 @@ if not _SERVER_MODE:
         torch_dtype=torch.float16,
         device_map={"": device},
         local_files_only=True,
-        quantization_config=BitsAndBytesConfig(load_in_4bit=True),
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        ),
     )
     llama_tokenizer = AutoTokenizer.from_pretrained(
         LLAMA_PATH,
@@ -161,6 +166,7 @@ def chat_with_llama_batch(
     inputs = llama_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048)
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
+    print(f"    [DEBUG] chat_with_llama_batch: generating for {len(attacks)} attacks...", flush=True)
     with torch.no_grad():
         outputs = llama_model.generate(
             **inputs,
@@ -169,6 +175,7 @@ def chat_with_llama_batch(
             temperature=0.7,
             top_p=0.9,
         )
+    print(f"    [DEBUG] chat_with_llama_batch: generation complete.", flush=True)
 
     llama_tokenizer.padding_side = original_padding_side
 
@@ -328,7 +335,12 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             torch_dtype=torch.float16,
             device_map={"": device},
             local_files_only=True,
-            quantization_config=BitsAndBytesConfig(load_in_4bit=True),
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+            ),
         )
         # Clean max_length from base model BEFORE PeftModel wraps it
         if hasattr(base_model.config, "max_length"):
@@ -345,7 +357,12 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             torch_dtype=torch.float16,
             device_map={"": device},
             local_files_only=True,
-            quantization_config=BitsAndBytesConfig(load_in_4bit=True),
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+            ),
         )
     model.eval()
     # Clean stale max_length from model config to avoid ValueError in generate()
@@ -1943,6 +1960,7 @@ def inference_gen_model_verbose_batch(
     inputs = gen_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=1024)
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
+    print(f"    [DEBUG] inference_gen_model_verbose_batch: generating for {len(prompt_texts)} prompts...", flush=True)
     with torch.no_grad():
         outputs = gen_model.generate(
             **inputs,
@@ -1951,6 +1969,7 @@ def inference_gen_model_verbose_batch(
             temperature=0.7,
             top_p=0.9,
         )
+    print(f"    [DEBUG] inference_gen_model_verbose_batch: generation complete.", flush=True)
 
     gen_tokenizer.padding_side = original_padding_side
 
@@ -3478,8 +3497,10 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
         inputs = tkr(prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048)
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
+        print(f"    [DEBUG] extract_batch: verifying {len(prompts)} candidates...", flush=True)
         with torch.no_grad():
             outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
+        print(f"    [DEBUG] extract_batch: verification complete.", flush=True)
 
         tkr.padding_side = orig_padding
 
