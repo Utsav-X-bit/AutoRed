@@ -329,7 +329,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             torch_dtype=torch.float16,
             device_map={"": device},
             local_files_only=True,
-            load_in_4bit=True,
+            quantization_config=BitsAndBytesConfig(load_in_4bit=True),
         )
         model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
     else:
