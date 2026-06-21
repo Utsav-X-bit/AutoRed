@@ -21,9 +21,25 @@ Generator Upgrade (LLaMA-2-7B-Chat):
 Every intermediate step is logged for full traceability.
 """
 
+import os
+import sys
+import json
+import argparse
+import random
+import re
+import datetime
+from typing import List, Dict, Any, Tuple
+
 import torch
 import pandas as pd
 from tqdm import tqdm
+
+import transformers
+from transformers import PreTrainedTokenizerFast
+if not hasattr(PreTrainedTokenizerFast, "all_special_tokens_extended"):
+    PreTrainedTokenizerFast.all_special_tokens_extended = property(lambda self: self.all_special_tokens)
+
+from vllm import LLM, SamplingParams
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -1084,14 +1100,11 @@ class SensitiveInfoExtractor:
             return []
 
         prompt = self.build_llm_extract_prompt(text, failed_candidates)
-        inputs = tkr(prompt, return_tensors="pt")
-        inputs = {k: v.to(device) for k, v in inputs.items()}
 
-        with torch.no_grad():
-            outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
+        sampling_params = SamplingParams(max_tokens=180, temperature=0.0)
+        outputs = mdl.generate([prompt], sampling_params, use_tqdm=False)
 
-        prompt_len = inputs["input_ids"].shape[1]
-        raw = tkr.decode(outputs[0][prompt_len:], skip_special_tokens=True).strip()
+        raw = outputs[0].outputs[0].text.strip()
         return self.parse_llm_extract_output(raw)
 
     # ------------------------------------------------------------------
