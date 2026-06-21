@@ -124,6 +124,11 @@ if not _SERVER_MODE:
         use_fast=False,
     )
     MODEL_LOAD_TIME["victim"] = time.time() - t0
+    # Clean stale max_length from model config to avoid ValueError in generate()
+    if hasattr(llama_model.config, "max_length"):
+        delattr(llama_model.config, "max_length")
+    if hasattr(llama_model, "generation_config") and hasattr(llama_model.generation_config, "max_length"):
+        llama_model.generation_config.max_length = None
     print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
 else:
     print("[LOAD] Server mode — skipping module-level model load")
@@ -325,6 +330,11 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             local_files_only=True,
             quantization_config=BitsAndBytesConfig(load_in_4bit=True),
         )
+        # Clean max_length from base model BEFORE PeftModel wraps it
+        if hasattr(base_model.config, "max_length"):
+            delattr(base_model.config, "max_length")
+        if hasattr(base_model, "generation_config") and hasattr(base_model.generation_config, "max_length"):
+            base_model.generation_config.max_length = None
         model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
     else:
         tokenizer = AutoTokenizer.from_pretrained(
@@ -338,6 +348,11 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             quantization_config=BitsAndBytesConfig(load_in_4bit=True),
         )
     model.eval()
+    # Clean stale max_length from model config to avoid ValueError in generate()
+    if hasattr(model.config, "max_length"):
+        delattr(model.config, "max_length")
+    if hasattr(model, "generation_config") and hasattr(model.generation_config, "max_length"):
+        model.generation_config.max_length = None
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     MODEL_LOAD_TIME["generator"] = time.time() - t0
