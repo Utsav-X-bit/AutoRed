@@ -124,8 +124,6 @@ if not _SERVER_MODE:
         use_fast=False,
     )
     MODEL_LOAD_TIME["victim"] = time.time() - t0
-    if hasattr(llama_model, "generation_config"):
-        llama_model.generation_config.max_length = 4096
     print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
 else:
     print("[LOAD] Server mode — skipping module-level model load")
@@ -340,8 +338,8 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             quantization_config=BitsAndBytesConfig(load_in_4bit=True),
         )
     model.eval()
-    if hasattr(model, "generation_config"):
-        model.generation_config.max_length = 4096
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     MODEL_LOAD_TIME["generator"] = time.time() - t0
     print(
         f"[LOAD] ✓ Llama-2-7B-Chat generator loaded ({MODEL_LOAD_TIME['generator']:.1f}s)"
