@@ -3003,30 +3003,26 @@ def run_benchmark(
     agent.extractor.reset_stats()
 
     # Sample scenarios: ensure uniqueness across workers when possible
-    # Use defense_df (full dataset) instead of defender_df (capped at 1000)
-    # so that large benchmarks (e.g., 4 workers × 1000 = 4000) get unique scenarios
     active_df = defense_df if defense_df is not None else defender_df
     pool_size = len(active_df)
-    total_rounds = n_rounds * num_workers  # Total scenarios needed across all workers
 
-    if total_rounds > pool_size:
+    if n_rounds > pool_size:
         print(
-            f"\n  [WARN] Total rounds ({total_rounds}) > pool size ({pool_size}). "
+            f"\n  [WARN] Total rounds ({n_rounds}) > pool size ({pool_size}). "
             f"Sampling with replacement."
         )
-        scenarios_df = active_df.sample(n=total_rounds, random_state=42, replace=True)
+        scenarios_df = active_df.sample(n=n_rounds, random_state=42, replace=True)
     else:
-        scenarios_df = active_df.sample(n=total_rounds, random_state=42)
+        scenarios_df = active_df.sample(n=n_rounds, random_state=42)
 
-    # Keep only the columns we need (handle both full and pre-sampled schemas)
+    # Keep only the columns we need
     scenarios_df = scenarios_df[["opening_defense", "closing_defense", "access_code"]]
 
-    # Multi-worker: slice scenarios for this worker (each gets unique scenarios)
+    # Multi-worker: slice scenarios for this worker
     if num_workers > 1:
         scenarios_list = scenarios_df.reset_index(drop=True).to_dict("records")
         per_worker = len(scenarios_list) // num_workers
         remainder = len(scenarios_list) % num_workers
-        # Distribute remainder across first 'remainder' workers
         start = worker_id * per_worker + min(worker_id, remainder)
         end = start + per_worker + (1 if worker_id < remainder else 0)
         worker_scenarios = scenarios_list[start:end]
