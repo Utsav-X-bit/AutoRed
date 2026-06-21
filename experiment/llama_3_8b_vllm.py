@@ -128,7 +128,7 @@ DEBUG_GROUND_TRUTH = True
 
 # Defaults for globals — populated inside __name__ == '__main__' guard below.
 # This prevents vLLM's spawn-based workers from re-executing model loading.
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda"  # Hardcoded to avoid torch.cuda.is_available() initializing CUDA context early
 MODEL_LOAD_TIME = {}
 llama_model = None
 llama_tokenizer = None
@@ -140,8 +140,6 @@ def _load_models():
     global llama_model, llama_tokenizer, MODEL_LOAD_TIME
 
     print(f"[CONFIG] Using device: {device}")
-    if device == "cuda":
-        print(f"[CONFIG] GPU: {torch.cuda.get_device_name(0)}")
 
     if _SERVER_MODE:
         print("[LOAD] Server mode — skipping model load")
