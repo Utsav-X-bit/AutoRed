@@ -27,6 +27,10 @@
 # =============================================================================
 # Configuration
 # =============================================================================
+
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
 NUM_ROUNDS=${1:-1000}
 GENERATOR_PATH=${2:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
 BASE_GENERATOR_PATH=${3:-""}
@@ -35,7 +39,7 @@ DATASET_SIZE=1000
 OUTPUT_DIR="results/benchmarks/batched_${NUM_ROUNDS}r_4g"
 
 # Project root
-PROJECT_ROOT="/nlsasfs/home/isea/isea13/AutoRed"
+PROJECT_ROOT="/nlsasfs/home/isea/isea11/slurmJobs/AutoRed"
 cd "$PROJECT_ROOT"
 
 # Activate virtual environment
