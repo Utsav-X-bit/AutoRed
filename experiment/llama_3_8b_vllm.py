@@ -29,6 +29,12 @@ import os
 os.environ["C_INCLUDE_PATH"] = "/usr/include:" + os.environ.get("C_INCLUDE_PATH", "")
 os.environ["CPLUS_INCLUDE_PATH"] = "/usr/include:" + os.environ.get("CPLUS_INCLUDE_PATH", "")
 
+# --- Use vLLM V0 engine ---
+# V1 engine uses torch.compile which consumes ~5-6GB extra GPU memory during first
+# compilation (cache miss). V0 engine still uses CUDAGraphs for fast inference
+# but skips the heavy torch._inductor compilation step.
+os.environ["VLLM_USE_V1"] = "0"
+
 import sys
 import json
 import argparse
