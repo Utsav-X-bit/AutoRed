@@ -80,8 +80,9 @@ for WORKER_ID in $(seq 0 $((NUM_GPUS - 1))); do
     echo "[LAUNCH] Worker $WORKER_ID on GPU $GPU_ID (Processing 16 scenarios at a time)"
     echo "         Output: $WORKER_OUTPUT"
 
-    # Launch worker on specific GPU
-    CUDA_VISIBLE_DEVICES=$GPU_ID python experiment/llama_3_8b_verbose.py \
+    # Launch worker on specific GPU — use env to ensure CUDA_VISIBLE_DEVICES
+    # is set in the process, not just the shell variable
+    env CUDA_VISIBLE_DEVICES=$GPU_ID python experiment/llama_3_8b_verbose.py \
         --mode benchmark \
         --rounds "$NUM_ROUNDS" \
         --dataset-size "$DATASET_SIZE" \
@@ -90,9 +91,14 @@ for WORKER_ID in $(seq 0 $((NUM_GPUS - 1))); do
         --num-workers "$NUM_GPUS" \
         --generator-path "$GENERATOR_PATH" \
         $( [ -n "$BASE_GENERATOR_PATH" ] && echo "--base-generator-path $BASE_GENERATOR_PATH" ) \
-        2>&1 | tee "$WORKER_LOG" &
+        > "$WORKER_LOG" 2>&1 &
 
     PIDS+=($!)
+
+    # Stagger workers by 5s to avoid NFS I/O contention during model loading
+    if [ $WORKER_ID -lt $((NUM_GPUS - 1)) ]; then
+        sleep 5
+    fi
 done
 
 echo ""
