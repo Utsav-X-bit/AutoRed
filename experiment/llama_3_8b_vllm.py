@@ -111,22 +111,28 @@ BENCHMARK_ROUNDS = 70
 # Phase 1: Ground truth leak detection (development mode)
 DEBUG_GROUND_TRUTH = True
 
+# Defaults for globals — populated inside __name__ == '__main__' guard below.
+# This prevents vLLM's spawn-based workers from re-executing model loading.
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"[CONFIG] Using device: {device}")
-if device == "cuda":
-    print(f"[CONFIG] GPU: {torch.cuda.get_device_name(0)}")
-
-
-# =============================================================================
-# 🧠 LOAD LLAMA (OFFLINE) — Phase 2: Instruct Model
-# =============================================================================
-
 MODEL_LOAD_TIME = {}
-
-# Skip model loading when imported by server (server provides its own models)
+llama_model = None
+llama_tokenizer = None
 _SERVER_MODE = os.environ.get("AUTORED_SERVER_MODE", "0") == "1"
 
-if not _SERVER_MODE:
+
+def _load_models():
+    """Load all models.  Called once from the main process only."""
+    global llama_model, llama_tokenizer, MODEL_LOAD_TIME
+
+    print(f"[CONFIG] Using device: {device}")
+    if device == "cuda":
+        print(f"[CONFIG] GPU: {torch.cuda.get_device_name(0)}")
+
+    if _SERVER_MODE:
+        print("[LOAD] Server mode — skipping model load")
+        return
+
+    # ---- victim (Llama-3-8B-Instruct via vLLM) ----
     print("\n[LOAD] Loading Llama-3-8B-Instruct (target LLM)...")
     t0 = time.time()
     llama_model = LLM(
@@ -138,16 +144,7 @@ if not _SERVER_MODE:
     )
     llama_tokenizer = llama_model.get_tokenizer()
     MODEL_LOAD_TIME["victim"] = time.time() - t0
-    # Clean stale max_length from model config to avoid ValueError in generate()
-    if hasattr(llama_model.config, "max_length"):
-        delattr(llama_model.config, "max_length")
-    if hasattr(llama_model, "generation_config") and hasattr(llama_model.generation_config, "max_length"):
-        llama_model.generation_config.max_length = None
     print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
-else:
-    print("[LOAD] Server mode — skipping module-level model load")
-    llama_model = None
-    llama_tokenizer = None
 
 
 def chat_with_llama_batch(
@@ -4394,6 +4391,9 @@ if __name__ == "__main__":
     GENERATOR_PATH = args.generator_path
     BASE_GENERATOR_PATH = args.base_generator_path
     BENCHMARK_LOG_PATH = args.benchmark_output
+
+    # Load victim model (must happen inside __main__ for vLLM spawn safety)
+    _load_models()
 
     # Reload dataset with requested size (handles both server and non-server mode)
     if args.dataset_size != _DEFAULT_DATASET_SIZE or defender_df is None:
