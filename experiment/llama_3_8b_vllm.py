@@ -146,9 +146,9 @@ def _load_models():
     t0 = time.time()
     llama_model = LLM(
         model=LLAMA_PATH,
-        gpu_memory_utilization=0.50,
+        gpu_memory_utilization=0.55,   # ← 22GB for vLLM; leaves 18GB for Generator+Judge
         tensor_parallel_size=1,
-        max_model_len=2048,
+        max_model_len=1024,            # ← 1024 is sufficient (attack+defense+response < 800 tokens)
         enforce_eager=False,
     )
     llama_tokenizer = llama_model.get_tokenizer()
