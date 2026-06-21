@@ -162,7 +162,6 @@ def chat_with_llama_batch(
         outputs = llama_model.generate(
             **inputs,
             max_new_tokens=200,
-            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -209,7 +208,6 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
         outputs = llama_model.generate(
             **inputs,
             max_new_tokens=200,
-            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -1077,7 +1075,7 @@ class SensitiveInfoExtractor:
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            outputs = mdl.generate(**inputs, max_new_tokens=180, max_length=4096, do_sample=False)
+            outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
 
         prompt_len = inputs["input_ids"].shape[1]
         raw = tkr.decode(outputs[0][prompt_len:], skip_special_tokens=True).strip()
@@ -1936,7 +1934,6 @@ def inference_gen_model_verbose_batch(
         outputs = gen_model.generate(
             **inputs,
             max_new_tokens=128,
-            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -1986,7 +1983,6 @@ def inference_gen_model_verbose(gen_model, gen_tokenizer, prompt_text: str) -> d
         outputs = gen_model.generate(
             **inputs,
             max_new_tokens=128,
-            max_length=4096,
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
@@ -3474,7 +3470,7 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            outputs = mdl.generate(**inputs, max_new_tokens=180, max_length=4096, do_sample=False)
+            outputs = mdl.generate(**inputs, max_new_tokens=180, do_sample=False)
 
         tkr.padding_side = orig_padding
 
