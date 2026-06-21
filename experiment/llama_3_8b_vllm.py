@@ -150,9 +150,9 @@ def _load_models():
     t0 = time.time()
     llama_model = LLM(
         model=LLAMA_PATH,
-        gpu_memory_utilization=0.55,   # ← 22GB for vLLM; leaves 18GB for Generator+Judge
+        gpu_memory_utilization=0.50,   # ← ~20GB for vLLM; leaves ~19GB for Generator+Judge
         tensor_parallel_size=1,
-        max_model_len=1024,            # ← 1024 is sufficient (attack+defense+response < 800 tokens)
+        max_model_len=2048,            # ← Increased to 2048 to prevent decoder prompt length errors
         enforce_eager=False,
     )
     llama_tokenizer = llama_model.get_tokenizer()
@@ -1933,49 +1933,55 @@ def inference_gen_model_verbose_batch(
     original_padding_side = gen_tokenizer.padding_side
     gen_tokenizer.padding_side = "left"
 
-    prompts = []
-    for pt in prompt_texts:
-        messages = [{"role": "user", "content": pt}]
-        prompts.append(
-            gen_tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
-        )
-
-    inputs = gen_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=1024)
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-
     print(f"    [DEBUG] inference_gen_model_verbose_batch: generating for {len(prompt_texts)} prompts...", flush=True)
     t0 = time.time()
-    with torch.no_grad():
-        outputs = gen_model.generate(
-            **inputs,
-            max_new_tokens=128,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-        )
-    print(f"    [DEBUG] inference_gen_model_verbose_batch: generation complete in {time.time() - t0:.2f}s.", flush=True)
+    
+    results = []
+    batch_size = 8
+    
+    for chunk_start in range(0, len(prompt_texts), batch_size):
+        chunk_texts = prompt_texts[chunk_start:chunk_start + batch_size]
+        prompts = []
+        for pt in chunk_texts:
+            messages = [{"role": "user", "content": pt}]
+            prompts.append(
+                gen_tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            )
+
+        inputs = gen_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=1024)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = gen_model.generate(
+                **inputs,
+                max_new_tokens=128,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.9,
+            )
+
+        for i in range(len(chunk_texts)):
+            prompt_len = inputs["input_ids"].shape[1]
+            generated = gen_tokenizer.decode(
+                outputs[i][prompt_len:], skip_special_tokens=True
+            ).strip()
+            if not generated or len(generated) < 3:
+                generated = "[EMPTY - generator produced only whitespace]"
+
+            results.append(
+                {
+                    "internal_prompt": chunk_texts[i],
+                    "input_tokens": len(inputs["input_ids"][i].tolist()),
+                    "generated_attack": generated,
+                    "output_tokens": len(outputs[i].tolist()) - prompt_len,
+                }
+            )
 
     gen_tokenizer.padding_side = original_padding_side
+    print(f"    [DEBUG] inference_gen_model_verbose_batch: generation complete in {time.time() - t0:.2f}s.", flush=True)
 
-    results = []
-    for i in range(len(prompt_texts)):
-        prompt_len = inputs["input_ids"].shape[1]
-        generated = gen_tokenizer.decode(
-            outputs[i][prompt_len:], skip_special_tokens=True
-        ).strip()
-        if not generated or len(generated) < 3:
-            generated = "[EMPTY - generator produced only whitespace]"
-
-        results.append(
-            {
-                "internal_prompt": prompt_texts[i],
-                "input_tokens": len(inputs["input_ids"][i].tolist()),
-                "generated_attack": generated,
-                "output_tokens": len(outputs[i].tolist()) - prompt_len,
-            }
-        )
     return results
 
 
