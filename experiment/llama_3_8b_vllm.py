@@ -178,30 +178,19 @@ def chat_with_llama_batch(
             )
         )
 
-    inputs = llama_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048)
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-
     print(f"    [DEBUG] chat_with_llama_batch: generating for {len(attacks)} attacks...", flush=True)
     t0 = time.time()
-    with torch.no_grad():
-        outputs = llama_model.generate(
-            **inputs,
-            max_new_tokens=200,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-        )
+    
+    sampling_params = SamplingParams(max_tokens=200, temperature=0.7, top_p=0.9)
+    outputs = llama_model.generate(prompts, sampling_params=sampling_params, use_tqdm=False)
+    
     print(f"    [DEBUG] chat_with_llama_batch: generation complete in {time.time() - t0:.2f}s.", flush=True)
 
     llama_tokenizer.padding_side = original_padding_side
 
     responses = []
-    for i in range(len(attacks)):
-        prompt_len = inputs["input_ids"].shape[1]
-        response = llama_tokenizer.decode(
-            outputs[i][prompt_len:], skip_special_tokens=True
-        )
-        responses.append(response)
+    for output in outputs:
+        responses.append(output.outputs[0].text.strip())
 
     return responses
 
@@ -227,21 +216,11 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
     prompt = llama_tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    inputs = llama_tokenizer(prompt, return_tensors="pt")
-    inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    with torch.no_grad():
-        outputs = llama_model.generate(
-            **inputs,
-            max_new_tokens=200,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-        )
+    sampling_params = SamplingParams(max_tokens=200, temperature=0.7, top_p=0.9)
+    outputs = llama_model.generate([prompt], sampling_params=sampling_params, use_tqdm=False)
 
-    # Decode only the NEW tokens (skip prompt prefix)
-    prompt_len = inputs["input_ids"].shape[1]
-    return llama_tokenizer.decode(outputs[0][prompt_len:], skip_special_tokens=True)
+    return outputs[0].outputs[0].text.strip()
 
 
 # =============================================================================
