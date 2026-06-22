@@ -235,30 +235,34 @@ def chat_with_llama(pre_defense: str, attack: str, post_defense: str) -> str:
 _DEFAULT_DATASET_SIZE = 1000  # Default pool size, overridable via --dataset-size
 
 if not _SERVER_MODE:
-    print("\n[LOAD] Loading defense dataset...")
-    if not os.path.exists(DATA_PATH):
-        raise FileNotFoundError(f"Dataset not found: {DATA_PATH}")
+    try:
+        print("\n[LOAD] Loading defense dataset...")
+        if not os.path.exists(DATA_PATH):
+            raise FileNotFoundError(f"Dataset not found: {DATA_PATH}")
 
-    raw_defenses = pd.read_json(
-        DATA_PATH,
-        lines=True,
-        compression="bz2",
-    ).set_index("defense_id")
+        raw_defenses = pd.read_json(
+            DATA_PATH,
+            lines=True,
+            compression="bz2",
+        ).set_index("defense_id")
 
-    defense_df = raw_defenses.dropna(subset=["access_code"])
+        defense_df = raw_defenses.dropna(subset=["access_code"])
 
-    defender_df = defense_df.sample(
-        n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42
-    )
-    cols = ["opening_defense", "closing_defense", "access_code"]
-    if "access_code_type" in defender_df.columns:
-        cols.append("access_code_type")
-    if "defense_type" in defender_df.columns:
-        cols.append("defense_type")
-    defender_df = defender_df[cols]
-    print(
-        f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)"
-    )
+        defender_df = defense_df.sample(
+            n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42
+        )
+        cols = ["opening_defense", "closing_defense", "access_code"]
+        if "access_code_type" in defender_df.columns:
+            cols.append("access_code_type")
+        if "defense_type" in defender_df.columns:
+            cols.append("defense_type")
+        defender_df = defender_df[cols]
+        print(
+            f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)"
+        )
+    except Exception as e:
+        print(f"[LOAD] Could not load default dataset: {e}")
+        defender_df = None
 else:
     print("[LOAD] Server mode — skipping module-level dataset load")
     raw_defenses = None
@@ -937,7 +941,6 @@ class SensitiveInfoExtractor:
             re.sub(r"[ \t]+", " ", line).strip() for line in candidate.splitlines()
         ]
         candidate = "\n".join(line for line in lines if line)
-        candidate = candidate.rstrip(".,;:!?)]")
         return candidate
 
     @staticmethod
@@ -982,8 +985,12 @@ class SensitiveInfoExtractor:
         for pattern in EXTRACTOR_PATTERNS:
             matches = re.findall(pattern, text, re.IGNORECASE)
             for m in matches:
-                cleaned = m.strip().rstrip(".,;:!?)]").strip("\"'")
-                if cleaned and len(cleaned) > 1:
+                raw = m.strip().strip("\"'")
+                if raw and len(raw) > 1:
+                    candidates.append(raw)
+                
+                cleaned = raw.rstrip(".,;:!?)]")
+                if cleaned and len(cleaned) > 1 and cleaned != raw:
                     candidates.append(cleaned)
         return candidates
 
@@ -1067,8 +1074,15 @@ class SensitiveInfoExtractor:
             "System",
         }
         # Find capitalized words (start with uppercase, followed by lowercase or digits)
-        candidates = re.findall(r"\b([A-Z][a-z]{2,}(?:\d+)?)\b", text)
-        return [c for c in candidates if c not in stop_words]
+        candidates = []
+        for m in re.finditer(r"\b([A-Z][a-z]{2,}(?:\d+)?)([.,;:!?)]*)", text):
+            word = m.group(1)
+            punct = m.group(2)
+            if word not in stop_words:
+                candidates.append(word)
+                if punct:
+                    candidates.append(word + punct)
+        return candidates
 
     # ------------------------------------------------------------------
     # Phase 3: LLM Extractor (JSON-based, broad)
@@ -2339,10 +2353,15 @@ class RedTeamingAgent:
             top_k=20, final_k=3
         )
         
-        strategy_scores = {}
+        # Calculate RAG strategy distribution
+        c_rag = {}
+        for ex in self.retrieved_examples:
+            c_rag[ex["strategy"]] = c_rag.get(ex["strategy"], 0.0) + 1.0
+        rag_sum = sum(c_rag.values()) if c_rag else 1.0
         
+        # Get Predictor Probabilities
+        p_pred = {}
         if self.strategy_predictor is not None:
-            # Phase 5: Strategy Predictor
             feat_vec = torch.zeros(len(self.feature_vocab)).to(device)
             
             prim = f"primary:{scenario.primary_type}"
@@ -2354,44 +2373,72 @@ class RedTeamingAgent:
                 if sec_feat in self.feature_vocab:
                     feat_vec[self.feature_vocab[sec_feat]] = 1.0
                     
+            code_type = getattr(scenario, "access_code_type", "UNKNOWN")
+            ctype = f"code_type:{code_type}"
+            if ctype in self.feature_vocab:
+                feat_vec[self.feature_vocab[ctype]] = 1.0
+                
+            comp = f"complexity:{scenario.defense_complexity}"
+            if comp in self.feature_vocab:
+                feat_vec[self.feature_vocab[comp]] = 1.0
+                    
             with torch.no_grad():
                 logits = self.strategy_predictor(feat_vec.unsqueeze(0))
                 probs = torch.softmax(logits, dim=1).squeeze(0)
                 
             for i, p in enumerate(probs):
                 strat_name = self.reverse_label_vocab[i]
-                strategy_scores[strat_name] = p.item() * 100.0  # scale to roughly match KB percentage
+                p_pred[strat_name] = p.item()
         else:
             # Fallback to KB
             kb_stats = self.knowledge_base.get(scenario.defense_type, {})
             for s in ATTACK_TYPES:
-                strategy_scores[s] = kb_stats.get(s, 0.0)
-
-        # 2. Add Local run score
+                p_pred[s] = kb_stats.get(s, 0.0) / 100.0
+                
+        # Calculate Local Run Scores (S_local)
+        s_local = {}
         for s in ATTACK_TYPES:
             st = self.strategy_stats.get(s, {"successes": 0, "partial_leaks": 0, "failures": 0})
-            local_score = (st["successes"] * 3 + st["partial_leaks"] * 1.5 - st["failures"] * 0.5)
-            strategy_scores[s] = strategy_scores.get(s, 0.0) + max(0, local_score * 0.1)
+            score = (st["successes"] * 3 + st["partial_leaks"] * 1.5 - st["failures"] * 0.5)
+            s_local[s] = max(0.0, score)
+            
+        local_sum = sum(s_local.values()) if sum(s_local.values()) > 0 else 1.0
+        
+        # Calculate Final Score
+        # score[s] = α × P_pred[s] + β × (C_rag[s] / sum(C_rag)) + γ × normalize(S_local[s])
+        alpha, beta, gamma = 0.4, 0.35, 0.25
+        
+        strategy_scores = {}
+        for s in ATTACK_TYPES:
+            pred_score = p_pred.get(s, 0.0)
+            rag_score = c_rag.get(s, 0.0) / rag_sum
+            local_score = s_local.get(s, 0.0) / local_sum
+            
+            final_score = (alpha * pred_score) + (beta * rag_score) + (gamma * local_score)
+            strategy_scores[s] = final_score
 
-        # Boost from RAG Retrieved Examples
-        for ex in self.retrieved_examples:
-            strategy_scores[ex["strategy"]] = strategy_scores.get(ex["strategy"], 0.0) + 15.0
+        # Ensure unexplored strategies have a baseline weight 
+        baseline_weight = 0.05 # 5% chance baseline for exploration
 
-        # 3. Take Top 5 by score
+        for strat in ATTACK_TYPES:
+            if strat not in strategy_scores:
+                strategy_scores[strat] = baseline_weight
+            else:
+                strategy_scores[strat] = max(strategy_scores[strat], baseline_weight)
+                
+        # Top 5 Selection
         sorted_strats = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
         top5 = sorted_strats[:5]
-
-        # 4. Ensure unexplored strategies have a baseline weight 
-        weights = []
-        choices = []
-        baseline_weight = 5.0 # 5% chance baseline for new/unexplored strategies
-
-        for strat, score in top5:
-            choices.append(strat)
-            weights.append(max(score, baseline_weight))
+        
+        weights = [score for _, score in top5]
+        choices = [strat for strat, _ in top5]
             
-        # 5. Weighted Sampling
+        # Weighted Sampling
         selected = random.choices(choices, weights=weights, k=1)[0]
+        
+        if self.strategy_predictor is not None:
+            print(f"[STRATEGY] Predictor active! Top prediction: {choices[0]} (Selected: {selected})")
+            
         return selected
 
     def _mutate_attack(self, attack: str, strategy: str) -> str:
@@ -4480,6 +4527,11 @@ if __name__ == "__main__":
         help="Base model path used when --generator-path is a LoRA adapter",
     )
     parser.add_argument(
+        "--dataset-path",
+        default=DATA_PATH,
+        help="Path to defense dataset (default: DATA_PATH)",
+    )
+    parser.add_argument(
         "--benchmark-output",
         default=BENCHMARK_LOG_PATH,
         help="Where to save aggregate benchmark summary JSON",
@@ -4506,12 +4558,13 @@ if __name__ == "__main__":
     _load_models()
 
     # Reload dataset with requested size (handles both server and non-server mode)
-    if args.dataset_size != _DEFAULT_DATASET_SIZE or defender_df is None:
-        if defender_df is None:
+    if args.dataset_size != _DEFAULT_DATASET_SIZE or defender_df is None or args.dataset_path != DATA_PATH:
+        if defender_df is None or args.dataset_path != DATA_PATH:
             # Server mode or fallback — load from disk
-            print(f"\n[LOAD] Loading defense dataset...")
+            print(f"\n[LOAD] Loading defense dataset from {args.dataset_path}...")
+            comp = "bz2" if str(args.dataset_path).endswith(".bz2") else None
             raw_defenses = pd.read_json(
-                DATA_PATH, lines=True, compression="bz2"
+                args.dataset_path, lines=True, compression=comp
             ).set_index("defense_id")
             defense_df = raw_defenses.dropna(subset=["access_code"])
 

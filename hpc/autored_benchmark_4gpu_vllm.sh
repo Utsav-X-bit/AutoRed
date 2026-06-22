@@ -34,8 +34,9 @@ export HF_HUB_OFFLINE=1
 NUM_ROUNDS=${1:-1000}
 GENERATOR_PATH=${2:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
 BASE_GENERATOR_PATH=${3:-""}
+DATASET_PATH=${4:-""}
 NUM_GPUS=4
-DATASET_SIZE=1000
+DATASET_SIZE=${5:-1000}
 OUTPUT_DIR="results/benchmarks/batched_${NUM_ROUNDS}r_4g"
 
 # Project root
@@ -91,6 +92,7 @@ for WORKER_ID in $(seq 0 $((NUM_GPUS - 1))); do
         --num-workers "$NUM_GPUS" \
         --generator-path "$GENERATOR_PATH" \
         $( [ -n "$BASE_GENERATOR_PATH" ] && echo "--base-generator-path $BASE_GENERATOR_PATH" ) \
+        $( [ -n "$DATASET_PATH" ] && echo "--dataset-path $DATASET_PATH" ) \
         > "$WORKER_LOG" 2>&1 &
 
     PIDS+=($!)
