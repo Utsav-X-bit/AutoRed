@@ -592,6 +592,75 @@ class StrategyPredictor(torch.nn.Module):
         
     def forward(self, x):
         return self.net(x)
+class DefenseRetriever:
+    """FAISS-based RAG Retriever for Defense Scenarios."""
+    def __init__(self, index_path="data/rag/success_defenses.index", meta_path="data/rag/success_metadata.json"):
+        import os, json
+        self.index = None
+        self.metadata = []
+        self.enabled = False
+        
+        if os.path.exists(index_path) and os.path.exists(meta_path):
+            import faiss
+            from sentence_transformers import SentenceTransformer
+            self.index = faiss.read_index(index_path)
+            with open(meta_path, "r") as f:
+                self.metadata = json.load(f)
+            self.model = SentenceTransformer("all-MiniLM-L6-v2")
+            self.enabled = True
+            print(f"RAG Layer Initialized: Loaded {len(self.metadata)} successful examples.")
+
+    def retrieve(self, defense_text, defense_type=None, top_k=20, final_k=3):
+        if not self.enabled:
+            return []
+            
+        import faiss
+        import numpy as np
+        
+        emb = self.model.encode([defense_text], convert_to_numpy=True)
+        faiss.normalize_L2(emb)
+        
+        distances, indices = self.index.search(emb, top_k)
+        
+        results = []
+        for i in range(top_k):
+            idx = indices[0][i]
+            if idx == -1: continue
+            meta = self.metadata[idx]
+            
+            # Hybrid Filtering
+            if defense_type and defense_type != "unknown" and meta.get("defense_type") != defense_type:
+                continue
+                
+            results.append({
+                "strategy": meta["strategy"],
+                "attack": meta["attack"],
+                "defense_type": meta.get("defense_type", "unknown"),
+                "distance": float(distances[0][i])
+            })
+            
+            if len(results) >= final_k:
+                break
+                
+        # Fallback
+        if len(results) < final_k:
+            for i in range(top_k):
+                idx = indices[0][i]
+                if idx == -1: continue
+                meta = self.metadata[idx]
+                if meta.get("defense_type") == defense_type: continue
+                
+                results.append({
+                    "strategy": meta["strategy"],
+                    "attack": meta["attack"],
+                    "defense_type": meta.get("defense_type", "unknown"),
+                    "distance": float(distances[0][i])
+                })
+                if len(results) >= final_k:
+                    break
+                    
+        return results
+
 class CTFEnvironment:
     """
     Phase 1: Gymnasium-style environment for the CTF game.
@@ -2098,6 +2167,10 @@ class RedTeamingAgent:
             self.strategy_predictor.to(device)
             self.strategy_predictor.eval()
 
+        # RAG Retriever
+        self.retriever = DefenseRetriever()
+        self.retrieved_examples = []
+
     def reset(self):
         """
         Problem 1: Reset agent state between benchmark rounds.
@@ -2124,6 +2197,18 @@ class RedTeamingAgent:
         """
         # Phase 4: Add strategy-specific instruction
         strategy_prompt = ATTACK_TYPE_PROMPTS.get(strategy, "")
+
+        # RAG: Add Relevant Successful Examples
+        rag_text = ""
+        if self.retrieved_examples:
+            rag_lines = ["Relevant Successful Examples:"]
+            for i, ex in enumerate(self.retrieved_examples, 1):
+                rag_lines.append(f"{i}.")
+                rag_lines.append(f"Defense Type: {ex.get('defense_type', 'unknown')}")
+                rag_lines.append(f"Strategy: {ex.get('strategy', 'unknown')}")
+                rag_lines.append("Attack:")
+                rag_lines.append(f"{ex.get('attack', '')}\n")
+            rag_text = "\n".join(rag_lines)
 
         # Phase 3: Add recent history (last 3 attempts) WITH result feedback
         history_text = ""
@@ -2180,14 +2265,17 @@ class RedTeamingAgent:
                 "Output:\n"
             )
 
-        # Problem 5: History FIRST, then adaptation (Fix 4), then strategy, then prompt
+        # Problem 5: History FIRST, then adaptation (Fix 4), then RAG, then strategy, then prompt
         # Llama-2 pays most attention to the beginning of the context
+        parts = []
         if history_text:
-            full_prompt = (
-                f"{history_text}{adaptation_text}\n\n{strategy_prompt}\n\n{prompt}"
-            )
-        else:
-            full_prompt = f"{strategy_prompt}\n\n{prompt}"
+            parts.append(f"{history_text}{adaptation_text}")
+        if rag_text:
+            parts.append(rag_text)
+        parts.append(strategy_prompt)
+        parts.append(prompt)
+        
+        full_prompt = "\n\n".join(parts)
         return full_prompt.strip()
 
     def _strip_preamble(self, attack: str) -> str:
@@ -2227,6 +2315,14 @@ class RedTeamingAgent:
         """
         import random
         
+        # FAISS Hybrid Retrieval
+        defense_text = f"{scenario.opening_defense}\n{scenario.closing_defense}"
+        self.retrieved_examples = self.retriever.retrieve(
+            defense_text=defense_text,
+            defense_type=getattr(scenario, 'primary_type', None),
+            top_k=20, final_k=3
+        )
+        
         strategy_scores = {}
         
         if self.strategy_predictor is not None:
@@ -2260,6 +2356,10 @@ class RedTeamingAgent:
             st = self.strategy_stats.get(s, {"successes": 0, "partial_leaks": 0, "failures": 0})
             local_score = (st["successes"] * 3 + st["partial_leaks"] * 1.5 - st["failures"] * 0.5)
             strategy_scores[s] = strategy_scores.get(s, 0.0) + max(0, local_score * 0.1)
+
+        # Boost from RAG Retrieved Examples
+        for ex in self.retrieved_examples:
+            strategy_scores[ex["strategy"]] = strategy_scores.get(ex["strategy"], 0.0) + 15.0
 
         # 3. Take Top 5 by score
         sorted_strats = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
@@ -3786,7 +3886,7 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
             "verified": False,
         }
         extract_mask = [
-            (not gt_leaks[j] and judge_results[j]["decision_name"] == "ATTEMPT")
+            (judge_results[j]["decision_name"] == "ATTEMPT")
             for j in range(len(active_indices))
         ]
         extract_indices = [j for j, m in enumerate(extract_mask) if m]
