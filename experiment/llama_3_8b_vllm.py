@@ -952,7 +952,8 @@ class SensitiveInfoExtractor:
     @staticmethod
     def _candidate_key(candidate: str) -> str:
         """Comparison key that deduplicates whitespace variants."""
-        return re.sub(r"\s+", " ", candidate.strip().lower())
+        candidate = candidate.strip().strip("\"'`").lower()
+        return re.sub(r"\s+", " ", candidate)
 
     # ------------------------------------------------------------------
     # Phase 1: Ground Truth Leak Detection
@@ -2418,12 +2419,12 @@ class RedTeamingAgent:
             else:
                 strategy_scores[strat] = max(strategy_scores[strat], baseline_weight)
                 
-        # Top 5 Selection
+        # Full Distribution Selection (allows garak categories to be explored)
         sorted_strats = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
-        top5 = sorted_strats[:5]
+        # top5 = sorted_strats[:5] # Replaced: Explore all categories to enable garak
         
-        weights = [score for _, score in top5]
-        choices = [strat for strat, _ in top5]
+        weights = [score for _, score in sorted_strats]
+        choices = [strat for strat, _ in sorted_strats]
             
         # Weighted Sampling
         selected = random.choices(choices, weights=weights, k=1)[0]
