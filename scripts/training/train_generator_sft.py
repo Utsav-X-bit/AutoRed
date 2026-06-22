@@ -95,7 +95,7 @@ def train():
         gradient_accumulation_steps=4,
         learning_rate=2e-4,
         logging_steps=10,
-        max_steps=100, # or num_train_epochs=3
+        num_train_epochs=3,
         save_steps=50,
         optim="paged_adamw_8bit",
         fp16=False,

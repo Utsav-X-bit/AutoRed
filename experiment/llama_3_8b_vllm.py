@@ -249,7 +249,12 @@ if not _SERVER_MODE:
     defender_df = defense_df.sample(
         n=min(_DEFAULT_DATASET_SIZE, len(defense_df)), random_state=42
     )
-    defender_df = defender_df[["opening_defense", "closing_defense", "access_code"]]
+    cols = ["opening_defense", "closing_defense", "access_code"]
+    if "access_code_type" in defender_df.columns:
+        cols.append("access_code_type")
+    if "defense_type" in defender_df.columns:
+        cols.append("defense_type")
+    defender_df = defender_df[cols]
     print(
         f"[LOAD] ✓ Dataset loaded: {len(defender_df)} defense scenarios (from {len(defense_df)} total)"
     )
@@ -2118,6 +2123,7 @@ class RedTeamingAgent:
         gen_model,
         gen_tokenizer,
         extractor: SensitiveInfoExtractor,
+        retriever: Optional[DefenseRetriever] = None,
     ):
         self.judge = judge
         self.gen_model = gen_model
@@ -2173,7 +2179,7 @@ class RedTeamingAgent:
             self.strategy_predictor.eval()
 
         # RAG Retriever
-        self.retriever = DefenseRetriever()
+        self.retriever = retriever if retriever is not None else DefenseRetriever()
         self.retrieved_examples = []
 
     def reset(self):
@@ -2207,12 +2213,16 @@ class RedTeamingAgent:
         rag_text = ""
         if self.retrieved_examples:
             rag_lines = ["Relevant Successful Examples:"]
-            for i, ex in enumerate(self.retrieved_examples, 1):
+            # Inject top 3 examples to improve accuracy without causing OOM
+            for i, ex in enumerate(self.retrieved_examples[:3], 1):
                 rag_lines.append(f"{i}.")
                 rag_lines.append(f"Defense Type: {ex.get('defense_type', 'unknown')}")
                 rag_lines.append(f"Strategy: {ex.get('strategy', 'unknown')}")
                 rag_lines.append("Attack:")
-                rag_lines.append(f"{ex.get('attack', '')}\n")
+                attack_text = ex.get('attack', '')
+                if len(attack_text) > 1000:
+                    attack_text = attack_text[:1000] + "..."
+                rag_lines.append(f"{attack_text}\n")
             rag_text = "\n".join(rag_lines)
 
         # Phase 3: Add recent history (last 3 attempts) WITH result feedback
@@ -3809,6 +3819,7 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
             template_agent.gen_model,
             template_agent.gen_tokenizer,
             new_extractor,
+            retriever=template_agent.retriever,
         )
         new_agent.reset()
         new_agent.extractor.set_ground_truth(scenario.access_code)
