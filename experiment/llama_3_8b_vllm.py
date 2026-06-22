@@ -22,6 +22,7 @@ Every intermediate step is logged for full traceability.
 """
 
 import os
+import uuid
 
 # --- HPC / Conda GCC Workaround for Triton Compilation ---
 # Conda's GCC doesn't search /usr/include by default, which breaks Triton when it 
@@ -1599,7 +1600,7 @@ def serialize_run(
     benchmark_info=None,
 ) -> dict:
     """Convert experiment trace to AutoRedRun JSON structure."""
-    run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{uuid.uuid4().hex[:6]}"
 
     # Build attempts array — supports both nested (original) and flat (server) trace formats
     attempts = []
@@ -4415,7 +4416,7 @@ def benchmark_extractor(
     results_dir.mkdir(exist_ok=True)
     extractor_json = {
         "experiment": {
-            "run_id": f"extractor_bench_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "run_id": f"extractor_bench_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{uuid.uuid4().hex[:6]}",
             "benchmark_mode": True,
             "timestamp": datetime.now().isoformat(),
             "experiment_version": EXPERIMENT_VERSION,
