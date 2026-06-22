@@ -593,10 +593,16 @@ class StrategyPredictor(torch.nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(input_dim, 128),
+            torch.nn.Linear(input_dim, 256),
+            torch.nn.BatchNorm1d(256),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.2),
+            torch.nn.Dropout(0.3),
+            torch.nn.Linear(256, 128),
+            torch.nn.BatchNorm1d(128),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.3),
             torch.nn.Linear(128, 64),
+            torch.nn.BatchNorm1d(64),
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
             torch.nn.Linear(64, output_dim)
