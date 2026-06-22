@@ -352,6 +352,12 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         if hasattr(base_model, "generation_config") and hasattr(base_model.generation_config, "max_length"):
             base_model.generation_config.max_length = None
         model = PeftModel.from_pretrained(base_model, ckpt_path, local_files_only=True)
+        model.eval()
+        # Clean stale max_length from model config to avoid ValueError in generate()
+        if hasattr(model.config, "max_length"):
+            delattr(model.config, "max_length")
+        if hasattr(model, "generation_config") and hasattr(model.generation_config, "max_length"):
+            model.generation_config.max_length = None
     else:
         global gen_lora_request
         gen_lora_request = None
@@ -362,12 +368,6 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             max_model_len=2048,
         )
         tokenizer = model.get_tokenizer()
-    model.eval()
-    # Clean stale max_length from model config to avoid ValueError in generate()
-    if hasattr(model.config, "max_length"):
-        delattr(model.config, "max_length")
-    if hasattr(model, "generation_config") and hasattr(model.generation_config, "max_length"):
-        model.generation_config.max_length = None
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     MODEL_LOAD_TIME["generator"] = time.time() - t0
@@ -2017,60 +2017,79 @@ def inference_gen_model_verbose_batch(
 ) -> list:
     if not prompt_texts:
         return []
-    if gen_tokenizer.pad_token is None:
-        gen_tokenizer.pad_token = gen_tokenizer.eos_token
-    original_padding_side = gen_tokenizer.padding_side
-    gen_tokenizer.padding_side = "left"
 
     print(f"    [DEBUG] inference_gen_model_verbose_batch: generating for {len(prompt_texts)} prompts...", flush=True)
     t0 = time.time()
-    
     results = []
-    batch_size = 8
-    
-    for chunk_start in range(0, len(prompt_texts), batch_size):
-        chunk_texts = prompt_texts[chunk_start:chunk_start + batch_size]
-        prompts = []
-        for pt in chunk_texts:
-            messages = [{"role": "user", "content": pt}]
-            prompts.append(
-                gen_tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
-                )
+
+    # Format prompts
+    prompts = []
+    for pt in prompt_texts:
+        messages = [{"role": "user", "content": pt}]
+        prompts.append(
+            gen_tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
             )
+        )
 
-        inputs = gen_tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=1024)
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-
-        with torch.no_grad():
-            outputs = gen_model.generate(
-                **inputs,
-                max_new_tokens=128,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-            )
-
-        for i in range(len(chunk_texts)):
-            prompt_len = inputs["input_ids"].shape[1]
-            generated = gen_tokenizer.decode(
-                outputs[i][prompt_len:], skip_special_tokens=True
-            ).strip()
+    if hasattr(gen_model, "llm_engine"):
+        # vLLM generation
+        from vllm import SamplingParams
+        sampling_params = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=128)
+        outputs = gen_model.generate(prompts, sampling_params=sampling_params, use_tqdm=False)
+        for i, out in enumerate(outputs):
+            generated = out.outputs[0].text.strip()
             if not generated or len(generated) < 3:
                 generated = "[EMPTY - generator produced only whitespace]"
+            results.append({
+                "internal_prompt": prompt_texts[i],
+                "input_tokens": len(out.prompt_token_ids),
+                "generated_attack": generated,
+                "output_tokens": len(out.outputs[0].token_ids),
+            })
+    else:
+        # PyTorch generation (fallback for LoRA adapter)
+        if gen_tokenizer.pad_token is None:
+            gen_tokenizer.pad_token = gen_tokenizer.eos_token
+        original_padding_side = gen_tokenizer.padding_side
+        gen_tokenizer.padding_side = "left"
 
-            results.append(
-                {
-                    "internal_prompt": chunk_texts[i],
-                    "input_tokens": len(inputs["input_ids"][i].tolist()),
-                    "generated_attack": generated,
-                    "output_tokens": len(outputs[i].tolist()) - prompt_len,
-                }
-            )
+        batch_size = 8
+        for chunk_start in range(0, len(prompt_texts), batch_size):
+            chunk_texts = prompt_texts[chunk_start:chunk_start + batch_size]
+            chunk_prompts = prompts[chunk_start:chunk_start + batch_size]
+            
+            inputs = gen_tokenizer(chunk_prompts, return_tensors="pt", padding=True, truncation=True, max_length=1024)
+            inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    gen_tokenizer.padding_side = original_padding_side
+            with torch.no_grad():
+                outputs = gen_model.generate(
+                    **inputs,
+                    max_new_tokens=128,
+                    do_sample=True,
+                    temperature=0.7,
+                    top_p=0.9,
+                )
+
+            for i in range(len(chunk_texts)):
+                prompt_len = inputs["input_ids"].shape[1]
+                generated = gen_tokenizer.decode(
+                    outputs[i][prompt_len:], skip_special_tokens=True
+                ).strip()
+                if not generated or len(generated) < 3:
+                    generated = "[EMPTY - generator produced only whitespace]"
+
+                results.append(
+                    {
+                        "internal_prompt": chunk_texts[i],
+                        "input_tokens": len(inputs["input_ids"][i].tolist()),
+                        "generated_attack": generated,
+                        "output_tokens": len(outputs[i].tolist()) - prompt_len,
+                    }
+                )
+        gen_tokenizer.padding_side = original_padding_side
+
     print(f"    [DEBUG] inference_gen_model_verbose_batch: generation complete in {time.time() - t0:.2f}s.", flush=True)
-
     return results
 
 
@@ -2079,42 +2098,7 @@ def inference_gen_model_verbose(gen_model, gen_tokenizer, prompt_text: str) -> d
 
     Uses chat template for proper instruction following.
     """
-    messages = [
-        {
-            "role": "user",
-            "content": prompt_text,
-        },
-    ]
-
-    chat_prompt = gen_tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
-    )
-    inputs = gen_tokenizer(chat_prompt, return_tensors="pt")
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-
-    with torch.no_grad():
-        outputs = gen_model.generate(
-            **inputs,
-            max_new_tokens=128,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-        )
-
-    # Decode only the NEW tokens (skip prompt prefix)
-    prompt_len = inputs["input_ids"].shape[1]
-    generated = gen_tokenizer.decode(
-        outputs[0][prompt_len:], skip_special_tokens=True
-    ).strip()
-    if not generated or len(generated) < 3:
-        generated = "[EMPTY - generator produced only whitespace]"
-
-    return {
-        "internal_prompt": prompt_text,
-        "input_tokens": len(inputs["input_ids"][0].tolist()),
-        "generated_attack": generated,
-        "output_tokens": len(outputs[0].tolist()) - prompt_len,
-    }
+    return inference_gen_model_verbose_batch(gen_model, gen_tokenizer, [prompt_text])[0]
 
 
 # =============================================================================
