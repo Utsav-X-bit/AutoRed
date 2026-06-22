@@ -151,7 +151,7 @@ def _load_models():
     t0 = time.time()
     llama_model = LLM(
         model=LLAMA_PATH,
-        gpu_memory_utilization=0.50,   # ← ~20GB for vLLM; leaves ~19GB for Generator+Judge
+        gpu_memory_utilization=0.47,   # ← ~20GB for vLLM; leaves ~19GB for Generator+Judge
         tensor_parallel_size=1,
         max_model_len=2048,            # ← Increased to 2048 to prevent decoder prompt length errors
         enforce_eager=False,
@@ -357,7 +357,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         gen_lora_request = None
         model = LLM(
             model=ckpt_path,
-            gpu_memory_utilization=0.40,
+            gpu_memory_utilization=0.47,
             tensor_parallel_size=1,
             max_model_len=2048,
         )
