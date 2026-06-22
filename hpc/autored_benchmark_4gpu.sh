@@ -37,7 +37,7 @@ BASE_GENERATOR_PATH=${3:-""}
 DATASET_PATH=${4:-""}
 NUM_GPUS=4
 DATASET_SIZE=${5:-1000}
-OUTPUT_DIR="results/benchmarks/batched_${NUM_ROUNDS}r_4g"
+OUTPUT_DIR=${6:-"results/benchmarks/batched_${NUM_ROUNDS}r_4g"}
 
 # Project root
 PROJECT_ROOT="/nlsasfs/home/isea/isea11/slurmJobs/AutoRed"

@@ -2,11 +2,10 @@
 # =============================================================================
 # AutoRed Multi-GPU Parallel Benchmark Launcher (Batched)
 # =============================================================================
-# Usage: sbatch hpc/autored_benchmark_4gpu.slurm [NUM_ROUNDS] [GENERATOR_PATH] [BASE_MODEL_PATH]
+# Usage: sbatch hpc/autored_benchmark_4gpu_vllm.sh [NUM_ROUNDS] [GENERATOR_PATH] [BASE_MODEL_PATH] [DATASET_PATH] [DATASET_SIZE] [OUTPUT_DIR]
 #
 # Examples:
-#   sbatch hpc/autored_benchmark_4gpu.slurm 1000 "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
-#   sbatch hpc/autored_benchmark_4gpu.slurm 1000 "experiment/results/qlora_adapter" "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"
+#   sbatch hpc/autored_benchmark_4gpu_vllm.sh 1000 "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2" "" "" 1000 "results/benchmarks/benchmark_c_1000r"
 #
 # This script requests 4 A100 GPUs and launches 4 concurrent worker processes.
 # Thanks to the recent batched generation rewrite (BATCH_SIZE=16 per GPU),
@@ -37,7 +36,7 @@ BASE_GENERATOR_PATH=${3:-""}
 DATASET_PATH=${4:-""}
 NUM_GPUS=4
 DATASET_SIZE=${5:-1000}
-OUTPUT_DIR="results/benchmarks/batched_${NUM_ROUNDS}r_4g"
+OUTPUT_DIR=${6:-"results/benchmarks/batched_${NUM_ROUNDS}r_4g"}
 
 # Project root
 PROJECT_ROOT="/nlsasfs/home/isea/isea11/slurmJobs/AutoRed"
