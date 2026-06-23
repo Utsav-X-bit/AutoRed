@@ -31,8 +31,8 @@ export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
 
 NUM_ROUNDS=${1:-1000}
-GENERATOR_PATH=${2:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
-BASE_GENERATOR_PATH=${3:-""}
+GENERATOR_PATH=${2:-"experiment/generator_sft_adapter"}
+BASE_GENERATOR_PATH=${3:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
 DATASET_PATH=${4:-""}
 NUM_GPUS=4
 DATASET_SIZE=${5:-1000}
