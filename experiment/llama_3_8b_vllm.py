@@ -37,6 +37,27 @@ os.environ["CPLUS_INCLUDE_PATH"] = "/usr/include:" + os.environ.get("CPLUS_INCLU
 os.environ["VLLM_USE_V1"] = "0"
 
 import sys
+
+# --- MONKEY PATCH FOR PEFT / TRANSFORMERS COMPATIBILITY ---
+import types
+try:
+    import transformers
+    import transformers.integrations
+    if not hasattr(transformers.integrations, "tensor_parallel"):
+        tp = types.ModuleType("transformers.integrations.tensor_parallel")
+        sys.modules["transformers.integrations.tensor_parallel"] = tp
+        transformers.integrations.tensor_parallel = tp
+    else:
+        tp = transformers.integrations.tensor_parallel
+    
+    if not hasattr(tp, "EmbeddingParallel"):
+        class DummyEmbeddingParallel:
+            pass
+        tp.EmbeddingParallel = DummyEmbeddingParallel
+except Exception:
+    pass
+# ---------------------------------------------------------
+
 import json
 import argparse
 import random
