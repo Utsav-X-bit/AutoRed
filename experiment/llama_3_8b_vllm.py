@@ -352,13 +352,8 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
                 "peft is required to load LoRA adapter generators"
             ) from exc
 
-        tokenizer_path = (
-            ckpt_path
-            if (Path(ckpt_path) / "tokenizer_config.json").exists()
-            else base_model_path
-        )
         tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_path, local_files_only=True
+            base_model_path, local_files_only=True
         )
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_path,
