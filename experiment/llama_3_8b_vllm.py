@@ -358,7 +358,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
             else base_model_path
         )
         tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_path, local_files_only=True, use_fast=False
+            tokenizer_path, local_files_only=True
         )
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_path,
