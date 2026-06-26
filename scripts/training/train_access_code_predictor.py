@@ -6,8 +6,8 @@ import numpy as np
 from torch import nn
 from torch.utils.data import Dataset
 from transformers import (
-    DistilBertTokenizer, 
-    DistilBertForSequenceClassification, 
+    AutoTokenizer, 
+    AutoModelForSequenceClassification, 
     Trainer, 
     TrainingArguments,
     EarlyStoppingCallback
@@ -103,8 +103,8 @@ def train():
     )
     
     print("\nInitializing tokenizer and model...")
-    tokenizer = DistilBertTokenizer.from_pretrained(MODEL_NAME)
-    model = DistilBertForSequenceClassification.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(
         MODEL_NAME, num_labels=4
     )
     
