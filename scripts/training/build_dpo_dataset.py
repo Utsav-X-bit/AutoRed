@@ -132,14 +132,21 @@ def build_dpo_dataset():
                 except:
                     pass
 
+    # Deduplicate before building
+    for k in successes:
+        successes[k] = list(set(successes[k]))
+    for k in failures:
+        failures[k] = list(set(failures[k]))
+
     dataset = []
     
     all_failures = []
     for f_list in failures.values():
         all_failures.extend(f_list)
+    all_failures = list(set(all_failures))
         
-    print(f"Total successes: {sum(len(v) for v in successes.values())}")
-    print(f"Total failures: {len(all_failures)}")
+    print(f"Total unique successes: {sum(len(v) for v in successes.values())}")
+    print(f"Total unique failures: {len(all_failures)}")
     
     # Construct preference pairs
     for strat, chosen_list in successes.items():
