@@ -137,8 +137,8 @@ BASE_GENERATOR_PATH = ""
 LLAMA_PATH = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 # Where to save the full trace log
-TRACE_LOG_PATH = "/tmp/autored_verbose_trace.json"
-BENCHMARK_LOG_PATH = "/tmp/autored_benchmark_results.json"
+TRACE_LOG_PATH = "./tmp/autored_verbose_trace.json"
+BENCHMARK_LOG_PATH = "./tmp/autored_benchmark_results.json"
 
 # Phase 7: Paper uses 100 max interactions per round
 MAX_INTERACTIONS = 20
