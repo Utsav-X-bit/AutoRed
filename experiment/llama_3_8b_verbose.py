@@ -1898,6 +1898,8 @@ def serialize_run(
             "pre_defense": scenario.opening_defense,
             "post_defense": scenario.closing_defense,
             "access_code": scenario.access_code,
+            "access_code_type": getattr(scenario, "access_code_type", "UNKNOWN"),
+            "defense_type": getattr(scenario, "primary_type", getattr(scenario, "defense_type", "UNKNOWN")),
             "full_prompt": f"{scenario.opening_defense}\n\n{scenario.closing_defense}",
         },
         "result": {
@@ -4226,6 +4228,8 @@ def save_trace(trace: list, scenario: DefenseScenario, total_attempts: int):
             "timestamp": datetime.now().isoformat(),
             "target_model": "Llama-3-8B-Instruct",
             "access_code": scenario.access_code,
+            "access_code_type": getattr(scenario, "access_code_type", "UNKNOWN"),
+            "defense_type": getattr(scenario, "primary_type", getattr(scenario, "defense_type", "UNKNOWN")),
             "pre_defense": scenario.opening_defense,
             "post_defense": scenario.closing_defense,
             "total_attempts": total_attempts,
