@@ -111,20 +111,36 @@ def train():
     train_dataset = AccessCodeDataset(train_texts, train_labels, tokenizer)
     val_dataset = AccessCodeDataset(val_texts, val_labels, tokenizer)
     
-    training_args = TrainingArguments(
-        output_dir=OUTPUT_DIR,
-        num_train_epochs=3,
-        per_device_train_batch_size=64,
-        per_device_eval_batch_size=128,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=3e-5,
-        load_best_model_at_end=True,
-        metric_for_best_model="macro_f1",
-        greater_is_better=True,
-        logging_steps=100,
-        report_to="none"
-    )
+    try:
+        training_args = TrainingArguments(
+            output_dir=OUTPUT_DIR,
+            num_train_epochs=3,
+            per_device_train_batch_size=64,
+            per_device_eval_batch_size=128,
+            eval_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=3e-5,
+            load_best_model_at_end=True,
+            metric_for_best_model="macro_f1",
+            greater_is_better=True,
+            logging_steps=100,
+            report_to="none"
+        )
+    except TypeError:
+        training_args = TrainingArguments(
+            output_dir=OUTPUT_DIR,
+            num_train_epochs=3,
+            per_device_train_batch_size=64,
+            per_device_eval_batch_size=128,
+            evaluation_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=3e-5,
+            load_best_model_at_end=True,
+            metric_for_best_model="macro_f1",
+            greater_is_better=True,
+            logging_steps=100,
+            report_to="none"
+        )
     
     trainer = WeightedTrainer(
         class_weights=class_weights,
