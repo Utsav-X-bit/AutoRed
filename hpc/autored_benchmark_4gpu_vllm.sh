@@ -151,3 +151,12 @@ else
     echo "[ERROR] Merge script failed!"
     exit 1
 fi
+
+
+while true; do
+    if grep -q "stop" loop.txt; then
+        echo "Target text found. Terminating..."
+        break
+    fi
+    sleep 2
+done
