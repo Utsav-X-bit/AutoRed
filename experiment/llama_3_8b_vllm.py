@@ -3100,8 +3100,9 @@ def verbose_test_llama(
     )
 
     # Save to results directory
-    results_dir = Path("results")
-    results_dir.mkdir(exist_ok=True)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    results_dir = Path("results") / date_str
+    results_dir.mkdir(parents=True, exist_ok=True)
     json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
     with open(json_path, "w") as f:
         json.dump(run_json, f, indent=2, default=str)
@@ -3564,8 +3565,9 @@ def run_benchmark(
     print(f"\n[JSON] Benchmark summary saved to: {BENCHMARK_LOG_PATH}")
 
     # JSON emission: save per-round run JSONs
-    results_dir = Path("results")
-    results_dir.mkdir(exist_ok=True)
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    results_dir = Path("results") / date_str
+    results_dir.mkdir(parents=True, exist_ok=True)
     for run_json in benchmark_run_jsons:
         json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
         with open(json_path, "w") as f:
