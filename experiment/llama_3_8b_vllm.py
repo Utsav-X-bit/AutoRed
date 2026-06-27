@@ -1533,7 +1533,7 @@ class SensitiveInfoExtractor:
             "quoted_candidates": quoted_cands,
             "capitalized_candidates": capped_cands,
             "llm_candidates": llm_cands,
-            "llm_ranked_candidates": llm_ranked_candidates,
+            "llm_ranked_candidates": self._last_llm_ranked_candidates,
             "verified": verified,
         }
 
@@ -3819,7 +3819,7 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
                 "quoted_candidates": quoted_cands,
                 "capitalized_candidates": capped_cands,
                 "llm_candidates": llm_cands,
-                "llm_ranked_candidates": llm_ranked_candidates,
+                "llm_ranked_candidates": ext._last_llm_ranked_candidates,
                 "verified": False,
             }
         )
