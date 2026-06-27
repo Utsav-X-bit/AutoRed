@@ -2220,10 +2220,14 @@ class RedTeamingAgent:
                 self.label_vocab = json.load(f)
             self.reverse_label_vocab = {v: k for k, v in self.label_vocab.items()}
             
-            self.strategy_predictor = StrategyPredictor(len(self.feature_vocab), len(self.label_vocab))
-            self.strategy_predictor.load_state_dict(torch.load(pred_path, map_location=device))
-            self.strategy_predictor.to(device)
-            self.strategy_predictor.eval()
+            try:
+                self.strategy_predictor = StrategyPredictor(len(self.feature_vocab), len(self.label_vocab))
+                self.strategy_predictor.load_state_dict(torch.load(pred_path, map_location=device))
+                self.strategy_predictor.to(device)
+                self.strategy_predictor.eval()
+            except RuntimeError as e:
+                print(f"[WARNING] Failed to load StrategyPredictor due to shape mismatch, disabling it: {e}")
+                self.strategy_predictor = None
 
         # RAG Retriever
         self.retriever = retriever if retriever is not None else DefenseRetriever()
