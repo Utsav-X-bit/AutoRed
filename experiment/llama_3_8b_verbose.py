@@ -3542,26 +3542,41 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
         capped_cands = ext._capitalized_extract(text)
 
         llm_cands = ext.parse_llm_extract_output(raw_llm)
-        llm_ranked_candidates = [
-            {
-                "value": ext._normalize(item.get("value", "")),
-                "score": item.get("score", 0),
-            }
-            for item in ext._last_llm_ranked_candidates
-            if ext._normalize(item.get("value", ""))
-        ]
-        llm_rank_scores = {
-            ext._candidate_key(item["value"]): item["score"]
-            for item in llm_ranked_candidates
-        }
+        
+        # Build LLM confidence map
+        llm_conf_map = {}
+        for item in ext._last_llm_ranked_candidates:
+            norm_val = ext._normalize(item.get("value", ""))
+            if norm_val:
+                key = ext._candidate_key(norm_val)
+                llm_conf_map[key] = max(llm_conf_map.get(key, 0.0), item.get("confidence", 0.0))
 
-        all_candidates = llm_cands + regex_cands + quoted_cands + capped_cands
+        # Build Regex confidence map
+        regex_conf_map = {}
+        for c in regex_cands:
+            key = ext._candidate_key(ext._normalize(c))
+            regex_conf_map[key] = 1.0
+        for c in quoted_cands:
+            key = ext._candidate_key(ext._normalize(c))
+            if key not in regex_conf_map: regex_conf_map[key] = 0.8
+        for c in capped_cands:
+            key = ext._candidate_key(ext._normalize(c))
+            if key not in regex_conf_map: regex_conf_map[key] = 0.5
+
+        # Merge all candidates and compute frequency
+        all_candidates_raw = llm_cands + regex_cands + quoted_cands + capped_cands
+        freq_map = {}
+        for c in all_candidates_raw:
+            key = ext._candidate_key(ext._normalize(c))
+            freq_map[key] = freq_map.get(key, 0) + 1
+        max_freq = max(freq_map.values()) if freq_map else 1
+
         seen = set()
         unique_candidates = []
-        for c in all_candidates:
+        for c in all_candidates_raw:
             normalized = ext._normalize(c)
             candidate_key = ext._candidate_key(normalized)
-            if candidate_key not in seen and candidate_key not in ext.failed_candidates:
+            if candidate_key not in seen:
                 seen.add(candidate_key)
                 unique_candidates.append(normalized)
 
@@ -3583,14 +3598,14 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
                     "quoted_candidates": quoted_cands,
                     "capitalized_candidates": capped_cands,
                     "llm_candidates": llm_cands,
-                    "llm_ranked_candidates": llm_ranked_candidates,
+                    "llm_ranked_candidates": ext._last_llm_ranked_candidates,
                     "verified": False,
                 }
             )
             continue
 
         ranked = ext._rank_candidates(
-            unique_candidates, llm_rank_scores=llm_rank_scores
+            unique_candidates, llm_conf_map, regex_conf_map, freq_map, max_freq
         )
         top_score = ranked[0][1] if ranked else 0
         adaptive_k = 2 if top_score >= 12 else 3
