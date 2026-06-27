@@ -174,7 +174,7 @@ def _load_models():
         model=LLAMA_PATH,
         gpu_memory_utilization=0.47,   # ← ~20GB for vLLM; leaves ~19GB for Generator+Judge
         tensor_parallel_size=1,
-        max_model_len=2048,            # ← Increased to 2048 to prevent decoder prompt length errors
+        max_model_len=4096,            # ← Increased to 4096 to prevent decoder prompt length errors
         enforce_eager=False,
     )
     llama_tokenizer = llama_model.get_tokenizer()
@@ -395,7 +395,7 @@ def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
         model=ckpt_path,
         gpu_memory_utilization=0.45,  # Slightly lower to leave room for DistilBERT
         tensor_parallel_size=1,
-        max_model_len=2048,
+        max_model_len=4096,
     )
     tokenizer = model.get_tokenizer()
     MODEL_LOAD_TIME["generator"] = time.time() - t0

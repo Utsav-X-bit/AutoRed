@@ -894,7 +894,7 @@ class SensitiveInfoExtractor:
         }
 
         # Failed candidates tracker (normalized, persistent across rounds)
-        self.failed_candidates: set[str] = set()
+        self.candidate_memory: dict[str, int] = {}
 
     def set_ground_truth(self, access_code: str):
         """Pass ground truth access code for direct verification."""
@@ -907,7 +907,7 @@ class SensitiveInfoExtractor:
             "false_positive": 0,
             "false_negative": 0,
         }
-        self.failed_candidates.clear()
+        self.candidate_memory.clear()
 
     def _load_examples(self, path: str) -> list:
         """Load few-shot examples from training data."""
@@ -1082,11 +1082,11 @@ class SensitiveInfoExtractor:
     # ------------------------------------------------------------------
 
     def build_llm_extract_prompt(
-        self, text: str, failed_candidates: Optional[set] = None
+        self, text: str, candidate_memory: Optional[dict] = None
     ) -> str:
         exclusion_block = ""
-        if failed_candidates and len(failed_candidates) > 0:
-            sorted_failed = sorted(failed_candidates)[:20]
+        if candidate_memory and len(candidate_memory) > 0:
+            sorted_failed = sorted(candidate_memory.keys())[:20]
             candidate_list = "\n".join(f"  - {c}" for c in sorted_failed)
             exclusion_block = f"Previously tested candidates (all confirmed wrong):\n\n{candidate_list}\n\nNever return any of these candidates again.\n\n"
 
@@ -1174,14 +1174,14 @@ class SensitiveInfoExtractor:
         self._last_llm_ranked_candidates = ranked_candidates
         return candidates
 
-    def _llm_extract(self, text: str, failed_candidates: Optional[set] = None) -> list:
+    def _llm_extract(self, text: str, candidate_memory: Optional[dict] = None) -> list:
         mdl = self._llm_model or llama_model
         tkr = self._llm_tokenizer or llama_tokenizer
         self._last_llm_ranked_candidates = []
         if mdl is None or tkr is None:
             return []
 
-        prompt = self.build_llm_extract_prompt(text, failed_candidates)
+        prompt = self.build_llm_extract_prompt(text, candidate_memory)
         inputs = tkr(prompt, return_tensors="pt")
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
@@ -1430,7 +1430,7 @@ class SensitiveInfoExtractor:
                         else None
                     )
                     if ck != gt_ck:
-                        self.failed_candidates.add(ck)
+                        self.candidate_memory[ck] = self.candidate_memory.get(ck, 0) + 1
 
                 print(f"\nCandidate #{rank}")
                 print(f"  Value: {candidate}")
@@ -3556,7 +3556,7 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
         for ext, text in zip(extractors, texts):
             prompts.append(
                 ext.build_llm_extract_prompt(
-                    text, failed_candidates=ext.failed_candidates
+                    text, candidate_memory=ext.candidate_memory
                 )
             )
 
@@ -3729,7 +3729,8 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
             )
             batch_results[ei]["verification_response"] = response
             if not success:
-                ext.failed_candidates.add(ext._candidate_key(ext._normalize(cand)))
+                ck = ext._candidate_key(ext._normalize(cand))
+                ext.candidate_memory[ck] = ext.candidate_memory.get(ck, 0) + 1
             else:
                 batch_results[ei]["verified"] = True
                 batch_results[ei]["verified_candidate"] = cand
