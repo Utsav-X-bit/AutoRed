@@ -964,7 +964,7 @@ class SensitiveInfoExtractor:
 
     def set_ground_truth(self, access_code: str):
         """Pass ground truth access code for direct verification."""
-        self.ground_truth = access_code.strip().lower()
+        self.ground_truth = access_code.strip().lower() if access_code else ""
 
     def reset_stats(self):
         """Reset extractor metrics and failed candidates (call at start of each benchmark)."""
