@@ -35,14 +35,10 @@ def load_all_scenarios(path: str) -> List[DefenseScenario]:
             scenarios.append(scenario)
     return scenarios
 
-def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], max_attempts: int = 5, worker_id: int = 0):
+def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], gen_model, gen_tokenizer, extractor, max_attempts: int = 5, worker_id: int = 0):
     """
     Phase 3: Super Oracle (Best-of-N Search over States)
     """
-    gen_model = core_module.gen_model
-    gen_tokenizer = core_module.gen_tokenizer
-    extractor = core_module.extractor
-
     from vllm import SamplingParams
     # High temperature for diverse generation
     sampling_params = SamplingParams(n=n_samples, temperature=0.8, top_p=0.9, max_tokens=128)
@@ -72,8 +68,7 @@ def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], max_attem
                 last_extractor_confidence=last_extractor_confidence
             )
 
-            # 2. Oracle Strategy Selection (Uniform random for diversity in Best-of-N, or weighted)
-            # In a full Oracle, we might sample N strategies. For now, let's sample 1 strategy and generate N attacks.
+            # 2. Oracle Strategy Selection
             strategy = random.choice(ATTACK_TYPES)
             
             # 3. Generate N Attacks
@@ -112,7 +107,6 @@ def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], max_attem
             extractor.set_ground_truth(scenario.access_code)
             
             for j, (atk, resp) in enumerate(zip(candidates, victim_responses)):
-                # If ground truth is extracted, we WIN!
                 if extractor.check_ground_truth_leak(resp):
                     print(f"  🎉 SUCCESS on candidate {j+1}!")
                     success = True
@@ -121,7 +115,6 @@ def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], max_attem
                     best_score = 1.0
                     break
                     
-                # Otherwise, use Extractor confidence as a reward heuristic
                 ext_res = extractor.extract(resp)
                 score = 0.0
                 if ext_res["candidates"]:
@@ -183,10 +176,10 @@ def main():
     core_module._SERVER_MODE = False
     print("Loading models...")
     _load_models()
-    core_module.load_decision_model(DISTILBERT_CKPT)
-    core_module.load_gen_model(GENERATOR_PATH, BASE_GENERATOR_PATH)
+    judge_tokenizer, judge_model = core_module.load_decision_model(DISTILBERT_CKPT)
+    gen_tokenizer, gen_model = core_module.load_gen_model(GENERATOR_PATH, BASE_GENERATOR_PATH)
     
-    core_module.extractor = SensitiveInfoExtractor(model=core_module.llama_model, tokenizer=core_module.llama_tokenizer)
+    extractor = SensitiveInfoExtractor(model=core_module.llama_model, tokenizer=core_module.llama_tokenizer)
     
     scenarios = load_all_scenarios("experiment/raw_dump_defenses.jsonl.bz2")
     import random
@@ -201,7 +194,7 @@ def main():
         scenarios = scenarios[start_idx:end_idx]
         print(f"[WORKER {args.worker_id}/{args.num_workers}] Processing scenarios {start_idx} to {end_idx} ({len(scenarios)} total)")
     
-    run_super_oracle(args.n, scenarios, worker_id=args.worker_id)
+    run_super_oracle(args.n, scenarios, gen_model, gen_tokenizer, extractor, worker_id=args.worker_id)
 
 if __name__ == "__main__":
     main()
