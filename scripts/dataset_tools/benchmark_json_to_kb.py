@@ -3,6 +3,10 @@ import argparse
 from pathlib import Path
 import sys
 import uuid
+import os
+
+# Prevent heavy model loading when importing from experiment modules
+os.environ["AUTORED_SERVER_MODE"] = "1"
 
 # Add the project root to sys.path so we can import from experiment
 project_root = Path(__file__).parent.parent.parent
@@ -22,8 +26,18 @@ def convert_benchmark_to_kb(json_path: str, db_path: str = "data/autored_kb.db")
         print("Could not find 'runs' or 'results' in JSON.")
         return
 
+    all_strategies = [
+        "trigger_phrase_discovery",
+        "instruction_leak",
+        "exception_discovery",
+        "roleplay",
+        "translation",
+        "summarization",
+        "system_prompt_recovery",
+    ]
+
     kb = KnowledgeBase(db_path=db_path)
-    state_builder = StateBuilder()
+    state_builder = StateBuilder(all_strategies=all_strategies)
     
     count = 0
     print(f"Importing {len(runs)} benchmark rounds into Knowledge Base...")
