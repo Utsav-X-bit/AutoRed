@@ -11,7 +11,8 @@ class KnowledgeBase:
         self._init_db()
         
     def _init_db(self):
-        with sqlite3.connect(self.db_path) as conn:
+        conn = sqlite3.connect(self.db_path)
+        try:
             cursor = conn.cursor()
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS trajectories (
@@ -63,10 +64,13 @@ class KnowledgeBase:
                 pass  # Columns exist
                 
             conn.commit()
+        finally:
+            conn.close()
 
     def log_trajectory(self, data: Dict[str, Any]):
         """Logs a single step trajectory into the DB."""
-        with sqlite3.connect(self.db_path) as conn:
+        conn = sqlite3.connect(self.db_path)
+        try:
             cursor = conn.cursor()
             
             # 1. Log State Snapshot if provided
@@ -118,10 +122,13 @@ class KnowledgeBase:
                 data.get("reward", 0.0)
             ))
             conn.commit()
+        finally:
+            conn.close()
             
     def get_successful_trajectories(self, scenario_id: str = None, limit: int = 10) -> List[Dict[str, Any]]:
         """Used for RAG later to find successful attacks."""
-        with sqlite3.connect(self.db_path) as conn:
+        conn = sqlite3.connect(self.db_path)
+        try:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             query = "SELECT * FROM trajectories WHERE verifier_success = 1"
@@ -135,3 +142,5 @@ class KnowledgeBase:
             cursor.execute(query, params)
             rows = cursor.fetchall()
             return [dict(r) for r in rows]
+        finally:
+            conn.close()
