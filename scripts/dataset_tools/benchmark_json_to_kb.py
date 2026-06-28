@@ -16,14 +16,33 @@ from experiment.knowledge_base import KnowledgeBase
 from experiment.state_builder import StateBuilder
 from experiment.llama_3_8b_verbose import DefenseScenario
 
-def convert_benchmark_to_kb(json_path: str, db_path: str = "data/autored_kb.db"):
-    print(f"Loading benchmark results from {json_path}")
-    with open(json_path, 'r') as f:
-        data = json.load(f)
+def convert_benchmark_to_kb(input_path: str, db_path: str = "data/autored_kb.db"):
+    input_p = Path(input_path)
+    runs = []
+    
+    if input_p.is_dir():
+        print(f"Loading all benchmark traces from directory {input_path}")
+        json_files = list(input_p.glob("run_*.json"))
+        if not json_files:
+            json_files = list(input_p.glob("*.json"))
+        for jf in json_files:
+            with open(jf, 'r') as f:
+                data = json.load(f)
+                if "trace" in data:
+                    runs.append(data)
+    else:
+        print(f"Loading benchmark results from {input_path}")
+        with open(input_path, 'r') as f:
+            data = json.load(f)
         
-    runs = data.get("runs", data.get("results", []))
-    if not runs and "results" not in data:
-        print("Could not find 'runs' or 'results' in JSON.")
+        # If the file itself is a run trace
+        if "trace" in data:
+            runs.append(data)
+        else:
+            runs = data.get("runs", data.get("results", []))
+
+    if not runs:
+        print("Could not find any 'trace' data in the input. If you are using the vLLM batch runner, pass the directory containing the individual run_*.json files instead of merged_summary.json.")
         return
 
     all_strategies = [
@@ -129,7 +148,7 @@ def convert_benchmark_to_kb(json_path: str, db_path: str = "data/autored_kb.db")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert Benchmark JSONs to KB Trajectories with StateSnapshots")
-    parser.add_argument("--input", "-i", type=str, required=True, help="Path to merged_summary.json")
+    parser.add_argument("--input", "-i", type=str, required=True, help="Path to merged_summary.json OR the directory containing individual run_*.json traces")
     parser.add_argument("--db", type=str, default="data/autored_kb.db", help="Path to output sqlite DB")
     
     args = parser.parse_args()
