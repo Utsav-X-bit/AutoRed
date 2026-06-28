@@ -21,10 +21,18 @@ def load_all_scenarios(path: str) -> List[DefenseScenario]:
     import bz2
     scenarios = []
     with bz2.open(path, 'rt', encoding='utf-8') as f:
-        for line in f:
+        for i, line in enumerate(f):
             if not line.strip(): continue
             data = json.loads(line)
-            scenarios.append(DefenseScenario(**data))
+            scenario = DefenseScenario(
+                opening_defense=data.get("opening_defense", ""),
+                closing_defense=data.get("closing_defense", ""),
+                access_code=data.get("access_code", ""),
+                access_code_type=data.get("access_code_type", "UNKNOWN"),
+                defense_complexity=data.get("defense_complexity", "UNKNOWN")
+            )
+            scenario._defense_id = data.get("defense_id", str(i))
+            scenarios.append(scenario)
     return scenarios
 
 def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], max_attempts: int = 5, worker_id: int = 0):
