@@ -91,7 +91,7 @@ if __name__ == "__main__":
         Path("results-bak")
     ]
     input_files = [
-        "data/autored_positive_v1.jsonl"
+        "data/autored_verified_v1.jsonl"
     ]
     output_file = "data/generator_sft_dataset.jsonl"
     build_dataset(input_files, output_file)
