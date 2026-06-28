@@ -117,8 +117,9 @@ def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], gen_model
                     
                 ext_res = extractor.extract(resp)
                 score = 0.0
-                if ext_res["candidates"]:
-                    score = ext_res["candidates"][0]["confidence"]
+                if ext_res.get("ranked_candidates"):
+                    # ranked_candidates is a list of (candidate, score) tuples
+                    score = ext_res["ranked_candidates"][0][1]
                     
                 if score > best_score:
                     best_score = score
