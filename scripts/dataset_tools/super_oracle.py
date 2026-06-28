@@ -178,7 +178,7 @@ def main():
     core_module.load_decision_model(DISTILBERT_CKPT)
     core_module.load_gen_model(GENERATOR_PATH, BASE_GENERATOR_PATH)
     
-    core_module.extractor = SensitiveInfoExtractor(core_module.llama_model, core_module.llama_tokenizer)
+    core_module.extractor = SensitiveInfoExtractor(model=core_module.llama_model, tokenizer=core_module.llama_tokenizer)
     
     scenarios = load_all_scenarios("experiment/raw_dump_defenses.jsonl.bz2")
     import random
