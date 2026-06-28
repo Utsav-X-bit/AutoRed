@@ -42,9 +42,16 @@ class StrategyPredictor:
     def predict_top_k(self, state, k=5):
         # Heuristic: simulate a predictor by shuffling and allocating decayed budget
         import random
+        k = min(k, len(self.strategies))
         random.shuffle(self.strategies)
         top_k = self.strategies[:k]
-        budget_alloc = [5, 4, 3, 2, 1] 
+        
+        # Distribute budget using a proportional decay from 5 down to 1
+        budget_alloc = []
+        for i in range(k):
+            alloc = max(1, round(5 * ((k - i) / k)))
+            budget_alloc.append(alloc)
+            
         return dict(zip(top_k, budget_alloc))
 
 class PrimitiveComposer:
@@ -107,7 +114,8 @@ def run_super_oracle(n_samples: int, scenarios: List[DefenseScenario], gen_model
             )
 
             # 2. Strategy Predictor
-            budget = predictor.predict_top_k(state, k=5)
+            # Dynamically select 'n_samples' number of strategies
+            budget = predictor.predict_top_k(state, k=n_samples)
             
             # 3. Primitive Composer & Generation
             gen_prompts = []
