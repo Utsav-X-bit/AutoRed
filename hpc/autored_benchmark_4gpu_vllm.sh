@@ -18,7 +18,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:A100-SXM4:4
-#SBATCH --time=12:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --output=logs/benchmark_4gpu_%j.out
 #SBATCH --error=logs/benchmark_4gpu_%j.err
 #SBATCH --partition=airawatp
