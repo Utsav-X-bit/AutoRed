@@ -16,7 +16,7 @@
 #SBATCH --job-name=SuperOracle_v3
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --gres=gpu:A100-SXM4:4
+#SBATCH --gres=gpu:A100-SXM4:8
 #SBATCH --time=7-00:00:00
 #SBATCH --output=logs/super_oracle_%j.out
 #SBATCH --error=logs/super_oracle_%j.err
@@ -33,7 +33,7 @@ N_STRATEGIES=${1:-10}
 NUM_SCENARIOS=${2:-1000}
 MAX_ATTEMPTS=${3:-10}
 DATASET=${4:-"experiment/raw_dump_defenses.jsonl.bz2"}
-NUM_GPUS=4
+NUM_GPUS=8
 
 # Project root
 PROJECT_ROOT="/nlsasfs/home/isea/isea11/slurmJobs/AutoRed"
@@ -49,7 +49,7 @@ mkdir -p "data"
 mkdir -p "logs"
 
 echo "============================================="
-echo "AutoRed Super Oracle v3 — 4-GPU Benchmark"
+echo "AutoRed Super Oracle v3 — 8-GPU Benchmark"
 echo "============================================="
 echo "Strategies/Step : $N_STRATEGIES"
 echo "Total Scenarios : $NUM_SCENARIOS"
