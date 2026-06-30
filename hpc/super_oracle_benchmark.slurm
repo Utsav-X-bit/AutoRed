@@ -9,8 +9,8 @@
 #   sbatch hpc/super_oracle_benchmark.slurm 10 1000 8     # 10 strategies, 1000 scenarios, 8 attempts
 #   sbatch hpc/super_oracle_benchmark.slurm 15 500 10 experiment/oracle_v3_scenarios_5000.jsonl.bz2
 #
-# This script requests 4 A100 GPUs and launches 4 concurrent worker processes
-# to run the Super Oracle v3 (Intelligence-Driven Best-of-N Search).
+# This script requests 8 A100 GPUs and launches 8 concurrent worker processes
+# to run the Super Oracle v4 (Intelligence-Driven Best-of-N Search).
 # =============================================================================
 
 #SBATCH --job-name=SuperOracle_v3
@@ -56,8 +56,8 @@ echo "Total Scenarios : $NUM_SCENARIOS"
 echo "Max Attempts    : $MAX_ATTEMPTS"
 echo "GPUs            : $NUM_GPUS"
 echo "Filter          : ON (max_code_len=25)"
-echo "Double-Down     : ON (confidence > 0.7)"
-echo "Power Combos    : ON (15% of candidates)"
+echo "Early Terminate : ON (plateau detector)"
+echo "Power Combos    : ON (30% of candidates)"
 echo "============================================="
 
 # =============================================================================
