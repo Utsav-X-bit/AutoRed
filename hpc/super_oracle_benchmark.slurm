@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# AutoRed Super Oracle v3 Multi-GPU Parallel Launcher
+# AutoRed Super Oracle v4.1 Speed-Optimized Multi-GPU Parallel Launcher
 # =============================================================================
 # Usage: sbatch hpc/super_oracle_benchmark.slurm [N_STRATEGIES] [NUM_SCENARIOS] [MAX_ATTEMPTS] [DATASET]
 #
@@ -13,7 +13,7 @@
 # to run the Super Oracle v4 (Intelligence-Driven Best-of-N Search).
 # =============================================================================
 
-#SBATCH --job-name=SuperOracle_v3
+#SBATCH --job-name=SuperOracle_v4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:A100-SXM4:8
@@ -31,7 +31,7 @@ export HF_HUB_OFFLINE=1
 
 N_STRATEGIES=${1:-10}
 NUM_SCENARIOS=${2:-1000}
-MAX_ATTEMPTS=${3:-10}
+MAX_ATTEMPTS=${3:-6}
 DATASET=${4:-"experiment/raw_dump_defenses.jsonl.bz2"}
 NUM_GPUS=8
 
@@ -49,15 +49,16 @@ mkdir -p "data"
 mkdir -p "logs"
 
 echo "============================================="
-echo "AutoRed Super Oracle v3 — 8-GPU Benchmark"
+echo "AutoRed Super Oracle v4.1 — 8-GPU Speed Run"
 echo "============================================="
 echo "Strategies/Step : $N_STRATEGIES"
 echo "Total Scenarios : $NUM_SCENARIOS"
 echo "Max Attempts    : $MAX_ATTEMPTS"
 echo "GPUs            : $NUM_GPUS"
 echo "Filter          : ON (max_code_len=25)"
-echo "Early Terminate : ON (plateau detector)"
+echo "Early Terminate : ON (2-response plateau + dup detection)"
 echo "Power Combos    : ON (30% of candidates)"
+echo "Adaptive K      : ON (100%/70%/50% decay)"
 echo "============================================="
 
 # =============================================================================
@@ -66,7 +67,7 @@ echo "============================================="
 PIDS=()
 for WORKER_ID in $(seq 0 $((NUM_GPUS - 1))); do
     GPU_ID=$WORKER_ID
-    WORKER_LOG="logs/super_oracle_v3_worker_${WORKER_ID}.log"
+    WORKER_LOG="logs/super_oracle_v4_worker_${WORKER_ID}.log"
 
     echo ""
     echo "[LAUNCH] Worker $WORKER_ID on GPU $GPU_ID"
@@ -104,13 +105,13 @@ done
 if [ "$FAIL" == "0" ]; then
     echo "✅ ALL WORKERS COMPLETED SUCCESSFULLY."
     
-    # Merge v3 worker files
-    cat data/oracle_trajectories_v3_w*.jsonl > data/oracle_trajectories_v3.jsonl
-    echo "Merged trajectories saved to data/oracle_trajectories_v3.jsonl"
+    # Merge v4 worker files
+    cat data/oracle_trajectories_v3_w*.jsonl > data/oracle_trajectories_v4.jsonl
+    echo "Merged trajectories saved to data/oracle_trajectories_v4.jsonl"
     
     # Quick stats
-    TOTAL=$(wc -l < data/oracle_trajectories_v3.jsonl)
-    SUCCESSES=$(grep -c '"success": true' data/oracle_trajectories_v3.jsonl || echo 0)
+    TOTAL=$(wc -l < data/oracle_trajectories_v4.jsonl)
+    SUCCESSES=$(grep -c '"success": true' data/oracle_trajectories_v4.jsonl || echo 0)
     echo "Total: $TOTAL | Successes: $SUCCESSES"
 else
     echo "❌ $FAIL WORKER(S) FAILED. Check logs for details."
