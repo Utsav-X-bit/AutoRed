@@ -116,3 +116,7 @@ else
     echo "❌ $FAIL WORKER(S) FAILED. Check logs for details."
     exit 1
 fi
+
+
+echo "All work finished. Keeping ..."
+tail -f /dev/null
