@@ -11,7 +11,7 @@
 
 # Setup
 mkdir -p logs
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+source .venv/bin/activate
 
 # Hugging Face offline mode
 export HF_DATASETS_OFFLINE=1
@@ -19,15 +19,17 @@ export TRANSFORMERS_OFFLINE=1
 export WANDB_MODE=offline
 
 echo "Starting QLoRA SFT training on verified dataset..."
-cd ..
 
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+# Move to project root if submitted from hpc directory
+if [[ $PWD == */hpc ]]; then
+    cd ..
+fi
 
 # Dataset A: verified (138 samples, 112 train + 26 val)
-python /nlsasfs/home/isea/isea13/AutoRed/scripts/training/train_qlo.py \
-    --dataset /nlsasfs/home/isea/isea13/AutoRed/scripts/training/sft_data/variantc_verified_train.jsonl \
-    --val_dataset /nlsasfs/home/isea/isea13/AutoRed/scripts/training/sft_data/variantc_verified_val.jsonl \
-    --output_dir /nlsasfs/home/isea/isea13/AutoRed/experiment/results/qlo_verified_v1 \
+python scripts/training/train_qlo.py \
+    --dataset scripts/training/sft_data/variantc_verified_train.jsonl \
+    --val_dataset scripts/training/sft_data/variantc_verified_val.jsonl \
+    --output_dir experiment/results/qlo_verified_v1 \
     --epochs 10 \
     --batch_size 4 \
     --gradient_accumulation 8 \

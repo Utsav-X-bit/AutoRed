@@ -12,14 +12,15 @@
 
 # Setup
 mkdir -p logs
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+source .venv/bin/activate
 
 # Hugging Face offline mode
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export WANDB_MODE=offline
-export HF_HOME=/work/utsav/hf_cache
-export TRANSFORMERS_CACHE=/work/utsav/hf_cache
+# export HF_HOME=/work/utsav/hf_cache
+# export TRANSFORMERS_CACHE=/work/utsav/hf_cache
+
 
 # Move to project root if submitted from hpc directory
 if [[ $PWD == */hpc ]]; then

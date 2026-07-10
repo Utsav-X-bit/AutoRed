@@ -35,6 +35,12 @@ export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
 export WANDB_MODE=offline
+# Ensure only 1 GPU is used if running interactively (bypassing sbatch)
+if [ -z "$CUDA_VISIBLE_DEVICES" ] && [ -z "$SLURM_JOB_ID" ]; then
+    export CUDA_VISIBLE_DEVICES=0
+    echo "Interactive mode detected: Setting CUDA_VISIBLE_DEVICES=0"
+fi
+
 
 # Parse arguments
 VARIANT=${1:-planner}
