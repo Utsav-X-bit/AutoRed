@@ -12,7 +12,7 @@
 
 # Setup
 mkdir -p logs
-source ../.venv/bin/activate
+source .venv/bin/activate
 
 # Hugging Face offline mode
 export HF_DATASETS_OFFLINE=1
@@ -20,7 +20,11 @@ export TRANSFORMERS_OFFLINE=1
 export WANDB_MODE=offline
 
 echo "Starting QLoRA SFT training on positive dataset..."
-cd ..
+
+# Move to project root if submitted from hpc directory
+if [[ $PWD == */hpc ]]; then
+    cd ..
+fi
 
 # Dataset B: positive (291 samples, 235 train + 56 val)
 python scripts/training/train_qlo.py \

@@ -8,9 +8,9 @@
 #SBATCH --error=benchmark_qlo_%j.err
 #SBATCH --partition=airawatp
 
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+source /nlsasfs/home/isea/isea38/AutoRed/.venv/bin/activate
 
-cd /nlsasfs/home/isea/isea13/AutoRed
+cd /nlsasfs/home/isea/isea38/AutoRed
 
 export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1

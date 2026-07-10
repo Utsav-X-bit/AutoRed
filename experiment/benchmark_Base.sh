@@ -8,9 +8,9 @@
 #SBATCH --error=benchmark_base_%j.err
 #SBATCH --partition=airawatp
 
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+source /nlsasfs/home/isea/isea38/AutoRed/.venv/bin/activate
 
-cd /nlsasfs/home/isea/isea13/AutoRed
+cd /nlsasfs/home/isea/isea38/AutoRed
 
 
 CUDA_VISIBLE_DEVICES=0 python experiment/llama_3_8b_verbose.py \

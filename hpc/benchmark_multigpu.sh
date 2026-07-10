@@ -32,7 +32,7 @@ DATASET_SIZE=${5:-1000}        # Pool size for scenario sampling
 OUTPUT_DIR="results/benchmarks/multigpu_${NUM_ROUNDS}r_${NUM_GPUS}g"
 
 # Project root
-PROJECT_ROOT="/nlsasfs/home/isea/isea13/AutoRed"
+PROJECT_ROOT="/nlsasfs/home/isea/isea38/AutoRed"
 cd "$PROJECT_ROOT"
 
 # Activate virtual environment

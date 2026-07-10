@@ -5,21 +5,21 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:A100-SXM4:1
-#SBATCH --mem=40G
 #SBATCH --time=02:00:00
 #SBATCH --output=logs/ranker_train_%j.out
 #SBATCH --error=logs/ranker_train_%j.err
 
 # Setup
 mkdir -p logs
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
+source .venv/bin/activate
 
 # Hugging Face offline mode
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export WANDB_MODE=offline
-export HF_HOME=/work/utsav/hf_cache
-export TRANSFORMERS_CACHE=/work/utsav/hf_cache
+# export HF_HOME=/work/utsav/hf_cache
+# export TRANSFORMERS_CACHE=/work/utsav/hf_cache
+
 
 # Move to project root if submitted from hpc directory
 if [[ $PWD == */hpc ]]; then

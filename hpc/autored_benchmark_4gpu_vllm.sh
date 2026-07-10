@@ -39,7 +39,7 @@ DATASET_SIZE=${5:-1000}
 OUTPUT_DIR=${6:-"results/benchmarks/batched_${NUM_ROUNDS}r_4g"}
 
 # Project root
-PROJECT_ROOT="/nlsasfs/home/isea/isea11/slurmJobs/AutoRed"
+PROJECT_ROOT="/nlsasfs/home/isea/isea38/AutoRed"
 cd "$PROJECT_ROOT"
 
 # Activate virtual environment
