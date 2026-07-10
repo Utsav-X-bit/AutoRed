@@ -941,6 +941,9 @@ class SensitiveInfoExtractor:
         n_shots: int = 5,
         model=None,
         tokenizer=None,
+        ranker_model_path: str = "",
+        ranker_model=None,
+        ranker_tokenizer=None,
     ):
         self.n_shots = n_shots
         self.examples = self._load_examples(few_shot_path)
@@ -951,6 +954,21 @@ class SensitiveInfoExtractor:
         self._llm_model = model
         self._llm_tokenizer = tokenizer
         self._last_llm_ranked_candidates = []
+
+        self.ranker_model = ranker_model
+        self.ranker_tokenizer = ranker_tokenizer
+        if self.ranker_model is not None:
+            self.ranker_device = next(self.ranker_model.parameters()).device
+        elif ranker_model_path and __import__('os').path.exists(ranker_model_path):
+            from transformers import AutoModelForSequenceClassification, AutoTokenizer
+            import torch
+            import logging
+            logging.info(f"Loading Extractor Ranker from {ranker_model_path}...")
+            self.ranker_tokenizer = AutoTokenizer.from_pretrained(ranker_model_path)
+            self.ranker_model = AutoModelForSequenceClassification.from_pretrained(ranker_model_path)
+            self.ranker_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.ranker_model.to(self.ranker_device)
+            self.ranker_model.eval()
 
         # Phase 7: Extractor metrics
         self.extractor_stats = {
@@ -1271,9 +1289,26 @@ class SensitiveInfoExtractor:
     # ------------------------------------------------------------------
 
     def _rank_candidates(
-        self, candidates: list, llm_conf_map: dict, regex_conf_map: dict, freq_map: dict, max_freq: int
+        self, candidates: list, llm_conf_map: dict, regex_conf_map: dict, freq_map: dict, max_freq: int, victim_response: str = ""
     ) -> list:
-        """Score and rank candidates using a probabilistic scoring model."""
+        """Score and rank candidates using a probabilistic scoring model or DeBERTa ranker."""
+        if getattr(self, "ranker_model", None) is not None:
+            import torch
+            scored = []
+            probs = getattr(self, "expected_ac_probs", {})
+            type_probs_str = " ".join([f"{k}={v:.2f}" for k, v in probs.items()]) if probs else "UNKNOWN"
+            for c in candidates:
+                input_text = f"{victim_response} [SEP] {c} [SEP] Type Probs: {type_probs_str}"
+                inputs = self.ranker_tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True).to(self.ranker_device)
+                with torch.no_grad():
+                    logits = self.ranker_model(**inputs).logits
+                    if logits.shape[-1] == 1:
+                        score = logits.sigmoid().item()
+                    else:
+                        score = torch.softmax(logits, dim=-1)[0, 1].item()
+                scored.append((c, score))
+            scored.sort(key=lambda x: -x[1])
+            return scored
         scored = []
         probs = getattr(self, "expected_ac_probs", None) or {"TOKEN": 0.25, "MULTILINE": 0.25, "PHRASE": 0.25, "SENTENCE": 0.25}
         
@@ -1453,7 +1488,7 @@ class SensitiveInfoExtractor:
             }
 
         # Layer 5: Rank candidates
-        ranked = self._rank_candidates(all_candidates, llm_conf_map, regex_conf_map, freq_map, max_freq)
+        ranked = self._rank_candidates(all_candidates, llm_conf_map, regex_conf_map, freq_map, max_freq, victim_response=text)
 
         # Phase 7: Adaptive Top-K based on confidence
         top_score = ranked[0][1] if ranked else 0
@@ -3835,7 +3870,7 @@ def extract_batch(extractors: list, texts: list, envs: list, top_k: int = 5) -> 
             continue
 
         ranked = ext._rank_candidates(
-            unique_candidates, llm_conf_map, regex_conf_map, freq_map, max_freq
+            unique_candidates, llm_conf_map, regex_conf_map, freq_map, max_freq, victim_response=text
         )
         top_score = ranked[0][1] if ranked else 0
         adaptive_k = 2 if top_score >= 12 else 3
@@ -4001,6 +4036,8 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
             n_shots=5,
             model=template_agent.extractor._llm_model,
             tokenizer=template_agent.extractor._llm_tokenizer,
+            ranker_model=template_agent.extractor.ranker_model,
+            ranker_tokenizer=template_agent.extractor.ranker_tokenizer,
         )
         new_agent = RedTeamingAgent(
             template_agent.judge,
@@ -4647,6 +4684,12 @@ if __name__ == "__main__":
         help="Worker ID for multi-GPU parallel benchmark (0-based, default: 0)",
     )
     parser.add_argument(
+        "--extractor-ranker-path",
+        type=str,
+        default="models/ranker_deberta_v1",
+        help="Path to trained DeBERTa ranker",
+    )
+    parser.add_argument(
         "--num-workers",
         type=int,
         default=1,
@@ -4689,7 +4732,7 @@ if __name__ == "__main__":
 
     # Phase 8: Extractor benchmark only needs target LLM (already loaded)
     if args.mode == "extractor_benchmark":
-        extractor = SensitiveInfoExtractor(EXT_DATA_PATH, n_shots=5)
+        extractor = SensitiveInfoExtractor(EXT_DATA_PATH, n_shots=5, ranker_model_path=args.extractor_ranker_path)
         benchmark_extractor(extractor, n_samples=100)
     else:
         # Full pipeline — load all models
@@ -4704,7 +4747,11 @@ if __name__ == "__main__":
 
         # Phase 5: Create SensitiveInfoExtractor with victim model for LLM extraction
         extractor = SensitiveInfoExtractor(
-            EXT_DATA_PATH, n_shots=5, model=llama_model, tokenizer=llama_tokenizer
+            EXT_DATA_PATH,
+            n_shots=5,
+            model=llama_model,
+            tokenizer=llama_tokenizer,
+            ranker_model_path=args.extractor_ranker_path,
         )
 
         # Phase 6: Create unified agent
