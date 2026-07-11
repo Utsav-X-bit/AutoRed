@@ -354,6 +354,8 @@ def load_access_code_predictor(ckpt_path: str):
 
 def load_gen_model(ckpt_path: str, base_model_path: str = BASE_GENERATOR_PATH):
     """Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base)."""
+    if os.path.exists(ckpt_path):
+        ckpt_path = os.path.abspath(ckpt_path)
     print(f"\n[LOAD] Loading Generator model (Llama-2-7B-Chat) from: {ckpt_path}")
     t0 = time.time()
     is_lora_adapter = (Path(ckpt_path) / "adapter_config.json").exists()
