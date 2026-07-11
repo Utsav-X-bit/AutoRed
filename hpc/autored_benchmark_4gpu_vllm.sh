@@ -1,21 +1,5 @@
 #!/bin/bash
-# =============================================================================
-# AutoRed Multi-GPU Parallel Benchmark Launcher (Batched)
-# =============================================================================
-# Usage: sbatch hpc/autored_benchmark_4gpu_vllm.sh [NUM_ROUNDS] [GENERATOR_PATH] [BASE_MODEL_PATH] [DATASET_PATH] [DATASET_SIZE] [OUTPUT_DIR]
-#
-# Examples:
-#   sbatch hpc/autored_benchmark_4gpu_vllm.sh 1000 "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2" "" "" 1000 "results/benchmarks/benchmark_c_1000r"
-#
-# This script requests 4 A100 GPUs and launches 4 concurrent worker processes.
-# Thanks to the recent batched generation rewrite (BATCH_SIZE=16 per GPU),
-# this will evaluate 64 scenarios simultaneously.
-#
-# Estimated Time for 1000 rounds: ~30 to 45 minutes
-# =============================================================================
-
 #SBATCH --job-name=AutoRed_4GPU
-#SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:A100-SXM4:4
 #SBATCH --time=7-00:00:00
@@ -153,10 +137,4 @@ else
 fi
 
 
-while true; do
-    if grep -q "stop" loop.txt; then
-        echo "Target text found. Terminating..."
-        break
-    fi
-    sleep 2
-done
+tail -f /dev/null
