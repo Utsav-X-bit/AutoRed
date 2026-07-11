@@ -28,13 +28,16 @@
 # ── Setup ──
 mkdir -p logs
 source /nlsasfs/home/isea/isea11/slurmJobs/AutoRed/.venv/bin/activate
-cd /nlsasfs/home/isea/isea11/slurmJobs/AutoRed
+cd /nlsasfs/home/isea/isea38/AutoRed
 
 # Offline mode (models cached on HPC)
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
 export WANDB_MODE=offline
+
+# Force single GPU to prevent batch size mismatch in SFTTrainer
+export CUDA_VISIBLE_DEVICES=0
 
 # Parse arguments
 VARIANT=${1:-planner}

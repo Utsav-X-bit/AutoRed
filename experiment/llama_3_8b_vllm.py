@@ -666,7 +666,7 @@ class DefenseRetriever:
             import faiss
             from sentence_transformers import SentenceTransformer
             self.index = faiss.read_index(index_path)
-            with open(meta_path, "r") as f:
+            with open(meta_path, "r", encoding="utf-8") as f:
                 self.metadata = json.load(f)
             self.model = SentenceTransformer("all-MiniLM-L6-v2")
             self.enabled = True
@@ -1002,7 +1002,7 @@ class SensitiveInfoExtractor:
             return []
 
         examples = []
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
@@ -2203,7 +2203,7 @@ class RedTeamingAgent:
         
         # Load Strategy Transitions
         try:
-            with open("data/strategy_transitions.json", "r") as f:
+            with open("data/strategy_transitions.json", "r", encoding="utf-8") as f:
                 import json
                 self.strategy_transitions = json.load(f)
         except Exception:
@@ -2236,13 +2236,13 @@ class RedTeamingAgent:
         self.knowledge_base = {}
         kb_path = os.path.join("data", "strategy_knowledge_base.json")
         if os.path.exists(kb_path):
-            with open(kb_path, "r") as f:
+            with open(kb_path, "r", encoding="utf-8") as f:
                 self.knowledge_base = json.load(f)
 
         self.oracle_rules = {}
         oracle_path = os.path.join("data", "oracle_rules.json")
         if os.path.exists(oracle_path):
-            with open(oracle_path, "r") as f:
+            with open(oracle_path, "r", encoding="utf-8") as f:
                 self.oracle_rules = json.load(f)
 
         # Load Strategy Predictor if available
@@ -2251,9 +2251,9 @@ class RedTeamingAgent:
         lab_path = os.path.join("experiment", "label_vocab.json")
         
         if os.path.exists(pred_path) and os.path.exists(feat_path) and os.path.exists(lab_path):
-            with open(feat_path, "r") as f:
+            with open(feat_path, "r", encoding="utf-8") as f:
                 self.feature_vocab = json.load(f)
-            with open(lab_path, "r") as f:
+            with open(lab_path, "r", encoding="utf-8") as f:
                 self.label_vocab = json.load(f)
             self.reverse_label_vocab = {v: k for k, v in self.label_vocab.items()}
             
@@ -3157,7 +3157,7 @@ def verbose_test_llama(
     results_dir = Path("results") / date_str
     results_dir.mkdir(parents=True, exist_ok=True)
     json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(run_json, f, indent=2, default=str)
     print(f"\n[JSON] Run saved to: {json_path}")
 
@@ -3454,7 +3454,7 @@ def run_benchmark(
                             
                     # Phase 0: Create Missed-Leak Dataset
                     if total_success_exact > total_success_extractor:
-                        with open(missed_leak_file, "a") as ml_f:
+                        with open(missed_leak_file, "a", encoding="utf-8") as ml_f:
                             ml_data = {
                                 "access_code": row["access_code"],
                                 "victim_response": trace[-1].get("response", ""),
@@ -3613,7 +3613,7 @@ def run_benchmark(
     benchmark["extractor_metrics"] = ext_metrics
 
     # Save results
-    with open(BENCHMARK_LOG_PATH, "w") as f:
+    with open(BENCHMARK_LOG_PATH, "w", encoding="utf-8") as f:
         json.dump(benchmark, f, indent=2)
     print(f"\n[JSON] Benchmark summary saved to: {BENCHMARK_LOG_PATH}")
 
@@ -3623,7 +3623,7 @@ def run_benchmark(
     results_dir.mkdir(parents=True, exist_ok=True)
     for run_json in benchmark_run_jsons:
         json_path = results_dir / f"{run_json['experiment']['run_id']}.json"
-        with open(json_path, "w") as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(run_json, f, indent=2, default=str)
     print(f"[JSON] {len(benchmark_run_jsons)} run JSONs saved to: {results_dir}/")
 
@@ -4427,7 +4427,7 @@ def save_trace(trace: list, scenario: DefenseScenario, total_attempts: int):
         "trace": trace,
     }
 
-    with open(TRACE_LOG_PATH, "w") as f:
+    with open(TRACE_LOG_PATH, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
 
     print(f"\n💾 Full trace saved to: {TRACE_LOG_PATH}")
@@ -4616,7 +4616,7 @@ def benchmark_extractor(
         "n_samples": n_samples,
     }
     json_path = results_dir / f"{extractor_json['experiment']['run_id']}.json"
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(extractor_json, f, indent=2, default=str)
     print(f"[JSON] Extractor benchmark saved to: {json_path}")
 
