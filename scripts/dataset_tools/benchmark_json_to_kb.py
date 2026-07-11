@@ -14,7 +14,18 @@ sys.path.append(str(project_root))
 
 from experiment.knowledge_base import KnowledgeBase
 from experiment.state_builder import StateBuilder
-from experiment.llama_3_8b_verbose import DefenseScenario
+from dataclasses import dataclass, field
+
+@dataclass
+class DefenseScenario:
+    opening_defense: str
+    closing_defense: str
+    access_code: str
+    access_code_type: str = "UNKNOWN"
+    defense_complexity: str = "UNKNOWN"
+    defense_type: str = "UNKNOWN"
+    primary_type: str = "UNKNOWN"
+    secondary_flags: list = field(default_factory=list)
 
 def convert_benchmark_to_kb(input_path: str, db_path: str = "data/autored_kb.db"):
     input_p = Path(input_path)

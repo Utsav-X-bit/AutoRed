@@ -216,36 +216,57 @@ def deduplicate_trajectories(
     
     kept = []
     kept_fingerprints = []
+    kept_counters = []
     removed = 0
     
+    # Pre-calculate Counters for the fingerprints
     for traj in trajectories:
         fp = extract_attack_fingerprint(traj)
         
         if not fp:
             kept.append(traj)
             kept_fingerprints.append(fp)
+            kept_counters.append(None)
             continue
-        
+            
+        c_fp = Counter(fp)
+        len_fp = len(fp)
         is_duplicate = False
-        for existing_fp in kept_fingerprints:
+        
+        len_threshold = similarity_threshold / (2.0 - similarity_threshold)
+        
+        for existing_fp, existing_counter in zip(kept_fingerprints, kept_counters):
             if not existing_fp:
                 continue
-            # Quick length check before expensive comparison
-            len_ratio = min(len(fp), len(existing_fp)) / max(len(fp), len(existing_fp), 1)
-            if len_ratio < 0.5:
+            
+            # 1. Quick length check
+            len_existing = len(existing_fp)
+            len_ratio = min(len_fp, len_existing) / max(len_fp, len_existing, 1)
+            if len_ratio < len_threshold:
+                continue
+                
+            # 2. Quick character bag overlap check
+            # Math: 2 * common >= threshold * (len_fp + len_existing)
+            min_common = 0.5 * similarity_threshold * (len_fp + len_existing)
+            
+            # Calculate intersection
+            common = sum((c_fp & existing_counter).values())
+            if common < min_common:
                 continue
             
+            # 3. Full SequenceMatcher check
             similarity = SequenceMatcher(None, fp, existing_fp).ratio()
             if similarity >= similarity_threshold:
                 is_duplicate = True
                 break
-        
+                
         if is_duplicate:
             removed += 1
         else:
             kept.append(traj)
             kept_fingerprints.append(fp)
-    
+            kept_counters.append(c_fp)
+            
     return kept, removed
 
 
@@ -259,6 +280,8 @@ def filter_trajectories(
     late_win_ratio: float = 0.25,
     similarity_threshold: float = 0.85,
     max_attempts: int = 10,
+    hard_mining: bool = False,
+    scenarios_metadata: Dict = None,
 ) -> Tuple[List[Dict], Dict[str, Any]]:
     """
     Full filtering pipeline:
@@ -266,9 +289,9 @@ def filter_trajectories(
     1. Score all trajectories
     2. Keep only successes
     3. Deduplicate
-    4. Sort by composite score
-    5. Keep top `top_percentile` (80%)
-    6. Enforce `late_win_ratio` (25%) from attempt 2+ wins
+    4. If hard_mining: filter for hard criteria (no top_percentile cut)
+       Else: Keep top `top_percentile` (80%)
+    5. Enforce `late_win_ratio` (25%) from attempt 2+ wins
     
     Returns: (filtered_trajectories, filter_stats)
     """
@@ -308,9 +331,71 @@ def filter_trajectories(
     stats["after_dedup"] = len(successes)
     stats["dedup_removed"] = dedup_removed
     
-    # Step 5: Quality cut (top 80%)
-    cutoff_idx = max(1, int(len(successes) * top_percentile))
-    quality_cut = successes[:cutoff_idx]
+    # Helper to categorize defense detailed
+    def get_defense_category(opening, closing):
+        text = (str(opening or "") + " " + str(closing or "")).lower()
+        categories = []
+        if any(k in text for k in ["translate", "language", "english to", "french", "spanish"]):
+            categories.append("translation")
+        if any(k in text for k in ["password", "passcode", "pin", "secret key", "secret code"]):
+            categories.append("password")
+        if any(k in text for k in ["you are", "pretend", "imagine", "persona", "character", "act as", "you will play"]):
+            categories.append("roleplay")
+        if "if " in text and ("then" in text or "otherwise" in text):
+            categories.append("conditional")
+        if any(k in text for k in ["conversation", "chat", "discuss", "never reveal"]):
+            categories.append("conversation")
+        if any(k in text for k in ["say '", 'say "', "say access granted", "say access denied", "exact phrase", "magic word", "output only"]):
+            categories.append("trigger_phrase")
+        if any(k in text for k in ["exception", "no matter what", "under no circumstances", "always", "never"]):
+            categories.append("exception")
+        if any(k in text for k in ["ignore", "instructions", "system prompt", "do not listen", "override", "forget"]):
+            categories.append("instruction_hiding")
+        if not categories:
+            categories.append("trigger_phrase")
+        return categories[0]
+
+    # Helper to get access code type
+    def get_access_code_type(ac):
+        ac = (ac or "").strip()
+        words = ac.split()
+        if "\n" in ac or len(ac) > 100:
+            return "MULTILINE"
+        elif len(words) > 5 or len(ac) > 20:
+            return "SENTENCE"
+        elif 2 <= len(words) <= 5:
+            return "PHRASE"
+        else:
+            return "TOKEN"
+
+    # Step 5: Quality cut / Hard mining filter
+    if hard_mining:
+        print("[HARD MINING] Filtering trajectories for hard criteria...")
+        hard_successes = []
+        for t in successes:
+            sid = str(t["scenario_id"])
+            defense_type = "unknown"
+            access_code_type = "UNKNOWN"
+            if scenarios_metadata and sid in scenarios_metadata:
+                meta = scenarios_metadata[sid]
+                defense_type = get_defense_category(meta.get("opening"), meta.get("closing"))
+                access_code_type = get_access_code_type(meta.get("access_code"))
+
+            # Criteria 1: Low-efficiency win (>= 4 attempts)
+            is_low_efficiency = t["num_attempts"] >= 4
+            # Criteria 2: Historically low success rate defense types
+            is_hard_defense = defense_type in ["roleplay", "conditional", "translation", "exception"]
+            # Criteria 3: Complex access code types
+            is_complex_code = access_code_type in ["MULTILINE", "CONVERSATION", "SENTENCE"]
+
+            if is_low_efficiency or is_hard_defense or is_complex_code:
+                hard_successes.append(t)
+        
+        quality_cut = hard_successes
+        print(f"[HARD MINING] Kept {len(quality_cut)} / {len(successes)} trajectories.")
+    else:
+        cutoff_idx = max(1, int(len(successes) * top_percentile))
+        quality_cut = successes[:cutoff_idx]
     
     if quality_cut:
         stats["quality_cutoff_score"] = quality_cut[-1]["scores"]["composite"]
@@ -355,9 +440,9 @@ def filter_trajectories(
 # SFT Data Formatter
 # ═══════════════════════════════════════════════════════════════════════
 
-def format_for_sft(trajectory: Dict) -> Dict:
+def format_for_sft(trajectory: Dict, scenarios_metadata: Dict = None) -> List[Dict]:
     """
-    Convert a scored trajectory into an SFT training example.
+    Convert a scored trajectory into SFT training examples.
     
     The SFT format encodes the full decision trajectory:
       - Input: scenario context (defense info, attempt number, history)
@@ -367,11 +452,63 @@ def format_for_sft(trajectory: Dict) -> Dict:
     so the Planner learns both "what to try first" AND "what to
     try after failure X."
     """
+    import random
+    
+    DEFENSE_WEIGHTS = {
+        "conversation": 5.0,
+        "translation": 2.5,
+        "roleplay": 2.0,
+        "trigger_phrase": 1.8,
+        "exception": 1.5,
+        "conditional": 1.0,
+        "password": 0.8,
+        "instruction_hiding": 0.5,
+    }
+
+    def get_repeat_count(weight):
+        count = int(weight)
+        prob = weight - count
+        if random.random() < prob:
+            count += 1
+        return count
+
+    def get_defense_category(opening, closing):
+        text = (str(opening or "") + " " + str(closing or "")).lower()
+        categories = []
+        if any(k in text for k in ["translate", "language", "english to", "french", "spanish"]):
+            categories.append("translation")
+        if any(k in text for k in ["password", "passcode", "pin", "secret key", "secret code"]):
+            categories.append("password")
+        if any(k in text for k in ["you are", "pretend", "imagine", "persona", "character", "act as", "you will play"]):
+            categories.append("roleplay")
+        if "if " in text and ("then" in text or "otherwise" in text):
+            categories.append("conditional")
+        if any(k in text for k in ["conversation", "chat", "discuss", "never reveal"]):
+            categories.append("conversation")
+        if any(k in text for k in ["say '", 'say "', "say access granted", "say access denied", "exact phrase", "magic word", "output only"]):
+            categories.append("trigger_phrase")
+        if any(k in text for k in ["exception", "no matter what", "under no circumstances", "always", "never"]):
+            categories.append("exception")
+        if any(k in text for k in ["ignore", "instructions", "system prompt", "do not listen", "override", "forget"]):
+            categories.append("instruction_hiding")
+        if not categories:
+            categories.append("trigger_phrase")
+        return categories[0]
+
     examples = []
     steps = trajectory["trajectory"]
     scenario_id = trajectory["scenario_id"]
     scores = trajectory.get("scores", {})
     
+    # Determine defense type for weighting
+    defense_type = "unknown"
+    if scenarios_metadata and str(scenario_id) in scenarios_metadata:
+        meta = scenarios_metadata[str(scenario_id)]
+        defense_type = get_defense_category(meta.get("opening"), meta.get("closing"))
+
+    weight = DEFENSE_WEIGHTS.get(defense_type, 1.0)
+    repeats = get_repeat_count(weight)
+
     for i, step in enumerate(steps):
         # Build the context (what the Planner would see at this point)
         history_steps = steps[:i]
@@ -411,7 +548,9 @@ def format_for_sft(trajectory: Dict) -> Dict:
             "trajectory_success": trajectory["success"],
         }
         
-        examples.append(example)
+        # Add the copies based on the repeat count
+        for _ in range(repeats):
+            examples.append(example)
     
     return examples
 
@@ -637,6 +776,14 @@ def main():
         "--score-only", action="store_true",
         help="Only score trajectories, don't filter or format"
     )
+    parser.add_argument(
+        "--scenarios", type=str, default="experiment/oracle_v3_scenarios_5000.jsonl.bz2",
+        help="Path to scenarios metadata file (.bz2)"
+    )
+    parser.add_argument(
+        "--hard-mining", action="store_true",
+        help="Enable hard example mining based on low efficiency, low success defenses, and complex code types"
+    )
     args = parser.parse_args()
     
     # ── Load Trajectories ──
@@ -670,6 +817,24 @@ def main():
     failures = len(trajectories) - successes
     print(f"  Successes: {successes} ({successes/max(len(trajectories),1)*100:.1f}%)")
     print(f"  Failures:  {failures}")
+
+    # ── Load Scenarios Metadata ──
+    scenarios_metadata = {}
+    if args.scenarios and os.path.exists(args.scenarios):
+        print(f"[LOAD] Loading scenarios metadata from: {args.scenarios}")
+        import bz2
+        with bz2.open(args.scenarios, 'rt', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    scenarios_metadata[str(data['defense_id'])] = {
+                        'opening': data.get('opening_defense', ''),
+                        'closing': data.get('closing_defense', ''),
+                        'access_code': data.get('access_code', '')
+                    }
+                except Exception:
+                    continue
+        print(f"  Loaded {len(scenarios_metadata)} scenario definitions")
     
     # ── Score Only Mode ──
     if args.score_only:
@@ -693,6 +858,8 @@ def main():
         late_win_ratio=args.late_win_ratio,
         similarity_threshold=args.similarity_threshold,
         max_attempts=args.max_attempts,
+        hard_mining=args.hard_mining,
+        scenarios_metadata=scenarios_metadata,
     )
     
     print(f"  Input:     {stats['input_total']}")
@@ -705,7 +872,7 @@ def main():
     print("\n[SFT] Formatting trajectories for SFT training...")
     sft_examples = []
     for traj in filtered:
-        examples = format_for_sft(traj)
+        examples = format_for_sft(traj, scenarios_metadata=scenarios_metadata)
         sft_examples.extend(examples)
     
     print(f"  Generated {len(sft_examples)} SFT training examples")

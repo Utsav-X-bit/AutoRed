@@ -34,6 +34,7 @@ from transformers import (
     AutoTokenizer,
     BitsAndBytesConfig,
     Trainer,
+    TrainerCallback,
     set_seed,
 )
 from trl import SFTTrainer, SFTConfig
@@ -146,12 +147,35 @@ def format_prompt(entry):
     return "".join(parts)
 
 
+class CurriculumCallback(TrainerCallback):
+    def __init__(self, trainer, easy_dataset, medium_dataset, hard_dataset, easy_epochs=2, medium_epochs=4):
+        self.trainer = trainer
+        self.easy_dataset = easy_dataset
+        self.medium_dataset = medium_dataset
+        self.hard_dataset = hard_dataset
+        self.easy_epochs = easy_epochs
+        self.medium_epochs = medium_epochs
+        
+    def on_epoch_end(self, args, state, control, **kwargs):
+        epoch = int(state.epoch)
+        if epoch < self.easy_epochs:
+            current_phase = "easy"
+            self.trainer.train_dataset = self.easy_dataset
+        elif epoch < self.easy_epochs + self.medium_epochs:
+            current_phase = "medium"
+            self.trainer.train_dataset = self.medium_dataset
+        else:
+            current_phase = "hard"
+            self.trainer.train_dataset = self.hard_dataset
+        print(f"\n[CURRICULUM] Epoch {epoch} ended. Active dataset for next epoch: {current_phase} (size: {len(self.trainer.train_dataset)})")
+
+
 def main():
     parser = argparse.ArgumentParser(description="QLoRA SFT training for AutoRed generator")
     parser.add_argument("--model_name", type=str,
                         default="Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2",
                         help="Base model name or path")
-    parser.add_argument("--dataset", type=str, required=True,
+    parser.add_argument("--dataset", type=str, default=None,
                         help="Path to training JSONL file")
     parser.add_argument("--val_dataset", type=str, default=None,
                         help="Path to validation JSONL file")
@@ -181,7 +205,22 @@ def main():
                         help="WandB project name (set to empty string to disable)")
     parser.add_argument("--run_name", type=str, default="autored_qlo",
                         help="Run name for logging")
+    parser.add_argument("--curriculum", action="store_true",
+                        help="Enable curriculum learning training mode")
+    parser.add_argument("--easy_dataset", type=str, default="scripts/training/sft_data/curriculum_easy_v1.jsonl",
+                        help="Path to easy curriculum dataset")
+    parser.add_argument("--medium_dataset", type=str, default="scripts/training/sft_data/curriculum_medium_v1.jsonl",
+                        help="Path to medium curriculum dataset")
+    parser.add_argument("--hard_dataset", type=str, default="scripts/training/sft_data/curriculum_hard_v1.jsonl",
+                        help="Path to hard curriculum dataset")
+    parser.add_argument("--easy_epochs", type=int, default=2,
+                        help="Number of epochs for easy curriculum phase")
+    parser.add_argument("--medium_epochs", type=int, default=4,
+                        help="Number of epochs for medium curriculum phase")
     args = parser.parse_args()
+
+    if not args.curriculum and not args.dataset:
+        parser.error("--dataset is required when not using --curriculum mode.")
 
     set_seed(args.seed)
 
@@ -196,7 +235,16 @@ def main():
     print(f"Config saved to {output_path / 'training_config.json'}")
 
     # Load dataset
-    train_dataset, val_dataset = load_dataset_from_jsonl(args.dataset, args.val_dataset)
+    if args.curriculum:
+        print("[CURRICULUM] Loading curriculum datasets...")
+        easy_dataset, val_dataset = load_dataset_from_jsonl(args.easy_dataset, args.val_dataset)
+        medium_dataset, _ = load_dataset_from_jsonl(args.medium_dataset, None)
+        hard_dataset, _ = load_dataset_from_jsonl(args.hard_dataset, None)
+        
+        # Start training with the easy dataset
+        train_dataset = easy_dataset
+    else:
+        train_dataset, val_dataset = load_dataset_from_jsonl(args.dataset, args.val_dataset)
 
     # Quantization config
     bnb_config = BitsAndBytesConfig(
@@ -365,6 +413,19 @@ def main():
         for e in errors:
             print(f"    - {e}")
         raise RuntimeError("Could not initialize SFTTrainer with any known API")
+
+    if args.curriculum:
+        print("[CURRICULUM] Registering CurriculumCallback...")
+        trainer.add_callback(
+            CurriculumCallback(
+                trainer=trainer,
+                easy_dataset=easy_dataset,
+                medium_dataset=medium_dataset,
+                hard_dataset=hard_dataset,
+                easy_epochs=args.easy_epochs,
+                medium_epochs=args.medium_epochs,
+            )
+        )
 
     # Training
     print(f"\n{'='*60}")
