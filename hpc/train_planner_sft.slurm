@@ -27,8 +27,8 @@
 
 # ── Setup ──
 mkdir -p logs
-source /nlsasfs/home/isea/isea13/AutoRed/.venv/bin/activate
-cd /nlsasfs/home/isea/isea13/AutoRed
+source /nlsasfs/home/isea/isea11/slurmJobs/AutoRed/.venv/bin/activate
+cd /nlsasfs/home/isea/isea38/AutoRed
 
 # Offline mode (models cached on HPC)
 export HF_DATASETS_OFFLINE=1

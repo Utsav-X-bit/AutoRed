@@ -1,12 +1,12 @@
-# Graph Report - AutoRed  (2026-07-11)
+# Graph Report - AutoRed  (2026-07-12)
 
 ## Corpus Check
-- 195 files · ~861,864 words
+- 196 files · ~866,266 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4298 nodes · 5324 edges · 2081 communities detected
-- Extraction: 58% EXTRACTED · 42% INFERRED · 0% AMBIGUOUS · INFERRED: 2216 edges (avg confidence: 0.64)
+- 4302 nodes · 5330 edges · 2081 communities detected
+- Extraction: 58% EXTRACTED · 42% INFERRED · 0% AMBIGUOUS · INFERRED: 2219 edges (avg confidence: 0.64)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -2107,13 +2107,13 @@
 ## Surprising Connections (you probably didn't know these)
 - `Extractor Overhaul (8 Phases)` --semantically_similar_to--> `Task 3: Extractor Debugger Tab`  [INFERRED] [semantically similar]
   CHANGES_SUMMARY.md → docs/superpowers/plans/2026-06-09-autored-web-ui-phase2.md
+- `judge_attack() (worker)` --semantically_similar_to--> `judge_attack_server()`  [INFERRED] [semantically similar]
+  worker/experiment_runner.py → server/experiment_server.py
 - `ModelsManager (worker singleton)` --semantically_similar_to--> `ServerModelsManager (server singleton)`  [INFERRED] [semantically similar]
   worker/models_manager.py → server/models_server.py
 - `RL4LMs Library (AllenAI)` --semantically_similar_to--> `rl4lms/ Directory (forked RL4LMs library)`  [INFERRED] [semantically similar]
   README.md → GEMINI.md
 - `AUTO RED Framework` --semantically_similar_to--> `AUTO RED Framework (Poster)`  [INFERRED] [semantically similar]
-  AutoRed_ Automated Attack Scenario Generation Framework for Red Teaming of LLMs.AutoRed_AutomatedAttackScenarioGenerationFrameworkforRedTeamingofLLMs.pdf → poster.pdf
-- `Malicious Prompt Generator` --semantically_similar_to--> `Malicious Prompt Generator (Poster)`  [INFERRED] [semantically similar]
   AutoRed_ Automated Attack Scenario Generation Framework for Red Teaming of LLMs.AutoRed_AutomatedAttackScenarioGenerationFrameworkforRedTeamingofLLMs.pdf → poster.pdf
 
 ## Hyperedges (group relationships)
@@ -2138,128 +2138,128 @@
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.02
-Nodes (219): sha256(), close(), get_policy_first_device(), convert_benchmark_to_kb(), build_transitions(), download() (HF asset fetcher), chat_with_llama() (worker), judge_attack() (worker) (+211 more)
+Cohesion: 0.01
+Nodes (243): compute_metrics(), analyze(), tqdm(), sha256(), :param action_masks: Masks applied to constrain the choice of possible actions., main(), build_dataset(), main() (+235 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.02
-Nodes (66): Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, Unpacks vectorized dict observations into separate dict observations, TransitionInfo, unpack_observations(), EvaluateActionsOutput, GenerationInputs, GenerationOutputs, PolicyOutput (+58 more)
+Cohesion: 0.03
+Nodes (114): A2C, Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, Unpacks vectorized dict observations into separate dict observations, TransitionInfo, GenerationInputs, LMActorCriticPolicy, PolicyType, RefPolicyOutput (+106 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (104): A2C, _build_model_heads(), LMActorCriticPolicy, Args:             observation_space (DictSpace): Observation space             a, Cider, Main Class to compute the CIDEr metric, PIExt, PIGen (+96 more)
+Cohesion: 0.02
+Nodes (81): GenerationOutputs, get_policy_first_device(), PolicyOutput, CausalLMActorCriticPolicy, make_masked_proba_distribution(), MaskableBernoulliDistribution, MaskableCategorical, MaskableCategoricalDistribution (+73 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.03
-Nodes (106): analyze_attack_evolution(), benchmark_extractor(), _candidate_key(), categorize_defense_detailed(), chat_with_llama(), CTFEnvironment, DecisionType, DefenseRetriever (+98 more)
+Cohesion: 0.02
+Nodes (163): close(), convert_benchmark_to_kb(), prepare(), KnowledgeBase, Used for RAG later to find successful attacks., DefenseRetriever, get_git_commit(), load_gen_model() (+155 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.03
-Nodes (61): Update policy using the currently gathered         rollout buffer (one gradient, render(), step(), MaskableDictRolloutBuffer, MaskableDictRolloutBufferSamples, MaskableRolloutBuffer, MaskableRolloutBufferSamples, Dict Rollout buffer used in on-policy algorithms like A2C/PPO.     Extends the R (+53 more)
+Nodes (61): Update policy using the currently gathered         rollout buffer (one gradient, render(), step(), EvaluateActionsOutput, Dataclass for the output of the method policy.evaluate_actions().     This is in, MaskableDictRolloutBuffer, MaskableDictRolloutBufferSamples, MaskableRolloutBuffer (+53 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.03
-Nodes (86): clean_gen_name(), get_hash(), main(), audit_record(), build_run_id_index(), candidate_key(), candidate_matches_gt(), capitalized_extract() (+78 more)
+Nodes (79): AnalyticsPanel Component, classify_code(), audit_sample(), count_words(), generate_report(), has_access_granted(), has_conversation_markers(), has_json_syntax() (+71 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.03
-Nodes (65): IntEnum, analyze_attack_evolution(), benchmark_extractor(), chat_with_llama(), CTFEnvironment, DecisionType, DefenseScenario, inference_gen_model_verbose() (+57 more)
+Nodes (50): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+42 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.04
-Nodes (65): compute_metrics(), main(), main(), analyze(), load(), :param action_masks: Masks applied to constrain the choice of possible actions., build_dpo_dataset(), build_dataset() (+57 more)
+Nodes (71): judge_attack_server(), load_gen_model(), _load_models(), Load all models.  Called once from the main process only., Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base)., classify_access_code_type(), classify_defense_complexity(), classify_defense_type() (+63 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.04
-Nodes (56): AnalyticsPanel Component, classify_code(), analyze(), audit_sample(), count_words(), generate_report(), has_access_granted(), has_conversation_markers() (+48 more)
+Nodes (41): clean_gen_name(), get_hash(), main(), main(), main(), analyze(), audit_record(), build_run_id_index() (+33 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.03
-Nodes (48): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+40 more)
-
-### Community 10 - "Community 10"
 Cohesion: 0.04
 Nodes (68): Access Code (Sensitive Information), Agentic Workflow, Alarm Triggers for Suspicious Inputs, Attack Success Rate (ASR), AUTO RED Framework, Binary Sentence Classifier, Capture The Flag (CTF) Game, Curiosity-Driven RL for Red Teaming (+60 more)
 
-### Community 11 - "Community 11"
-Cohesion: 0.05
-Nodes (48): main(), load_worker_result(), main(), merge_benchmarks(), Load and validate a single worker result file., Merge results from multiple workers into a single summary., classify_access_code_type(), classify_defense_complexity() (+40 more)
+### Community 10 - "Community 10"
+Cohesion: 0.06
+Nodes (48): build_dpo_prompt(), main(), build_sft_datasets(), Split examples into train/val, stratified by strategy., stratified_split(), build_run_id_index(), candidate_key(), collect_negatives() (+40 more)
 
-### Community 12 - "Community 12"
+### Community 11 - "Community 11"
 Cohesion: 0.06
 Nodes (53): GPT-3.5-turbo Experiment Notebook, InternLM Experiment Notebook, Jupyter Notebook Environment, Llama 2 7B Experiment Notebook, Llama 3 8B Experiment Notebook, Mistral Experiment Notebook, Result Analysis Notebook, AutoRed Overview and Architecture (+45 more)
 
-### Community 13 - "Community 13"
-Cohesion: 0.07
-Nodes (33): BeamSampleDecoderOnlyOutput, BeamSampleEncoderDecoderOutput, BeamSearchDecoderOnlyOutput, BeamSearchEncoderDecoderOutput, _expand_inputs_for_generation(), generate(), GenerationMixinWithRawScores, GreedySearchDecoderOnlyOutput (+25 more)
-
-### Community 14 - "Community 14"
+### Community 12 - "Community 12"
 Cohesion: 0.07
 Nodes (43): AnalyticsPanel, Attempt, AttemptUpdate, AutoRedRun, BenchmarkDashboard, ExtractorCard, FilterBar, GeneratorCard (+35 more)
 
-### Community 15 - "Community 15"
+### Community 13 - "Community 13"
 Cohesion: 0.05
 Nodes (45): Four Prompt-Level Fixes (TensorTrust-Aligned), Strategy Mutation (7 Templates), Strategy Selection (Score-Based), Strategy System (8 Changes), Analytics Panel, Web UI Architecture (3-Tier), Attempt Data Model, Attempt Investigation View (+37 more)
 
-### Community 16 - "Community 16"
+### Community 14 - "Community 14"
 Cohesion: 0.08
 Nodes (37): A2C, AutoRed, BatchedRewardFunction, CTF_Game, DistilBERT_Judge, EvaluateActionsOutput, KLController, Llama3_8B_Target (+29 more)
 
-### Community 17 - "Community 17"
+### Community 15 - "Community 15"
 Cohesion: 0.07
 Nodes (37): Five Priority Fixes, Six Root Causes of 0% Success, Attack Templates Library, CausalLMActorCriticPolicy, Judge Input Fix (Attack+Response Format), Memory Requirements Analysis, PIGenCausal Data Pool, Priority 1: Replace T5 with LLaMA-2-7B (+29 more)
 
-### Community 18 - "Community 18"
+### Community 16 - "Community 16"
 Cohesion: 0.11
 Nodes (31): build_datasets(), build_failure_dataset(), build_positive_dataset(), build_verified_dataset(), code_type_analysis(), complexity_analysis(), compute_attack_length_stats(), extract_features() (+23 more)
 
-### Community 19 - "Community 19"
+### Community 17 - "Community 17"
 Cohesion: 0.12
 Nodes (16): ActionSpace, BaseEnv, A base class for all the environments, Args:             max_steps (int): max steps for each episode             reward, Resets the episode and returns an observation, Renders the current state of the environment, Gets the observation dimension, Lists all possible actions indices and its meaning          Returns: (+8 more)
 
-### Community 20 - "Community 20"
+### Community 18 - "Community 18"
 Cohesion: 0.11
 Nodes (27): analyze_diversity(), classify_all(), classify_attack(), compute_hashes(), deduplicate(), load_samples(), main(), normalize_text() (+19 more)
 
-### Community 21 - "Community 21"
+### Community 19 - "Community 19"
+Cohesion: 0.18
+Nodes (25): get_run(), list_runs(), upload_run(), ServerModelsManager (server singleton), _dict(), _integer(), _judge_probabilities(), _list() (+17 more)
+
+### Community 20 - "Community 20"
 Cohesion: 0.16
 Nodes (23): BaseModel, Attempt, AttemptUpdate, AutoRedRun, BestAttack, Event, ExperimentInfo, ExtractorTrace (+15 more)
 
-### Community 22 - "Community 22"
+### Community 21 - "Community 21"
 Cohesion: 0.13
 Nodes (16): classify_access_code(), compute_defense_complexity(), main(), post_process_results(), Logger for AutoRed experiment attempts., Log a single attempt., Mark a run as complete and increment run counter., Write buffered entries to disk. (+8 more)
 
-### Community 23 - "Community 23"
-Cohesion: 0.13
-Nodes (22): compute_composite_score(), deduplicate_trajectories(), extract_attack_fingerprint(), filter_trajectories(), format_for_sft(), generate_report(), main(), Trajectory Filter & SFT Dataset Builder ======================================== (+14 more)
-
-### Community 24 - "Community 24"
+### Community 22 - "Community 22"
 Cohesion: 0.11
 Nodes (22): AutoRed Paper Summary, Codebase Architecture, Dual-Policy Learning Approach, HPC Deployment, Key Architectural Components, Reward Model Design, RL Training Loop (MDP Formulation), Attack Loop (+14 more)
 
-### Community 25 - "Community 25"
-Cohesion: 0.16
+### Community 23 - "Community 23"
+Cohesion: 0.14
 Nodes (10): CiderScorer, cook_refs(), cook_test(), precook(), Compute term frequency for reference data.         This will be used to compute, Takes a string as input and returns an object that can be given to     either co, Takes a list of reference sentences for a single segment     and returns an obje, Takes a test sentence and returns an object that     encapsulates everything tha (+2 more)
 
-### Community 26 - "Community 26"
+### Community 24 - "Community 24"
 Cohesion: 0.26
 Nodes (15): AutoRed Logo (padlock + syringe), Padlock Symbol (security / protected system), Syringe Symbol (injection / attack / exploit), AutoRed's Attack (malicious prompts sent to Chatbot), AutoRed System (automated adversarial framework), Chatbot (LLM interface receiving prompts), Decision State d1 = extract (switch to extraction phase), Decision State d0 = generate (continue prompt generation) (+7 more)
 
-### Community 27 - "Community 27"
+### Community 25 - "Community 25"
 Cohesion: 0.2
 Nodes (8): conjugate_gradient_solver(), flat_grad(), quantile_huber_loss(), The quantile-regression loss, as described in the QR-DQN and TQC papers.     Par, Returns the gradients of the passed sequence of parameters into a flat gradient., Finds an approximate solution to a set of linear equations Ax = b      Sources:, tokenize_rewards(), Computes the matrix-vector product with the Fisher information matrix.
 
-### Community 28 - "Community 28"
+### Community 26 - "Community 26"
 Cohesion: 0.28
 Nodes (9): App Router Configuration, AppErrorBoundary Component, AttackEvolutionTab Component, InvestigationTabs Component, React Entry Point, ModelHeatmapTab Component, ResizeHandle Component, ScenarioTab Component (+1 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.39
+Nodes (7): compute_complexity(), detect_secondary_types(), load_samples(), main(), Compute complexity score (1-10) for an attack sample.          Scoring dimension, Detect secondary attack types beyond the primary label., truncate()
+
+### Community 28 - "Community 28"
+Cohesion: 0.29
+Nodes (2): PrioritySampler, Creates a priority sampler          Args:             max_size (int): maximum si
 
 ### Community 29 - "Community 29"
 Cohesion: 0.36
 Nodes (7): dict_hash(), find_products(), get_dict_obj(), Recursively splits the given object, MD5 hash of a dictionary., split_config(), to_expand()
 
 ### Community 30 - "Community 30"
-Cohesion: 0.5
-Nodes (4): detect_primitives(), mine_transitions(), Detect presence of primitive markers in the attack string., Mines the SQLite Knowledge Base for attack state transitions.
+Cohesion: 0.25
+Nodes (1): KLController
 
 ### Community 31 - "Community 31"
 Cohesion: 0.5
@@ -10466,8 +10466,12 @@ Nodes (1): Llama Response 3: Serial Killer/Medic (T5)
   ui/src/components/ResizeHandle.tsx · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **2510 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+2505 more)
+- **2511 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+2506 more)
   These have ≤1 connection - possible missing edges or undocumented components.
+- **Thin community `Community 28`** (8 nodes): `sampler.py`, `PrioritySampler`, `.add()`, `.get_all_samples()`, `.__init__()`, `.sample()`, `.update()`, `Creates a priority sampler          Args:             max_size (int): maximum si`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 30`** (8 nodes): `kl_coeff()`, `KLController`, `.get_state_dict()`, `.__init__()`, `.load_from_state_dict()`, `.step()`, `kl_controllers.py`, `.load_from_dict()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 32`** (3 nodes): `load_jsonl()`, `main()`, `build_augmented_v1.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 34`** (3 nodes): `Returns first three sentences from the generated text`, `three_sentence_summary()`, `post_processors.py`
@@ -14568,15 +14572,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `AppErrorBoundary Component` and `ResizeHandle Component`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `MaskableDictRolloutBuffer` connect `Community 4` to `Community 0`, `Community 1`, `Community 2`, `Community 7`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `load()` connect `Community 7` to `Community 0`, `Community 2`, `Community 3`, `Community 5`, `Community 8`, `Community 9`, `Community 11`, `Community 14`, `Community 22`?**
+- **Why does `KnowledgeBase` connect `Community 3` to `Community 0`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `load()` connect `Community 8` to `Community 0`, `Community 1`, `Community 3`, `Community 6`, `Community 7`, `Community 10`, `Community 12`, `Community 19`, `Community 21`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `StateBuilder` connect `Community 3` to `Community 0`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **Are the 85 inferred relationships involving `StateBuilder` (e.g. with `DecisionType` and `DefenseScenario`) actually correct?**
   _`StateBuilder` has 85 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 65 inferred relationships involving `KnowledgeBase` (e.g. with `DecisionType` and `DefenseScenario`) actually correct?**
   _`KnowledgeBase` has 65 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 65 inferred relationships involving `RewardFunctionRegistry` (e.g. with `RewardFunction` and `BatchedRewardFunction`) actually correct?**
   _`RewardFunctionRegistry` has 65 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 37 inferred relationships involving `RewardFunction` (e.g. with `RewardIncreasingNumbers` and `RewardSentencesWithDates`) actually correct?**
-  _`RewardFunction` has 37 INFERRED edges - model-reasoned connections that need verification._
