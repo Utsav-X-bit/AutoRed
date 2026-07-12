@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import sys
 import types
 from typing import Dict, List
@@ -42,30 +41,7 @@ except Exception:
     pass
 
 
-KNOWN_STRATEGIES = [
-    "instruction_leak",
-    "trigger_phrase_discovery",
-    "exception_discovery",
-    "roleplay",
-    "summarization",
-    "translation",
-    "system_prompt_recovery",
-    "encoding_bypass",
-    "jailbreak_framing",
-    "authority_override",
-    "reflection_attack",
-    "format_conversion",
-    "base64_bypass",
-    "unicode_bypass",
-    "latent_injection",
-    "markdown_smuggling",
-    "json_smuggling",
-    "yaml_smuggling",
-]
-KNOWN_STYLES = ["formal", "conversational", "academic", "story", "direct"]
-KNOWN_POLICIES = ["explore", "retry_same_strategy", "switch_strategy"]
-KNOWN_ACCESS_TYPES = ["TOKEN", "PHRASE", "SENTENCE", "MULTILINE", "UNKNOWN"]
-KNOWN_FAILURE_REASONS = ["none", "JUDGE_REJECT", "EXTRACTOR_MISS", "VERIFIER_REJECT", "NEAR_MISS", "NO_RESPONSE"]
+from experiment.planner_contract import parse_plan_text, validate_plan as contract_validate_plan
 
 
 def parse_args() -> argparse.Namespace:
@@ -77,69 +53,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--local-files-only", action="store_true", default=True)
     return parser.parse_args()
 
-
-def extract_tag(text: str, tag: str) -> str | None:
-    match = re.search(rf"<{tag}>(.*?)</{tag}>", text, re.DOTALL)
-    return match.group(1).strip() if match else None
-
-
-def parse_plan(output: str) -> Dict[str, object]:
-    confidence_raw = extract_tag(output, "confidence")
-    try:
-        confidence = float(confidence_raw) if confidence_raw is not None else -1.0
-    except (TypeError, ValueError):
-        confidence = -1.0
-
-    prim_block = extract_tag(output, "primitive_sequence") or ""
-    primitives = re.findall(r"<step>(.*?)</step>", prim_block, re.DOTALL)
-
-    return {
-        "strategy": extract_tag(output, "strategy"),
-        "primitives": [p.strip() for p in primitives if p.strip()],
-        "style": extract_tag(output, "style"),
-        "expected_access_type": extract_tag(output, "expected_access_type"),
-        "retry_policy": extract_tag(output, "retry_policy"),
-        "confidence": confidence,
-        "failure_reason": extract_tag(output, "failure_reason"),
-    }
-
-
-def normalize_plan(plan: Dict[str, object], output: str) -> Dict[str, object]:
-    normalized = dict(plan)
-
-    if normalized["expected_access_type"] in (None, ""):
-        alias = extract_tag(output, "expected_access_code_type")
-        if alias:
-            normalized["expected_access_type"] = alias
-
-    failure_reason = normalized["failure_reason"]
-    if failure_reason in (None, "", "n/a", "N/A", "NA"):
-        normalized["failure_reason"] = "none"
-
-    return normalized
-
-
 def validate_plan(plan: Dict[str, object], output: str, test_name: str, *, allow_normalized: bool = False) -> bool:
-    candidate = normalize_plan(plan, output) if allow_normalized else plan
-    errors: List[str] = []
-    if "<plan>" not in output or "</plan>" not in output:
-        errors.append("missing <plan> wrapper")
-    if candidate["strategy"] not in KNOWN_STRATEGIES:
-        errors.append(f"unknown strategy: {candidate['strategy']}")
-    if not 1 <= len(candidate["primitives"]) <= 5:
-        errors.append(f"invalid primitive count: {len(candidate['primitives'])}")
-    if candidate["style"] not in KNOWN_STYLES:
-        errors.append(f"unknown style: {candidate['style']}")
-    if candidate["retry_policy"] not in KNOWN_POLICIES:
-        errors.append(f"unknown retry_policy: {candidate['retry_policy']}")
-    if candidate["expected_access_type"] not in KNOWN_ACCESS_TYPES:
-        errors.append(f"unknown access type: {candidate['expected_access_type']}")
-    if candidate["failure_reason"] not in KNOWN_FAILURE_REASONS:
-        errors.append(f"unknown failure_reason: {candidate['failure_reason']}")
-    if not (0.0 <= float(candidate["confidence"]) <= 1.0):
-        errors.append(f"confidence out of range: {candidate['confidence']}")
-    if any(v in (None, "") for k, v in candidate.items() if k != "primitives"):
-        errors.append("one or more plan fields are empty")
+    candidate = plan
+    errors: List[str] = contract_validate_plan(candidate, output, strict=not allow_normalized)
 
     if errors:
         mode = "normalized" if allow_normalized else "strict"
@@ -259,7 +175,7 @@ def run_planner_test(model, tokenizer, test_cases: List[Dict[str, str]], max_new
             output_ids = model.generate(**generate_kwargs)
 
         decoded = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
-        plan = parse_plan(decoded)
+        plan = parse_plan_text(decoded)
         if validate_plan(plan, decoded, tc["name"]):
             passed += 1
             normalized_passed += 1

@@ -205,6 +205,8 @@ def main():
                         help="Path to training JSONL file")
     parser.add_argument("--val_dataset", type=str, default=None,
                         help="Path to validation JSONL file")
+    parser.add_argument("--adapter_path", type=str, default=None,
+                        help="Optional existing PEFT adapter to continue training from")
     parser.add_argument("--output_dir", type=str, required=True,
                         help="Directory to save the trained model")
     parser.add_argument("--epochs", type=int, default=10,
@@ -322,7 +324,12 @@ def main():
         fan_in_fan_out=False,
     )
 
-    model = get_peft_model(model, lora_config)
+    if args.adapter_path:
+        from peft import PeftModel
+        print(f"Loading existing adapter from {args.adapter_path}...")
+        model = PeftModel.from_pretrained(model, args.adapter_path, is_trainable=True)
+    else:
+        model = get_peft_model(model, lora_config)
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size == 1:
         configure_single_gpu_parallel_flags(model)
