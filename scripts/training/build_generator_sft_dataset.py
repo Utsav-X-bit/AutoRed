@@ -24,7 +24,35 @@ ATTACK_TYPE_PROMPTS = {
     "unicode_bypass": "Use the \"unicode_bypass\" strategy: use Unicode characters to evade keyword filters."
 }
 
-def build_dataset(input_files, output_file):
+def classify_style_heuristic(attack_text):
+    text = attack_text.lower()
+    
+    # 1. Academic
+    academic_keywords = ["academic", "scientific", "technical", "vocabulary", "linguistic", "cognitive", 
+                         "hypothetical", "research", "analysis", "framework", "syntactic", "semantic"]
+    if any(k in text for k in academic_keywords):
+        return "academic"
+        
+    # 2. Story / Narrative
+    story_keywords = ["once upon a time", "imagine", "story", "novel", "protagonist", "character", 
+                      "adventure", "chapter", "narrative", "scene", "dialogue", "writer", "fictional"]
+    if any(k in text for k in story_keywords):
+        return "story"
+        
+    # 3. Question
+    if text.strip().endswith("?") or any(k in text for k in ["why", "how", "what if", "query", "question"]):
+        return "question"
+        
+    # 4. Direct / Command
+    direct_keywords = ["repeat", "print", "output", "list", "show", "verbatim", "ignore", "bypass", "execute", 
+                       "command", "must", "do not", "never", "always"]
+    if any(k in text for k in direct_keywords):
+        return "direct"
+        
+    # 5. Fallback/Conversational
+    return "conversational"
+
+def build_dataset(input_files, paraphrases_file, output_file):
     dataset = []
     seen_attacks = set()
     
@@ -45,7 +73,14 @@ def build_dataset(input_files, output_file):
         "Output:\n"
     )
 
+    # 1. Load base SFT examples and tag with heuristic style
+    print("Loading base SFT examples...")
+    base_count = 0
     for file_path in input_files:
+        if not os.path.exists(file_path):
+            print(f"[WARNING] Input file {file_path} not found. Skipping.")
+            continue
+            
         with open(file_path, "r") as f:
             for line in f:
                 if not line.strip():
@@ -62,36 +97,74 @@ def build_dataset(input_files, output_file):
                     continue
                 seen_attacks.add(attack)
                 
+                style = classify_style_heuristic(attack)
                 strategy_prompt = ATTACK_TYPE_PROMPTS.get(strategy, "")
                 
-                # Reconstruct the exact prompt the generator would see
-                full_user_prompt = f"{strategy_prompt}\n\n{base_prompt}".strip()
+                # Reconstruct prompt with style tag
+                full_user_prompt = f"{strategy_prompt}\n<style>{style}</style>\n\n{base_prompt}".strip()
                 
-                # We use the standard chat format (which SFTTrainer with Llama-3 tokenizer will template)
                 conversation = {
                     "messages": [
                         {"role": "user", "content": full_user_prompt},
                         {"role": "assistant", "content": attack}
                     ]
                 }
-                
                 dataset.append(conversation)
+                base_count += 1
                 
+    print(f"  Loaded {base_count} base examples.")
+
+    # 2. Load paraphrases SFT examples
+    if paraphrases_file and os.path.exists(paraphrases_file):
+        print(f"Loading paraphrased examples from {paraphrases_file}...")
+        para_count = 0
+        with open(paraphrases_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                data = json.loads(line)
+                if not data.get("accepted", False):
+                    continue
+                    
+                strategy = data.get("strategy", "unknown")
+                style = data.get("style", "conversational")
+                paraphrase = data.get("paraphrase", "")
+                
+                if not paraphrase:
+                    continue
+                
+                if paraphrase in seen_attacks:
+                    continue
+                seen_attacks.add(paraphrase)
+                
+                strategy_prompt = ATTACK_TYPE_PROMPTS.get(strategy, "")
+                full_user_prompt = f"{strategy_prompt}\n<style>{style}</style>\n\n{base_prompt}".strip()
+                
+                conversation = {
+                    "messages": [
+                        {"role": "user", "content": full_user_prompt},
+                        {"role": "assistant", "content": paraphrase}
+                    ]
+                }
+                dataset.append(conversation)
+                para_count += 1
+        print(f"  Loaded {para_count} paraphrased examples.")
+
     random.shuffle(dataset)
     
-    with open(output_file, "w") as out_f:
+    # Save output
+    out_path = Path(output_file)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as out_f:
         for item in dataset:
             out_f.write(json.dumps(item) + "\n")
             
     print(f"Built SFT dataset with {len(dataset)} examples at {output_file}")
 
 if __name__ == "__main__":
-    input_dirs = [
-        Path("results"),
-        Path("results-bak")
-    ]
     input_files = [
         "data/autored_verified_v1.jsonl"
     ]
+    paraphrases_file = "data/attack_paraphrases_v1.jsonl"
     output_file = "data/generator_sft_dataset.jsonl"
-    build_dataset(input_files, output_file)
+    build_dataset(input_files, paraphrases_file, output_file)
