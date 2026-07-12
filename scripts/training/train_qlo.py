@@ -24,10 +24,32 @@ import argparse
 import inspect
 import json
 import os
+import sys
+import types
 from pathlib import Path
 
 import torch
 from datasets import Dataset
+
+# PEFT on some transformers builds expects tensor_parallel helpers that may not
+# exist. Patch them before importing peft to keep adapter save/load working.
+try:
+    import transformers
+    import transformers.integrations
+
+    if not hasattr(transformers.integrations, "tensor_parallel"):
+        tp = types.ModuleType("transformers.integrations.tensor_parallel")
+        sys.modules["transformers.integrations.tensor_parallel"] = tp
+        transformers.integrations.tensor_parallel = tp
+    else:
+        tp = transformers.integrations.tensor_parallel
+
+    if not hasattr(tp, "EmbeddingParallel"):
+        class DummyEmbeddingParallel:
+            pass
+        tp.EmbeddingParallel = DummyEmbeddingParallel
+except Exception:
+    pass
 
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from transformers import (

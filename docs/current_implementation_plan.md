@@ -1689,7 +1689,7 @@ This is the single source of truth for all model paths. Update this section when
 | Base LLM | Llama-3.1-8B-Lexi-Uncensored-V2 | (HPC cache) | ✅ Ready |
 | Victim | Meta-Llama-3-8B-Instruct | (HPC cache) | ✅ Ready |
 | Judge | DistilBERT fine-tuned | `experiment/results/qlo_curriculum_v1` | ✅ Ready |
-| **Planner SFT v2** | Llama-3.1-8B-Lexi + Planner adapter | `experiment/results/planner_sft_v2` | 🔲 Phase 2 |
+| **Planner SFT v2** | Llama-3.1-8B-Lexi + Planner adapter | `experiment/results/planner_sft_v2` | 🟡 Phase 2 in progress |
 | **Generator SFT v2** | Llama-3.1-8B-Lexi + Generator adapter | `experiment/results/generator_sft_v2` | 🔲 Phase 5 |
 | Planner DPO v1 | Llama-3.1-8B-Lexi + DPO adapter | `experiment/results/planner_dpo_v1` | 🔲 Phase 11 |
 | Generator DPO v1 | Llama-3.1-8B-Lexi + DPO adapter | `experiment/results/generator_dpo_v1` | 🔲 Phase 13 (conditional) |
@@ -1704,8 +1704,8 @@ This is the single source of truth for all model paths. Update this section when
 
 | Phase | Task | Deliverable | GPU | Status |
 |---|---|---|---|---|
-| 1 | Build Planner dataset v2 | `data/planner_sft_dataset_v2.jsonl` | No | 🔲 |
-| 2 | Train Planner SFT v2 | `experiment/results/planner_sft_v2` | 1× A100 | 🔲 |
+| 1 | Build Planner dataset v2 | `data/planner_sft_dataset_v2.jsonl` | No | ✅ Done |
+| 2 | Train Planner SFT v2 | `experiment/results/planner_sft_v2` | 1× A100 | 🟡 In progress |
 | 3 | Test Planner isolation | All 3 test cases pass | 1× GPU | 🔲 |
 | 4 | Build Generator dataset v2 | `data/generator_sft_dataset_v2.jsonl` | No | 🔲 |
 | 5 | Train Generator SFT v2 | `experiment/results/generator_sft_v2` | 1× A100 | 🔲 |
@@ -1717,3 +1717,18 @@ This is the single source of truth for all model paths. Update this section when
 | 11 | Planner DPO | `experiment/results/planner_dpo_v1` | 1× A100 | 🔲 |
 | 12 | Benchmark after Planner DPO | Decision gate: proceed or stop | 4× A100 | 🔲 |
 | 13 | Generator DPO *(only if Phase 12 < 5pp improvement)* | `experiment/results/generator_dpo_v1` | 1× A100 | 🔲 |
+
+## Current Execution Status
+
+- `2026-07-12`: Phase 1 completed on the `experiment/defenses_ac30.jsonl.bz2` subset.
+- Deliverables created:
+  - `scripts/dataset_tools/build_planner_sft_v2.py`
+  - `data/planner_sft_dataset_v2.jsonl`
+  - `scripts/training/prepare_planner_sft_v2_split.py`
+  - `scripts/training/sft_data/planner_v2_train.jsonl`
+  - `scripts/training/sft_data/planner_v2_val.jsonl`
+  - `hpc/train_planner_sft_v2.slurm`
+  - `hpc/train_planner_sft_v2_fast.sh`
+- Phase 2 was started and reached successful training/eval through epoch 3 on 4× A100, but the run failed during final best-checkpoint reload due to a `transformers` / `peft` tensor-parallel compatibility issue.
+- That end-of-run compatibility issue has been patched in `scripts/training/train_qlo.py`.
+- Current state: rerunning Phase 2 with the patched trainer. Start from Phase 3 only after the rerun produces a clean saved adapter.

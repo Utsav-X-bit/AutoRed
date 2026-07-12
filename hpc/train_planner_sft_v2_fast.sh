@@ -11,6 +11,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+export TOKENIZERS_PARALLELISM=false
+
 GPUS=1
 EPOCHS=3
 OUTPUT_DIR="experiment/results/planner_sft_v2_fast"
