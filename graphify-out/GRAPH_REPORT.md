@@ -1,12 +1,12 @@
 # Graph Report - AutoRed  (2026-07-13)
 
 ## Corpus Check
-- 223 files · ~933,015 words
+- 224 files · ~933,631 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4614 nodes · 5769 edges · 2211 communities detected
-- Extraction: 59% EXTRACTED · 41% INFERRED · 0% AMBIGUOUS · INFERRED: 2357 edges (avg confidence: 0.65)
+- 4622 nodes · 5785 edges · 2211 communities detected
+- Extraction: 59% EXTRACTED · 41% INFERRED · 0% AMBIGUOUS · INFERRED: 2360 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -2237,14 +2237,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `Extractor Overhaul (8 Phases)` --semantically_similar_to--> `Task 3: Extractor Debugger Tab`  [INFERRED] [semantically similar]
   CHANGES_SUMMARY.md → docs/superpowers/plans/2026-06-09-autored-web-ui-phase2.md
-- `run_experiment() (worker)` --semantically_similar_to--> `run_experiment_server()`  [INFERRED] [semantically similar]
-  worker/experiment_runner.py → server/experiment_server.py
-- `chat_with_llama() (worker)` --semantically_similar_to--> `chat_with_llama_server()`  [INFERRED] [semantically similar]
-  worker/experiment_runner.py → server/experiment_server.py
-- `judge_attack() (worker)` --semantically_similar_to--> `judge_attack_server()`  [INFERRED] [semantically similar]
-  worker/experiment_runner.py → server/experiment_server.py
+- `ModelsManager (worker singleton)` --semantically_similar_to--> `ServerModelsManager (server singleton)`  [INFERRED] [semantically similar]
+  worker/models_manager.py → server/models_server.py
 - `RL4LMs Library (AllenAI)` --semantically_similar_to--> `rl4lms/ Directory (forked RL4LMs library)`  [INFERRED] [semantically similar]
   README.md → GEMINI.md
+- `AUTO RED Framework` --semantically_similar_to--> `AUTO RED Framework (Poster)`  [INFERRED] [semantically similar]
+  AutoRed_ Automated Attack Scenario Generation Framework for Red Teaming of LLMs.AutoRed_AutomatedAttackScenarioGenerationFrameworkforRedTeamingofLLMs.pdf → poster.pdf
+- `Malicious Prompt Generator` --semantically_similar_to--> `Malicious Prompt Generator (Poster)`  [INFERRED] [semantically similar]
+  AutoRed_ Automated Attack Scenario Generation Framework for Red Teaming of LLMs.AutoRed_AutomatedAttackScenarioGenerationFrameworkforRedTeamingofLLMs.pdf → poster.pdf
 
 ## Hyperedges (group relationships)
 - **AutoRed Three-Component Architecture** — readme_stop_point_identifier, readme_malicious_prompt_generator, readme_sensitive_information_extractor [EXTRACTED 1.00]
@@ -2269,47 +2269,47 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.03
-Nodes (124): A2C, Update policy using the currently gathered         rollout buffer (one gradient, Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, Unpacks vectorized dict observations into separate dict observations, TransitionInfo, _build_model_heads(), EvaluateActionsOutput, GenerationInputs (+116 more)
+Nodes (126): A2C, Update policy using the currently gathered         rollout buffer (one gradient, Advantage Actor Critic (A2C)      Paper: https://arxiv.org/abs/1602.01783     Co, Unpacks vectorized dict observations into separate dict observations, TransitionInfo, _build_model_heads(), EvaluateActionsOutput, GenerationInputs (+118 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.02
-Nodes (90): conjugate_gradient_solver(), flat_grad(), quantile_huber_loss(), The quantile-regression loss, as described in the QR-DQN and TQC papers.     Par, Returns the gradients of the passed sequence of parameters into a flat gradient., Finds an approximate solution to a set of linear equations Ax = b      Sources:, tokenize_rewards(), get_policy_first_device() (+82 more)
+Nodes (80): get_policy_first_device(), make_masked_proba_distribution(), MaskableBernoulliDistribution, MaskableCategorical, MaskableCategoricalDistribution, MaskableDistribution, MaskableMultiCategoricalDistribution, Code adapted from https://github.com/DLR-RM/stable-baselines3 (+72 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.02
-Nodes (194): clean_gen_name(), get_hash(), main(), main(), analyze(), detect_primitives(), level10_primitive_sequence(), level11_lexical_diversity() (+186 more)
+Nodes (200): clean_gen_name(), get_hash(), main(), main(), build_datasets(), build_failure_dataset(), build_positive_dataset(), build_verified_dataset() (+192 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.02
-Nodes (126): convert_benchmark_to_kb(), DefenseScenario, prepare(), elaborative_test_llama(), RedTeamingAgent (elaborative), chat_with_llama() (raw concat), inference_dec_model(), inference_gen_model() (T5) (+118 more)
+Nodes (148): sha256(), close(), convert_benchmark_to_kb(), DefenseScenario, download() (HF asset fetcher), chat_with_llama() (worker), judge_attack() (worker), run_benchmark() (worker) (+140 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.03
-Nodes (112): sha256(), close(), chat_with_llama_server(), judge_attack_server(), load_dataset(), Server-side experiment runner — runs AutoRed experiments using pre-loaded models, Run a single AutoRed experiment using pre-loaded server models.     Streams atte, Run a single AutoRed experiment using pre-loaded server models.     Streams atte (+104 more)
+Cohesion: 0.02
+Nodes (110): :param action_masks: Masks applied to constrain the choice of possible actions., build_dataset(), classify_style_heuristic(), prepare(), main(), map_probe_to_strategy(), analyze_attack_evolution(), benchmark_extractor() (+102 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.03
-Nodes (83): analyze_attack_evolution(), benchmark_extractor(), _build_benchmark_run_json(), _candidate_key(), categorize_defense_detailed(), chat_with_llama(), chat_with_llama_batch(), CTFEnvironment (+75 more)
+Nodes (79): analyze_attack_evolution(), benchmark_extractor(), _build_benchmark_run_json(), _candidate_key(), categorize_defense_detailed(), chat_with_llama_batch(), CTFEnvironment, DecisionType (+71 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.03
-Nodes (57): render(), step(), MaskableDictRolloutBuffer, MaskableDictRolloutBufferSamples, MaskableRolloutBuffer, MaskableRolloutBufferSamples, Dict Rollout buffer used in on-policy algorithms like A2C/PPO.     Extends the R, Rollout buffer that also stores the invalid action masks associated with each ob (+49 more)
+Nodes (52): render(), step(), MaskableDictRolloutBuffer, MaskableDictRolloutBufferSamples, MaskableRolloutBuffer, MaskableRolloutBufferSamples, Dict Rollout buffer used in on-policy algorithms like A2C/PPO.     Extends the R, Rollout buffer that also stores the invalid action masks associated with each ob (+44 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.03
-Nodes (66): IntEnum, analyze_attack_evolution(), benchmark_extractor(), chat_with_llama(), CTFEnvironment, DecisionType, DefenseScenario, inference_gen_model_verbose() (+58 more)
+Nodes (61): IntEnum, analyze_attack_evolution(), benchmark_extractor(), CTFEnvironment, DecisionType, DefenseScenario, load_decision_model(), load_gen_model() (+53 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.04
-Nodes (71): AnalyticsPanel Component, classify_code(), audit_sample(), count_words(), generate_report(), has_access_granted(), has_conversation_markers(), has_json_syntax() (+63 more)
+Cohesion: 0.03
+Nodes (69): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+61 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.03
-Nodes (45): BERTScoreMetric, BLEUMetric, BLEURTMetric, BaseMetric, CIDERMetric, DiversityMetrics, LearnedRewardMetric, MeteorMetric (+37 more)
+Nodes (75): AnalyticsPanel Component, classify_code(), compute_metrics(), compute_attack_length_stats(), Compute length-based statistics for an attack., analyze(), audit_sample(), count_words() (+67 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.05
-Nodes (44): main(), main(), analyze(), load(), build_dpo_dataset(), build_confusion_matrix(), download() (HF asset fetcher), chat_with_llama() (worker) (+36 more)
+Nodes (44): main(), main(), analyze(), load(), build_dpo_dataset(), main(), build_confusion_matrix(), main() (+36 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.04
@@ -2317,7 +2317,7 @@ Nodes (68): Access Code (Sensitive Information), Agentic Workflow, Alarm Trigger
 
 ### Community 12 - "Community 12"
 Cohesion: 0.04
-Nodes (46): compute_metrics(), :param action_masks: Masks applied to constrain the choice of possible actions., build_dataset(), classify_style_heuristic(), build_run_id_index(), candidate_key(), collect_negatives(), collect_positives() (+38 more)
+Nodes (45): main(), build_run_id_index(), candidate_key(), collect_negatives(), collect_positives(), load_jsonl(), load_result_json(), main() (+37 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.06
@@ -2344,24 +2344,24 @@ Cohesion: 0.07
 Nodes (37): Five Priority Fixes, Six Root Causes of 0% Success, Attack Templates Library, CausalLMActorCriticPolicy, Judge Input Fix (Attack+Response Format), Memory Requirements Analysis, PIGenCausal Data Pool, Priority 1: Replace T5 with LLaMA-2-7B (+29 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.11
-Nodes (31): build_datasets(), build_failure_dataset(), build_positive_dataset(), build_verified_dataset(), code_type_analysis(), complexity_analysis(), compute_attack_length_stats(), extract_features() (+23 more)
-
-### Community 20 - "Community 20"
 Cohesion: 0.12
 Nodes (16): ActionSpace, BaseEnv, A base class for all the environments, Args:             max_steps (int): max steps for each episode             reward, Resets the episode and returns an observation, Renders the current state of the environment, Gets the observation dimension, Lists all possible actions indices and its meaning          Returns: (+8 more)
+
+### Community 20 - "Community 20"
+Cohesion: 0.1
+Nodes (24): audit_record(), build_run_id_index(), candidate_key(), candidate_matches_gt(), capitalized_extract(), get_ground_truth(), load_jsonl(), main() (+16 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.11
 Nodes (27): analyze_diversity(), classify_all(), classify_attack(), compute_hashes(), deduplicate(), load_samples(), main(), normalize_text() (+19 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.13
-Nodes (23): audit_record(), build_run_id_index(), candidate_key(), candidate_matches_gt(), capitalized_extract(), get_ground_truth(), load_jsonl(), main() (+15 more)
-
-### Community 23 - "Community 23"
 Cohesion: 0.16
 Nodes (23): BaseModel, Attempt, AttemptUpdate, AutoRedRun, BestAttack, Event, ExperimentInfo, ExtractorTrace (+15 more)
+
+### Community 23 - "Community 23"
+Cohesion: 0.13
+Nodes (16): classify_access_code(), compute_defense_complexity(), main(), post_process_results(), Logger for AutoRed experiment attempts., Log a single attempt., Mark a run as complete and increment run counter., Write buffered entries to disk. (+8 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.12
@@ -2369,19 +2369,19 @@ Nodes (13): classify_access_code(), main(), Classify access code type based on s
 
 ### Community 25 - "Community 25"
 Cohesion: 0.13
-Nodes (16): classify_access_code(), compute_defense_complexity(), main(), post_process_results(), Logger for AutoRed experiment attempts., Log a single attempt., Mark a run as complete and increment run counter., Write buffered entries to disk. (+8 more)
+Nodes (11): evaluate_on_samples(), generate_text(), get_batch(), compute_metrics(), evaluate_on_samples(), generate(), generate_on_samples(), generate_text() (+3 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.11
 Nodes (22): AutoRed Paper Summary, Codebase Architecture, Dual-Policy Learning Approach, HPC Deployment, Key Architectural Components, Reward Model Design, RL Training Loop (MDP Formulation), Attack Loop (+14 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.15
-Nodes (14): configure_single_gpu_parallel_flags(), CurriculumCallback, DummyEmbeddingParallel, format_prompt(), get_model_device_map(), load_dataset_from_jsonl(), main(), patch_trainer_tokenizer_compat() (+6 more)
-
-### Community 28 - "Community 28"
 Cohesion: 0.26
 Nodes (15): AutoRed Logo (padlock + syringe), Padlock Symbol (security / protected system), Syringe Symbol (injection / attack / exploit), AutoRed's Attack (malicious prompts sent to Chatbot), AutoRed System (automated adversarial framework), Chatbot (LLM interface receiving prompts), Decision State d1 = extract (switch to extraction phase), Decision State d0 = generate (continue prompt generation) (+7 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.2
+Nodes (8): conjugate_gradient_solver(), flat_grad(), quantile_huber_loss(), The quantile-regression loss, as described in the QR-DQN and TQC papers.     Par, Returns the gradients of the passed sequence of parameters into a flat gradient., Finds an approximate solution to a set of linear equations Ax = b      Sources:, tokenize_rewards(), Computes the matrix-vector product with the Fisher information matrix.
 
 ### Community 29 - "Community 29"
 Cohesion: 0.28
@@ -2405,7 +2405,7 @@ Nodes (3): ConversationAttackPlanner, Adapts the plan dynamically based on the m
 
 ### Community 34 - "Community 34"
 Cohesion: 0.5
-Nodes (3): _candidate_key(), main(), Comparison key that deduplicates whitespace variants.
+Nodes (4): detect_primitives(), mine_transitions(), Detect presence of primitive markers in the attack string., Mines the SQLite Knowledge Base for attack state transitions.
 
 ### Community 35 - "Community 35"
 Cohesion: 0.5
@@ -2445,15 +2445,15 @@ Nodes (2): Llama Response 1: yukinoshita (T5, 3 attempts), Test 1: yukinoshita D
 
 ### Community 54 - "Community 54"
 Cohesion: 1.0
-Nodes (2): Test 4: Olajuwon Defense (Lexi, 1 attempt), Test 7: Password 42 Defense (Lexi, 1 attempt)
+Nodes (2): Test 5: Tomato Defense (Lexi, 13 attempts), Test 9: Tomato Browser Defense (Lexi, 13 attempts)
 
 ### Community 55 - "Community 55"
 Cohesion: 1.0
-Nodes (2): Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed), Test 8: **** Stars Password (Lexi, 7 attempts)
+Nodes (2): Test 4: Olajuwon Defense (Lexi, 1 attempt), Test 7: Password 42 Defense (Lexi, 1 attempt)
 
 ### Community 56 - "Community 56"
 Cohesion: 1.0
-Nodes (2): Test 5: Tomato Defense (Lexi, 13 attempts), Test 9: Tomato Browser Defense (Lexi, 13 attempts)
+Nodes (2): Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed), Test 8: **** Stars Password (Lexi, 7 attempts)
 
 ### Community 57 - "Community 57"
 Cohesion: 1.0
@@ -11116,7 +11116,7 @@ Nodes (1): Llama Response 3: Serial Killer/Medic (T5)
   ui/src/components/ResizeHandle.tsx · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **2649 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+2644 more)
+- **2650 isolated node(s):** `AutoRed — Optimized Red Teaming Experiment (Llama-3-8B-Instruct) ===============`, `Phase 2: Send prompt to Llama-3-Instruct using apply_chat_template().      Combi`, `Remove regenerated few-shot response patterns that echo the defense.      Llama-`, `Load LLaMA-2-7B-Chat as the attack generator (replaces T5-base).`, `Represents a single CTF defense scenario from the dataset.` (+2645 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **Thin community `Community 30`** (8 nodes): `kl_coeff()`, `KLController`, `.get_state_dict()`, `.__init__()`, `.load_from_state_dict()`, `.step()`, `kl_controllers.py`, `.load_from_dict()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -11132,11 +11132,11 @@ Nodes (1): Llama Response 3: Serial Killer/Medic (T5)
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 53`** (2 nodes): `Llama Response 1: yukinoshita (T5, 3 attempts)`, `Test 1: yukinoshita Defense (T5, 3 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 54`** (2 nodes): `Test 4: Olajuwon Defense (Lexi, 1 attempt)`, `Test 7: Password 42 Defense (Lexi, 1 attempt)`
+- **Thin community `Community 54`** (2 nodes): `Test 5: Tomato Defense (Lexi, 13 attempts)`, `Test 9: Tomato Browser Defense (Lexi, 13 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 55`** (2 nodes): `Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed)`, `Test 8: **** Stars Password (Lexi, 7 attempts)`
+- **Thin community `Community 55`** (2 nodes): `Test 4: Olajuwon Defense (Lexi, 1 attempt)`, `Test 7: Password 42 Defense (Lexi, 1 attempt)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 56`** (2 nodes): `Test 5: Tomato Defense (Lexi, 13 attempts)`, `Test 9: Tomato Browser Defense (Lexi, 13 attempts)`
+- **Thin community `Community 56`** (2 nodes): `Test 6: PerryTheAlmightyPlatypus Defense (Lexi, 50 attempts, failed)`, `Test 8: **** Stars Password (Lexi, 7 attempts)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 57`** (2 nodes): `Experiment Directory Graph Report`, `Full Project Graph Report`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -15472,12 +15472,12 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `AppErrorBoundary Component` and `ResizeHandle Component`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `load()` connect `Community 10` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 8`, `Community 9`, `Community 12`, `Community 14`, `Community 22`, `Community 25`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `RewardFunction` connect `Community 0` to `Community 20`, `Community 12`?**
+- **Why does `load()` connect `Community 10` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 8`, `Community 9`, `Community 12`, `Community 14`, `Community 20`, `Community 23`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
-- **Why does `MaskableDictRolloutBuffer` connect `Community 6` to `Community 0`, `Community 2`, `Community 12`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `RewardFunction` connect `Community 0` to `Community 19`, `Community 12`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `MaskableDictRolloutBuffer` connect `Community 6` to `Community 0`, `Community 2`, `Community 4`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **Are the 86 inferred relationships involving `StateBuilder` (e.g. with `DecisionType` and `DefenseScenario`) actually correct?**
   _`StateBuilder` has 86 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 66 inferred relationships involving `KnowledgeBase` (e.g. with `DecisionType` and `DefenseScenario`) actually correct?**

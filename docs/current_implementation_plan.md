@@ -1743,4 +1743,7 @@ This is the single source of truth for all model paths. Update this section when
 - Phase 4 generator dataset build completed on the AC30 subset and was split into train/val files for Phase 5.
 - Phase 5 generator training completed successfully with `train_loss=0.322891` and a saved adapter at `experiment/results/generator_sft_v2`.
 - Phase 6 generator isolation test script is now present and ready to run against `experiment/results/generator_sft_v2`.
-- Current state: run Phase 6 validation.
+- Phase 6 generator isolation test passed with `3/3` cases passing against `experiment/results/generator_sft_v2`.
+- Phase 7 runtime integration is now being implemented in `experiment/llama_3_8b_vllm.py` with separate planner and generator LoRA requests on a shared vLLM base.
+- `hpc/autored_benchmark_4gpu_vllm.sh` now forwards `--planner-path` alongside `--generator-path`.
+- Current state: run a runtime smoke test for Phase 7.

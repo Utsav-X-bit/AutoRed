@@ -15,12 +15,13 @@ export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
 
 NUM_ROUNDS=${1:-1000}
-GENERATOR_PATH=${2:-"experiment/generator_sft_adapter"}
-BASE_GENERATOR_PATH=${3:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
-DATASET_PATH=${4:-""}
+PLANNER_PATH=${2:-"experiment/results/planner_sft_v2"}
+GENERATOR_PATH=${3:-"experiment/results/generator_sft_v2"}
+BASE_GENERATOR_PATH=${4:-"Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2"}
+DATASET_PATH=${5:-""}
 NUM_GPUS=4
-DATASET_SIZE=${5:-1000}
-OUTPUT_DIR=${6:-"results/benchmarks/batched_${NUM_ROUNDS}r_4g"}
+DATASET_SIZE=${6:-1000}
+OUTPUT_DIR=${7:-"results/benchmarks/batched_${NUM_ROUNDS}r_4g"}
 
 # Project root
 PROJECT_ROOT="/home/utsav/Github/Research/AutoRed"
@@ -44,6 +45,7 @@ echo "AutoRed Batched 4-GPU Benchmark"
 echo "============================================="
 echo "Total Rounds : $NUM_ROUNDS"
 echo "GPUs         : $NUM_GPUS"
+echo "Planner      : $PLANNER_PATH"
 echo "Generator    : $GENERATOR_PATH"
 if [ -n "$BASE_GENERATOR_PATH" ]; then
     echo "Base Model   : $BASE_GENERATOR_PATH"
@@ -73,6 +75,7 @@ for WORKER_ID in $(seq 0 $((NUM_GPUS - 1))); do
         --benchmark-output "$WORKER_OUTPUT" \
         --worker-id "$WORKER_ID" \
         --num-workers "$NUM_GPUS" \
+        --planner-path "$PLANNER_PATH" \
         --generator-path "$GENERATOR_PATH" \
         $( [ -n "$BASE_GENERATOR_PATH" ] && echo "--base-generator-path $BASE_GENERATOR_PATH" ) \
         $( [ -n "$DATASET_PATH" ] && echo "--dataset-path $DATASET_PATH" ) \
@@ -135,6 +138,3 @@ else
     echo "[ERROR] Merge script failed!"
     exit 1
 fi
-
-
-tail -f /dev/null
