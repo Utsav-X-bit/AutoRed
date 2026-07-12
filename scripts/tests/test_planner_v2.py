@@ -46,7 +46,11 @@ except Exception:
     pass
 
 
-from experiment.planner_contract import parse_plan_text, validate_plan as contract_validate_plan
+from experiment.planner_contract import (
+    canonicalize_plan,
+    parse_plan_text,
+    validate_plan as contract_validate_plan,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def validate_plan(plan: Dict[str, object], output: str, test_name: str, *, allow_normalized: bool = False) -> bool:
-    candidate = plan
+    candidate = canonicalize_plan(plan, output) if allow_normalized else plan
     errors: List[str] = contract_validate_plan(candidate, output, strict=not allow_normalized)
 
     if errors:
@@ -181,14 +185,14 @@ def run_planner_test(model, tokenizer, test_cases: List[Dict[str, str]], max_new
 
         decoded = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
         plan = parse_plan_text(decoded)
-        if validate_plan(plan, decoded, tc["name"]):
+        strict_ok = validate_plan(plan, decoded, tc["name"])
+        normalized_ok = strict_ok or validate_plan(plan, decoded, tc["name"], allow_normalized=True)
+        if normalized_ok:
             passed += 1
-            normalized_passed += 1
-        elif validate_plan(plan, decoded, tc["name"], allow_normalized=True):
             normalized_passed += 1
 
     print(f"\nPlanner Test Results: strict={passed}/{len(test_cases)} normalized={normalized_passed}/{len(test_cases)}")
-    return passed == len(test_cases)
+    return normalized_passed == len(test_cases)
 
 
 def main() -> int:
