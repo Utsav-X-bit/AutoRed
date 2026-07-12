@@ -184,6 +184,39 @@ def _load_models():
     print(f"[LOAD] ✓ Llama-3-8B-Instruct loaded ({MODEL_LOAD_TIME['victim']:.1f}s)")
 
 
+def chat_with_llama_messages_batch(messages_batch: list) -> list:
+    if not messages_batch:
+        return []
+    if llama_tokenizer.pad_token is None:
+        llama_tokenizer.pad_token = llama_tokenizer.eos_token
+    original_padding_side = llama_tokenizer.padding_side
+    llama_tokenizer.padding_side = "left"
+
+    prompts = []
+    for messages in messages_batch:
+        prompts.append(
+            llama_tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        )
+
+    print(f"    [DEBUG] chat_with_llama_messages_batch: generating for {len(messages_batch)} conversations...", flush=True)
+    t0 = time.time()
+    
+    sampling_params = SamplingParams(max_tokens=200, temperature=0.7, top_p=0.9)
+    outputs = llama_model.generate(prompts, sampling_params=sampling_params, use_tqdm=False)
+    
+    print(f"    [DEBUG] chat_with_llama_messages_batch: generation complete in {time.time() - t0:.2f}s.", flush=True)
+
+    llama_tokenizer.padding_side = original_padding_side
+
+    responses = []
+    for output in outputs:
+        responses.append(output.outputs[0].text.strip())
+
+    return responses
+
+
 def chat_with_llama_batch(
     pre_defenses: list, attacks: list, post_defenses: list
 ) -> list:
@@ -740,6 +773,11 @@ class CTFEnvironment:
         self.done = False
         self.success = False
         self.last_response: Optional[str] = None
+        self.history = []
+        
+        # Phase 6: Enable multi-turn conversation tracking automatically for conversation defense types
+        d_type = getattr(scenario, "defense_type", "unknown")
+        self.multi_turn = d_type == "conversation"
 
     def reset(self):
         """Reset environment to initial state."""
@@ -747,6 +785,7 @@ class CTFEnvironment:
         self.done = False
         self.success = False
         self.last_response = None
+        self.history = []
         return {
             "pre_defense": self.scenario.opening_defense,
             "post_defense": self.scenario.closing_defense,
@@ -764,12 +803,28 @@ class CTFEnvironment:
         """
         self.current_step += 1
 
-        # Phase 2: Use chat template instead of raw concatenation
-        response = chat_with_llama(
-            self.scenario.opening_defense,
-            attack_prompt,
-            self.scenario.closing_defense,
+        system_content = f"{self.scenario.opening_defense or ''}\n\n{self.scenario.closing_defense or ''}"
+        
+        if self.multi_turn:
+            self.history.append({"role": "user", "content": attack_prompt})
+            messages = [{"role": "system", "content": system_content}] + self.history
+        else:
+            messages = [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": attack_prompt}
+            ]
+            
+        prompt = llama_tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
         )
+        
+        sampling_params = SamplingParams(max_tokens=200, temperature=0.7, top_p=0.9)
+        outputs = llama_model.generate([prompt], sampling_params=sampling_params, use_tqdm=False)
+        response = outputs[0].outputs[0].text.strip()
+        
+        if self.multi_turn:
+            self.history.append({"role": "assistant", "content": response})
+
         self.last_response = response
 
         # No success check here — success is determined by the extractor
@@ -4289,9 +4344,23 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
         )
         attacks = [r["generated_attack"] for r in gen_results]
 
-        pre_defenses = [envs[idx].scenario.opening_defense for idx in active_indices]
-        post_defenses = [envs[idx].scenario.closing_defense for idx in active_indices]
-        responses = chat_with_llama_batch(pre_defenses, attacks, post_defenses)
+        messages_batch = []
+        for j, idx in enumerate(active_indices):
+            env = envs[idx]
+            attack = attacks[j]
+            system_content = f"{env.scenario.opening_defense or ''}\n\n{env.scenario.closing_defense or ''}"
+            
+            if getattr(env, "multi_turn", False):
+                env.history.append({"role": "user", "content": attack})
+                messages = [{"role": "system", "content": system_content}] + env.history
+            else:
+                messages = [
+                    {"role": "system", "content": system_content},
+                    {"role": "user", "content": attack}
+                ]
+            messages_batch.append(messages)
+            
+        responses = chat_with_llama_messages_batch(messages_batch)
 
         new_contents = []
         gt_leaks = []
@@ -4299,6 +4368,10 @@ def _silent_test_batch(scenarios: list, template_agent: RedTeamingAgent) -> list
             env = envs[idx]
             env.current_step += 1
             resp = responses[j]
+            
+            if getattr(env, "multi_turn", False):
+                env.history.append({"role": "assistant", "content": resp})
+                
             env.last_response = resp
             if env.current_step >= env.max_steps:
                 env.done = True
