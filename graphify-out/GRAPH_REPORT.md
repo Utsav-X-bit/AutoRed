@@ -1,12 +1,12 @@
 # Graph Report - AutoRed  (2026-07-12)
 
 ## Corpus Check
-- 221 files · ~929,604 words
+- 221 files · ~929,536 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4590 nodes · 5711 edges · 2209 communities detected
-- Extraction: 59% EXTRACTED · 41% INFERRED · 0% AMBIGUOUS · INFERRED: 2342 edges (avg confidence: 0.65)
+- 4590 nodes · 5712 edges · 2209 communities detected
+- Extraction: 59% EXTRACTED · 41% INFERRED · 0% AMBIGUOUS · INFERRED: 2343 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
