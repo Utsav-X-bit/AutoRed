@@ -76,6 +76,7 @@ CMD=(
   --run_name "$RUN_NAME"
   --packing
   --disable_gradient_checkpointing
+  --skip_best_model_reload
   --logging_steps "$LOGGING_STEPS"
   --dataloader_num_workers "$DATALOADER_WORKERS"
 )

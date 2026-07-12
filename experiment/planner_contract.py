@@ -9,6 +9,7 @@ runtime integration use the same rules.
 from __future__ import annotations
 
 import re
+import json
 from typing import Any, Dict, List
 
 
@@ -52,12 +53,21 @@ def parse_plan_text(output: str) -> Dict[str, Any]:
 
     prim_block = extract_tag(output, "primitive_sequence") or ""
     primitives = re.findall(r"<step>(.*?)</step>", prim_block, re.DOTALL)
+    if not primitives and prim_block.strip():
+        try:
+            parsed = json.loads(prim_block)
+            if isinstance(parsed, list):
+                primitives = [str(item).strip() for item in parsed if str(item).strip()]
+        except Exception:
+            pass
 
     return {
         "strategy": extract_tag(output, "strategy"),
         "primitives": [p.strip() for p in primitives if p.strip()],
         "style": extract_tag(output, "style"),
         "expected_access_type": extract_tag(output, "expected_access_type"),
+        "expected_access_code_type": extract_tag(output, "expected_access_code_type"),
+        "expected_access_code": extract_tag(output, "expected_access_code"),
         "retry_policy": extract_tag(output, "retry_policy"),
         "confidence": confidence,
         "failure_reason": extract_tag(output, "failure_reason"),
@@ -68,12 +78,12 @@ def normalize_plan_dict(plan: Dict[str, Any], output: str) -> Dict[str, Any]:
     normalized = dict(plan)
 
     if normalized["expected_access_type"] in (None, ""):
-        alias = extract_tag(output, "expected_access_code_type")
+        alias = normalized.get("expected_access_code_type") or normalized.get("expected_access_code")
         if alias:
             normalized["expected_access_type"] = alias
 
     failure_reason = normalized["failure_reason"]
-    if failure_reason in (None, "", "n/a", "N/A", "NA"):
+    if failure_reason in (None, "", "n/a", "N/A", "NA") or failure_reason not in KNOWN_FAILURE_REASONS:
         normalized["failure_reason"] = "none"
 
     return normalized
@@ -87,6 +97,13 @@ def canonicalize_plan(plan: Dict[str, Any], output: str = "") -> Dict[str, Any]:
         strategy = "instruction_leak"
 
     primitives = candidate.get("primitives") or []
+    if isinstance(primitives, str):
+        try:
+            parsed = json.loads(primitives)
+            if isinstance(parsed, list):
+                primitives = [str(item).strip() for item in parsed if str(item).strip()]
+        except Exception:
+            primitives = []
     if not primitives:
         primitives = ["framing/educational_context"]
     primitives = primitives[:5]

@@ -235,6 +235,8 @@ def main():
                         help="Trainer logging interval")
     parser.add_argument("--dataloader_num_workers", type=int, default=0,
                         help="Number of dataloader workers")
+    parser.add_argument("--skip_best_model_reload", action="store_true",
+                        help="Skip Trainer's best-model reload at the end of training")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed")
     parser.add_argument("--wandb_project", type=str, default=None,
@@ -352,6 +354,8 @@ def main():
     # SFT Trainer
     print(f"\nSetting up SFTTrainer...")
     patch_trainer_tokenizer_compat()
+    load_best_model = bool(val_dataset) and not args.skip_best_model_reload
+
     sft_config = SFTConfig(
         output_dir=args.output_dir,
         num_train_epochs=args.epochs,
@@ -365,8 +369,8 @@ def main():
         save_strategy="epoch",
         eval_strategy="epoch" if val_dataset else "no",
         save_total_limit=3,
-        load_best_model_at_end=True if val_dataset else False,
-        metric_for_best_model="eval_loss" if val_dataset else None,
+        load_best_model_at_end=load_best_model,
+        metric_for_best_model="eval_loss" if load_best_model else None,
         fp16=False,
         bf16=True,
         dataloader_pin_memory=False,
@@ -487,20 +491,22 @@ def main():
 
     train_result = trainer.train()
 
-    # Save final model
-    print(f"\nSaving model to {args.output_dir}...")
-    model.save_pretrained(args.output_dir)
-    tokenizer.save_pretrained(args.output_dir)
+    is_main_process = getattr(trainer, "is_world_process_zero", lambda: True)()
+    if is_main_process:
+        print(f"\nSaving model to {args.output_dir}...")
+        trainer.save_model(args.output_dir)
+        tokenizer.save_pretrained(args.output_dir)
 
-    # Save metrics
-    metrics = train_result.metrics
-    metrics_dict = {k: round(float(v), 6) for k, v in metrics.items()}
-    with open(output_path / "train_metrics.json", "w") as f:
-        json.dump(metrics_dict, f, indent=2)
-    print(f"Training metrics saved")
-    print(f"  Train loss: {metrics_dict.get('train_loss', 'N/A')}")
+        metrics = train_result.metrics
+        metrics_dict = {k: round(float(v), 6) for k, v in metrics.items()}
+        with open(output_path / "train_metrics.json", "w") as f:
+            json.dump(metrics_dict, f, indent=2)
+        print("Training metrics saved")
+        print(f"  Train loss: {metrics_dict.get('train_loss', 'N/A')}")
+        print(f"\nDone. Model saved to {args.output_dir}")
 
-    print(f"\nDone. Model saved to {args.output_dir}")
+    if hasattr(trainer, "accelerator") and trainer.accelerator is not None:
+        trainer.accelerator.wait_for_everyone()
 
 
 if __name__ == "__main__":
