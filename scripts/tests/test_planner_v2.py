@@ -15,9 +15,14 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 import sys
 import types
 from typing import Dict, List
+
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 
 # Keep PEFT adapter loading compatible with the same transformers build used in
