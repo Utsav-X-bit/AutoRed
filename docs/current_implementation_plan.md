@@ -1708,7 +1708,7 @@ This is the single source of truth for all model paths. Update this section when
 | 2 | Train Planner SFT v2 | `experiment/results/planner_sft_v2` | 1× A100 | ✅ Done |
 | 3 | Test Planner isolation | Canonicalized contract passes | 1× GPU | ✅ Done (normalized acceptance) |
 | 4 | Build Generator dataset v2 | `data/generator_sft_dataset_v2.jsonl` | No | ✅ Done |
-| 5 | Train Generator SFT v2 | `experiment/results/generator_sft_v2` | 1× A100 | 🔲 |
+| 5 | Train Generator SFT v2 | `experiment/results/generator_sft_v2` | 1× A100 | ✅ Done |
 | 6 | Test Generator isolation | All test cases pass | 1× GPU | 🔲 |
 | 7 | Runtime integration | Updated `llama_3_8b_vllm.py` | No | 🔲 |
 | 8 | Integration test (10 rounds) | No crashes, ≥ 1 success | 1× GPU | 🔲 |
@@ -1732,11 +1732,13 @@ This is the single source of truth for all model paths. Update this section when
   - `scripts/dataset_tools/build_generator_sft_v2.py`
   - `data/generator_sft_dataset_v2.jsonl`
   - `scripts/training/prepare_generator_sft_v2_split.py`
-  - `scripts/training/sft_data/generator_v2_train.jsonl`
-  - `scripts/training/sft_data/generator_v2_val.jsonl`
+- `scripts/training/sft_data/generator_v2_train.jsonl`
+- `scripts/training/sft_data/generator_v2_val.jsonl`
+- `experiment/results/generator_sft_v2`
 - Phase 2 initially reached successful training/eval through epoch 3 on 4× A100, but the first run failed during final best-checkpoint reload due to a `transformers` / `peft` tensor-parallel compatibility issue.
 - That end-of-run compatibility issue was patched in `scripts/training/train_qlo.py`.
 - Phase 2 rerun completed successfully.
 - Phase 3 isolation test now uses canonicalized planner output as the runtime contract.
 - Phase 4 generator dataset build completed on the AC30 subset and was split into train/val files for Phase 5.
-- Current state: advance to Phase 5. The generator dataset is built and split for training.
+- Phase 5 generator training completed successfully with `train_loss=0.322891` and a saved adapter at `experiment/results/generator_sft_v2`.
+- Current state: advance to Phase 6.
