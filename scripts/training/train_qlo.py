@@ -23,6 +23,7 @@ Usage:
 import argparse
 import inspect
 import json
+import os
 from pathlib import Path
 
 import torch
@@ -77,6 +78,9 @@ def get_model_device_map(device_map_mode: str):
     device_map="auto" by default because it may shard across visible GPUs,
     after which Trainer can still attempt DataParallel from cuda:0.
     """
+    local_rank = int(os.environ.get("LOCAL_RANK", "-1"))
+    if local_rank >= 0 and torch.cuda.is_available():
+        return {"": local_rank}
     if device_map_mode == "auto":
         return "auto"
     if torch.cuda.is_available():
@@ -84,7 +88,7 @@ def get_model_device_map(device_map_mode: str):
     return None
 
 
-def disable_trainer_data_parallel(model):
+def configure_single_gpu_parallel_flags(model):
     """Prevent Trainer from wrapping quantized PEFT models in DataParallel."""
     for obj in (model, getattr(model, "base_model", None), getattr(model, "model", None)):
         if obj is not None:
@@ -199,6 +203,14 @@ def main():
                         help="Max sequence length")
     parser.add_argument("--device_map", choices=["single", "auto"], default="single",
                         help="Use one CUDA device by default; 'auto' may shard across GPUs")
+    parser.add_argument("--packing", action="store_true",
+                        help="Enable sequence packing in SFTTrainer for better throughput on short samples")
+    parser.add_argument("--disable_gradient_checkpointing", action="store_true",
+                        help="Disable gradient checkpointing for faster training if memory allows")
+    parser.add_argument("--logging_steps", type=int, default=5,
+                        help="Trainer logging interval")
+    parser.add_argument("--dataloader_num_workers", type=int, default=0,
+                        help="Number of dataloader workers")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed")
     parser.add_argument("--wandb_project", type=str, default=None,
@@ -289,7 +301,9 @@ def main():
     )
 
     model = get_peft_model(model, lora_config)
-    disable_trainer_data_parallel(model)
+    world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    if world_size == 1:
+        configure_single_gpu_parallel_flags(model)
     model.print_trainable_parameters()
 
     # Load tokenizer
@@ -318,7 +332,7 @@ def main():
         warmup_ratio=0.05,
         lr_scheduler_type="cosine",
         weight_decay=0.01,
-        logging_steps=5,
+        logging_steps=args.logging_steps,
         save_strategy="epoch",
         eval_strategy="epoch" if val_dataset else "no",
         save_total_limit=3,
@@ -327,10 +341,16 @@ def main():
         fp16=False,
         bf16=True,
         dataloader_pin_memory=False,
+        dataloader_num_workers=args.dataloader_num_workers,
         seed=args.seed,
         report_to="wandb" if args.wandb_project else "none",
         run_name=args.run_name,
         max_seq_length=args.max_length,
+        packing=args.packing,
+        group_by_length=True,
+        gradient_checkpointing=not args.disable_gradient_checkpointing,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
+        ddp_find_unused_parameters=False if world_size > 1 else None,
     )
 
     if args.wandb_project:
