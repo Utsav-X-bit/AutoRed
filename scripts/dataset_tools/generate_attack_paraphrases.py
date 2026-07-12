@@ -42,7 +42,7 @@ def main():
     parser.add_argument("--input", type=str, default="data/sft_dataset_v4_hard.jsonl", help="Input SFT dataset")
     parser.add_argument("--output", type=str, default="data/attack_paraphrases_v1.jsonl", help="Output paraphrases file")
     parser.add_argument("--model", type=str, default="Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2", help="Model name or path")
-    parser.add_argument("--backend", type=choices(["vllm", "transformers"]), default="vllm", help="Inference backend to use")
+    parser.add_argument("--backend", type=str, choices=["vllm", "transformers"], default="vllm", help="Inference backend to use")
     parser.add_argument("--max-attacks", type=int, default=100, help="Maximum number of successful attacks to paraphrase")
     args = parser.parse_args()
 
