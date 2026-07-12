@@ -104,39 +104,57 @@ def parse_plan(output: str) -> Dict[str, object]:
     }
 
 
-def validate_plan(plan: Dict[str, object], output: str, test_name: str) -> bool:
+def normalize_plan(plan: Dict[str, object], output: str) -> Dict[str, object]:
+    normalized = dict(plan)
+
+    if normalized["expected_access_type"] in (None, ""):
+        alias = extract_tag(output, "expected_access_code_type")
+        if alias:
+            normalized["expected_access_type"] = alias
+
+    failure_reason = normalized["failure_reason"]
+    if failure_reason in (None, "", "n/a", "N/A", "NA"):
+        normalized["failure_reason"] = "none"
+
+    return normalized
+
+
+def validate_plan(plan: Dict[str, object], output: str, test_name: str, *, allow_normalized: bool = False) -> bool:
+    candidate = normalize_plan(plan, output) if allow_normalized else plan
     errors: List[str] = []
     if "<plan>" not in output or "</plan>" not in output:
         errors.append("missing <plan> wrapper")
-    if plan["strategy"] not in KNOWN_STRATEGIES:
-        errors.append(f"unknown strategy: {plan['strategy']}")
-    if not 1 <= len(plan["primitives"]) <= 5:
-        errors.append(f"invalid primitive count: {len(plan['primitives'])}")
-    if plan["style"] not in KNOWN_STYLES:
-        errors.append(f"unknown style: {plan['style']}")
-    if plan["retry_policy"] not in KNOWN_POLICIES:
-        errors.append(f"unknown retry_policy: {plan['retry_policy']}")
-    if plan["expected_access_type"] not in KNOWN_ACCESS_TYPES:
-        errors.append(f"unknown access type: {plan['expected_access_type']}")
-    if plan["failure_reason"] not in KNOWN_FAILURE_REASONS:
-        errors.append(f"unknown failure_reason: {plan['failure_reason']}")
-    if not (0.0 <= float(plan["confidence"]) <= 1.0):
-        errors.append(f"confidence out of range: {plan['confidence']}")
-    if any(v in (None, "") for k, v in plan.items() if k != "primitives"):
+    if candidate["strategy"] not in KNOWN_STRATEGIES:
+        errors.append(f"unknown strategy: {candidate['strategy']}")
+    if not 1 <= len(candidate["primitives"]) <= 5:
+        errors.append(f"invalid primitive count: {len(candidate['primitives'])}")
+    if candidate["style"] not in KNOWN_STYLES:
+        errors.append(f"unknown style: {candidate['style']}")
+    if candidate["retry_policy"] not in KNOWN_POLICIES:
+        errors.append(f"unknown retry_policy: {candidate['retry_policy']}")
+    if candidate["expected_access_type"] not in KNOWN_ACCESS_TYPES:
+        errors.append(f"unknown access type: {candidate['expected_access_type']}")
+    if candidate["failure_reason"] not in KNOWN_FAILURE_REASONS:
+        errors.append(f"unknown failure_reason: {candidate['failure_reason']}")
+    if not (0.0 <= float(candidate["confidence"]) <= 1.0):
+        errors.append(f"confidence out of range: {candidate['confidence']}")
+    if any(v in (None, "") for k, v in candidate.items() if k != "primitives"):
         errors.append("one or more plan fields are empty")
 
     if errors:
-        print(f"  FAIL {test_name}: {errors}")
+        mode = "normalized" if allow_normalized else "strict"
+        print(f"  FAIL {test_name} ({mode}): {errors}")
         print("  Raw output:")
         print(output.strip()[:1200])
         return False
 
+    mode = "NORMALIZED PASS" if allow_normalized else "PASS"
     print(
-        f"  PASS {test_name}: "
-        f"strategy={plan['strategy']} "
-        f"primitives={plan['primitives']} "
-        f"style={plan['style']} "
-        f"retry={plan['retry_policy']}"
+        f"  {mode} {test_name}: "
+        f"strategy={candidate['strategy']} "
+        f"primitives={candidate['primitives']} "
+        f"style={candidate['style']} "
+        f"retry={candidate['retry_policy']}"
     )
     return True
 
@@ -220,6 +238,7 @@ def run_planner_test(model, tokenizer, test_cases: List[Dict[str, str]], max_new
     import torch
 
     passed = 0
+    normalized_passed = 0
     for tc in test_cases:
         messages = [{"role": "user", "content": tc["input"]}]
         input_ids = tokenizer.apply_chat_template(
@@ -229,20 +248,25 @@ def run_planner_test(model, tokenizer, test_cases: List[Dict[str, str]], max_new
         ).to(model.device)
 
         with torch.no_grad():
-            output_ids = model.generate(
-                input_ids,
-                max_new_tokens=max_new_tokens,
-                temperature=temperature,
-                do_sample=False,
-                pad_token_id=tokenizer.pad_token_id,
-            )
+            generate_kwargs = {
+                "input_ids": input_ids,
+                "max_new_tokens": max_new_tokens,
+                "do_sample": temperature > 0,
+                "pad_token_id": tokenizer.pad_token_id,
+            }
+            if temperature > 0:
+                generate_kwargs["temperature"] = temperature
+            output_ids = model.generate(**generate_kwargs)
 
         decoded = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
         plan = parse_plan(decoded)
         if validate_plan(plan, decoded, tc["name"]):
             passed += 1
+            normalized_passed += 1
+        elif validate_plan(plan, decoded, tc["name"], allow_normalized=True):
+            normalized_passed += 1
 
-    print(f"\nPlanner Test Results: {passed}/{len(test_cases)} passed")
+    print(f"\nPlanner Test Results: strict={passed}/{len(test_cases)} normalized={normalized_passed}/{len(test_cases)}")
     return passed == len(test_cases)
 
 
