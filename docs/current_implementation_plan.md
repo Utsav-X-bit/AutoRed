@@ -1731,14 +1731,16 @@ This is the single source of truth for all model paths. Update this section when
   - `hpc/train_planner_sft_v2_fast.sh`
   - `scripts/dataset_tools/build_generator_sft_v2.py`
   - `data/generator_sft_dataset_v2.jsonl`
-  - `scripts/training/prepare_generator_sft_v2_split.py`
+- `scripts/training/prepare_generator_sft_v2_split.py`
 - `scripts/training/sft_data/generator_v2_train.jsonl`
 - `scripts/training/sft_data/generator_v2_val.jsonl`
 - `experiment/results/generator_sft_v2`
+- `scripts/tests/test_generator_v2.py`
 - Phase 2 initially reached successful training/eval through epoch 3 on 4× A100, but the first run failed during final best-checkpoint reload due to a `transformers` / `peft` tensor-parallel compatibility issue.
 - That end-of-run compatibility issue was patched in `scripts/training/train_qlo.py`.
 - Phase 2 rerun completed successfully.
 - Phase 3 isolation test now uses canonicalized planner output as the runtime contract.
 - Phase 4 generator dataset build completed on the AC30 subset and was split into train/val files for Phase 5.
 - Phase 5 generator training completed successfully with `train_loss=0.322891` and a saved adapter at `experiment/results/generator_sft_v2`.
-- Current state: advance to Phase 6.
+- Phase 6 generator isolation test script is now present and ready to run against `experiment/results/generator_sft_v2`.
+- Current state: run Phase 6 validation.
