@@ -105,9 +105,9 @@ def api_run_status():
 # ─── Run Endpoints ──────────────────────────────────────────
 
 @app.get("/api/runs")
-def api_list_runs():
-    """List all past runs."""
-    return list_runs()
+def api_list_runs(limit: Optional[int] = Query(default=None, ge=0), offset: int = Query(default=0, ge=0)):
+    """List top-level past runs with optional pagination."""
+    return list_runs(limit=limit, offset=offset)
 
 
 @app.get("/api/runs/all")
@@ -129,9 +129,9 @@ def api_get_run(run_id: str):
 
 
 @app.get("/api/benchmarks")
-def api_list_benchmarks():
-    """List benchmark summary folders."""
-    return list_benchmarks()
+def api_list_benchmarks(limit: Optional[int] = Query(default=None, ge=0), offset: int = Query(default=0, ge=0)):
+    """List benchmark summary folders with optional pagination."""
+    return list_benchmarks(limit=limit, offset=offset)
 
 
 @app.get("/api/benchmarks/{benchmark_id}")

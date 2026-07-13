@@ -116,7 +116,7 @@ def list_trace_archives() -> List[Dict[str, Any]]:
     return archives
 
 
-def list_benchmarks() -> List[Dict[str, Any]]:
+def list_benchmarks(limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
     """List benchmark summaries from results/benchmarks."""
     ensure_results_dir()
     if not BENCHMARKS_DIR.exists():
@@ -150,6 +150,10 @@ def list_benchmarks() -> List[Dict[str, Any]]:
             "trace_archive_count": len(trace_archives),
             "trace_archives": [archive.name for archive in trace_archives],
         })
+    if offset:
+        benchmarks = benchmarks[offset:]
+    if limit is not None and limit >= 0:
+        benchmarks = benchmarks[:limit]
     return benchmarks
 
 
@@ -178,7 +182,7 @@ def get_benchmark(benchmark_id: str) -> Optional[Dict[str, Any]]:
     }
 
 
-def list_runs() -> List[Dict[str, Any]]:
+def list_runs(limit: Optional[int] = None, offset: int = 0) -> List[Dict[str, Any]]:
     """List top-level run JSON files with metadata."""
     ensure_results_dir()
     runs: List[Dict[str, Any]] = []
@@ -206,6 +210,10 @@ def list_runs() -> List[Dict[str, Any]]:
                 "error": str(e),
                 "benchmark_mode": False,
             })
+    if offset:
+        runs = runs[offset:]
+    if limit is not None and limit >= 0:
+        runs = runs[:limit]
     return runs
 
 
