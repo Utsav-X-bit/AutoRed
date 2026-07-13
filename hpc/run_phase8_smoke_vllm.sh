@@ -7,7 +7,7 @@ export TRANSFORMERS_OFFLINE=1
 export HF_HUB_OFFLINE=1
 export TOKENIZERS_PARALLELISM=false
 
-PROJECT_ROOT="/home/utsav/Github/Research/AutoRed"
+PROJECT_ROOT="/nlsasfs/home/isea/isea38/AutoRed"
 cd "$PROJECT_ROOT"
 
 source "$PROJECT_ROOT/.venv/bin/activate"
