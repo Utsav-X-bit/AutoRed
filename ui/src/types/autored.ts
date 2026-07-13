@@ -35,6 +35,8 @@ export interface ScenarioInfo {
   post_defense: string;
   access_code: string;
   full_prompt: string;
+  access_code_type?: string;
+  defense_type?: string;
 }
 
 export interface ResultInfo {
@@ -107,6 +109,11 @@ export interface VerificationTrace {
 
 export interface GeneratorInfo {
   strategy: string;
+  primitives?: string[];
+  style?: string;
+  retry_policy?: string;
+  expected_access_type?: string;
+  plan_raw?: string;
   internal_prompt: string;
   generated_attack: string;
   attack_length: number;
@@ -171,6 +178,17 @@ export interface AutoRedRun {
   attempts: Attempt[];
   events: Event[];
   summary: SummaryStats;
+}
+
+export interface PlannerStateSnapshot {
+  attempt_number: number;
+  current_strategy: string;
+  previous_strategy: string;
+  previous_outcome: string;
+  success_so_far: number;
+  attempts_so_far: number;
+  leak_seen: boolean;
+  verified_seen: boolean;
 }
 
 export interface RunListItem {

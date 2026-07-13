@@ -13,6 +13,7 @@ import ExtractorCard from '../components/ExtractorCard';
 import VerifierCard from '../components/VerifierCard';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import InvestigationTabs from '../components/InvestigationTabs';
+import PlannerInsightsPanel from '../components/PlannerInsightsPanel';
 import ResizeHandle from '../components/ResizeHandle';
 import { isRunSuccessful } from '../utils/success';
 
@@ -47,6 +48,10 @@ export default function InvestigationPage() {
   const [bottomHeight, setBottomHeight] = useState(() =>
     readStoredSize('autored.layout.bottomHeight', DEFAULT_BOTTOM_HEIGHT),
   );
+  const [showTimeline, setShowTimeline] = useState(true);
+  const [showPlanner, setShowPlanner] = useState(true);
+  const [showAnalytics, setShowAnalytics] = useState(true);
+  const [showTabs, setShowTabs] = useState(true);
 
   useEffect(() => {
     window.localStorage.setItem('autored.layout.leftWidth', String(leftWidth));
@@ -161,6 +166,7 @@ export default function InvestigationPage() {
 
   const attempt = selectedRun.attempts?.[selectedAttemptIndex];
   const runSucceeded = isRunSuccessful(selectedRun);
+  const hasPlannerData = selectedRun.attempts.some((item) => Boolean(item.generator.plan_raw));
   if (!attempt) {
     console.error('[InvestigationPage] Attempt not found:', {
       index: selectedAttemptIndex,
@@ -206,6 +212,34 @@ export default function InvestigationPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowTimeline((value) => !value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${showTimeline ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            title="Show or hide the attempt timeline"
+          >
+            Timeline
+          </button>
+          <button
+            onClick={() => setShowPlanner((value) => !value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${showPlanner ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            title={hasPlannerData ? 'Show or hide the planner analysis' : 'Legacy run: planner output is inferred from history'}
+          >
+            Planner
+          </button>
+          <button
+            onClick={() => setShowAnalytics((value) => !value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${showAnalytics ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            title="Show or hide the analytics panel"
+          >
+            Analytics
+          </button>
+          <button
+            onClick={() => setShowTabs((value) => !value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${showTabs ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}
+            title="Show or hide the deep analysis tabs"
+          >
+            Tabs
+          </button>
+          <button
             onClick={resetLayout}
             className="px-3 py-1.5 text-slate-500 hover:text-slate-900 text-xs font-medium transition-colors"
             title="Reset all panel sizes"
@@ -238,27 +272,34 @@ export default function InvestigationPage() {
 
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="flex-1 min-h-0 flex overflow-hidden">
-          <aside
-            className="flex-shrink-0 min-w-0 overflow-hidden"
-            style={{ width: leftWidth }}
-          >
-            <TimelineSidebar />
-          </aside>
-          <ResizeHandle
-            direction="vertical"
-            label="Resize attempt timeline"
-            onPointerDown={(event) => resizeFromPointer(
-              event,
-              'x',
-              leftWidth,
-              (start, delta) => updateLeftWidth(start + delta),
-            )}
-            onKeyboardResize={(delta) => updateLeftWidth(leftWidth + delta)}
-            onReset={() => setLeftWidth(DEFAULT_LEFT_WIDTH)}
-          />
+          {showTimeline && (
+            <>
+              <aside
+                className="flex-shrink-0 min-w-0 overflow-hidden"
+                style={{ width: leftWidth }}
+              >
+                <TimelineSidebar />
+              </aside>
+              <ResizeHandle
+                direction="vertical"
+                label="Resize attempt timeline"
+                onPointerDown={(event) => resizeFromPointer(
+                  event,
+                  'x',
+                  leftWidth,
+                  (start, delta) => updateLeftWidth(start + delta),
+                )}
+                onKeyboardResize={(delta) => updateLeftWidth(leftWidth + delta)}
+                onReset={() => setLeftWidth(DEFAULT_LEFT_WIDTH)}
+              />
+            </>
+          )}
 
           <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50 p-6">
             <div className="w-full max-w-6xl mx-auto space-y-4">
+            {showPlanner && (
+              <PlannerInsightsPanel run={selectedRun} selectedAttemptIndex={selectedAttemptIndex} />
+            )}
             {/* Attempt Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">Attempt {attempt.attempt_number}</h2>
@@ -283,44 +324,52 @@ export default function InvestigationPage() {
             </div>
           </main>
 
-          <ResizeHandle
-            direction="vertical"
-            label="Resize analytics panel"
-            onPointerDown={(event) => resizeFromPointer(
-              event,
-              'x',
-              rightWidth,
-              (start, delta) => updateRightWidth(start - delta),
-            )}
-            onKeyboardResize={(delta) => updateRightWidth(rightWidth - delta)}
-            onReset={() => setRightWidth(DEFAULT_RIGHT_WIDTH)}
-          />
-          <aside
-            className="flex-shrink-0 min-w-0 overflow-hidden"
-            style={{ width: rightWidth }}
-          >
-            <AnalyticsPanel />
-          </aside>
+          {showAnalytics && (
+            <>
+              <ResizeHandle
+                direction="vertical"
+                label="Resize analytics panel"
+                onPointerDown={(event) => resizeFromPointer(
+                  event,
+                  'x',
+                  rightWidth,
+                  (start, delta) => updateRightWidth(start - delta),
+                )}
+                onKeyboardResize={(delta) => updateRightWidth(rightWidth - delta)}
+                onReset={() => setRightWidth(DEFAULT_RIGHT_WIDTH)}
+              />
+              <aside
+                className="flex-shrink-0 min-w-0 overflow-hidden"
+                style={{ width: rightWidth }}
+              >
+                <AnalyticsPanel />
+              </aside>
+            </>
+          )}
         </div>
 
-        <ResizeHandle
-          direction="horizontal"
-          label="Resize investigation tabs"
-          onPointerDown={(event) => resizeFromPointer(
-            event,
-            'y',
-            bottomHeight,
-            (start, delta) => updateBottomHeight(start - delta),
-          )}
-          onKeyboardResize={(delta) => updateBottomHeight(bottomHeight - delta)}
-          onReset={() => setBottomHeight(DEFAULT_BOTTOM_HEIGHT)}
-        />
-        <section
-          className="flex-shrink-0 min-h-0 overflow-hidden"
-          style={{ height: bottomHeight }}
-        >
-          <InvestigationTabs />
-        </section>
+        {showTabs && (
+          <>
+            <ResizeHandle
+              direction="horizontal"
+              label="Resize investigation tabs"
+              onPointerDown={(event) => resizeFromPointer(
+                event,
+                'y',
+                bottomHeight,
+                (start, delta) => updateBottomHeight(start - delta),
+              )}
+              onKeyboardResize={(delta) => updateBottomHeight(bottomHeight - delta)}
+              onReset={() => setBottomHeight(DEFAULT_BOTTOM_HEIGHT)}
+            />
+            <section
+              className="flex-shrink-0 min-h-0 overflow-hidden"
+              style={{ height: bottomHeight }}
+            >
+              <InvestigationTabs />
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

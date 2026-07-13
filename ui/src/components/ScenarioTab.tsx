@@ -61,6 +61,16 @@ export default function ScenarioTab() {
         <pre className="text-xs text-slate-700 whitespace-pre-wrap bg-slate-50 rounded-lg p-3 border border-slate-200 max-h-48 overflow-y-auto">
           {JSON.stringify(raw_dataset_entry, null, 2)}
         </pre>
+        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-slate-500">Defense Type</p>
+            <p className="font-medium">{raw_dataset_entry.defense_type ?? 'n/a'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Access Code Type</p>
+            <p className="font-medium">{raw_dataset_entry.access_code_type ?? 'n/a'}</p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">

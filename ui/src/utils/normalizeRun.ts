@@ -68,6 +68,14 @@ export function normalizeAttempt(value: unknown, index = 0): Attempt {
     attempt_time_ms: asNumber(raw.attempt_time_ms),
     generator: {
       strategy: asString(generator.strategy, 'unknown'),
+      primitives: asArray(generator.primitives).map((value) => asString(value)).filter(Boolean),
+      style: asString(generator.style, 'unknown'),
+      retry_policy: asString(generator.retry_policy, 'explore'),
+      expected_access_type: asString(
+        generator.expected_access_type,
+        asString(generator.expected_access_code_type, 'UNKNOWN'),
+      ),
+      plan_raw: asString(generator.plan_raw),
       internal_prompt: asString(generator.internal_prompt),
       generated_attack: attack,
       attack_length: asNumber(generator.attack_length, attack.length),
@@ -189,6 +197,14 @@ export function normalizeRun(value: unknown): AutoRedRun {
       post_defense: asString(scenario.post_defense),
       access_code: asString(scenario.access_code),
       full_prompt: asString(scenario.full_prompt),
+      access_code_type: asString(
+        scenario.access_code_type,
+        asString(rawDatasetEntry.access_code_type, 'UNKNOWN'),
+      ),
+      defense_type: asString(
+        scenario.defense_type,
+        asString(rawDatasetEntry.defense_type, 'UNKNOWN'),
+      ),
     },
     result: {
       ground_truth_success: Boolean(result.ground_truth_success),

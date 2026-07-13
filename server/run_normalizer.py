@@ -136,6 +136,14 @@ def _normalize_attempt(raw: Any, index: int) -> Dict[str, Any]:
         "attempt_time_ms": _integer(attempt.get("attempt_time_ms")),
         "generator": {
             "strategy": _text(generator.get("strategy"), "unknown"),
+            "primitives": _list(generator.get("primitives")),
+            "style": _text(generator.get("style"), "unknown"),
+            "retry_policy": _text(generator.get("retry_policy"), "explore"),
+            "expected_access_type": _text(
+                generator.get("expected_access_type"),
+                _text(generator.get("expected_access_code_type"), "UNKNOWN"),
+            ),
+            "plan_raw": _text(generator.get("plan_raw")),
             "internal_prompt": _text(generator.get("internal_prompt")),
             "generated_attack": attack,
             "attack_length": _integer(generator.get("attack_length"), len(attack)),
@@ -299,6 +307,14 @@ def normalize_run(data: Any, fallback_run_id: str = "") -> Dict[str, Any]:
         "post_defense": _text(scenario.get("post_defense")),
         "access_code": _text(scenario.get("access_code")),
         "full_prompt": _text(scenario.get("full_prompt")),
+        "access_code_type": _text(
+            scenario.get("access_code_type"),
+            _text(raw_dataset_entry.get("access_code_type"), "UNKNOWN"),
+        ),
+        "defense_type": _text(
+            scenario.get("defense_type"),
+            _text(raw_dataset_entry.get("defense_type"), "UNKNOWN"),
+        ),
     })
     result.update({
         "ground_truth_success": bool(result.get("ground_truth_success", False)),
