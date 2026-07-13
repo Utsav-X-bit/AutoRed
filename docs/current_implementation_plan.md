@@ -101,7 +101,7 @@ The Generator does **NOT** receive:
 | Oracle trajectories | `data/oracle_trajectories_v4.jsonl` | ✅ Available |
 | Planner adapter (old) | `experiment/results/planner_primitive_sft_v1` | ⚠️ Partial — no style/retry_policy |
 | Generator adapter (old) | `experiment/results/generator_sft_style_v1` | ❌ Wrong — not plan-conditioned |
-| Main runner | `experiment/llama_3_8b_vllm.py` | ⚠️ Needs two-model integration |
+| Main runner | `experiment/llama_3_8b_vllm.py` | ✅ Integrated |
 | Benchmark script | `hpc/autored_benchmark_4gpu_vllm.sh` | ✅ |
 
 ---
@@ -1713,9 +1713,9 @@ This is the single source of truth for all model paths. Update this section when
 | 3 | Test Planner isolation | Canonicalized contract passes | 1× GPU | ✅ Done (normalized acceptance) |
 | 4 | Build Generator dataset v2 | `data/generator_sft_dataset_v2.jsonl` | No | ✅ Done |
 | 5 | Train Generator SFT v2 | `experiment/results/generator_sft_v2` | 1× A100 | ✅ Done |
-| 6 | Test Generator isolation | All test cases pass | 1× GPU | 🔲 |
-| 7 | Runtime integration | Updated `llama_3_8b_vllm.py` | No | 🔲 |
-| 8 | Integration test (10 rounds) | No crashes, ≥ 1 success | 1× GPU | 🔲 |
+| 6 | Test Generator isolation | All test cases pass | 1× GPU | ✅ Done |
+| 7 | Runtime integration | Updated `llama_3_8b_vllm.py` | No | ✅ Done |
+| 8 | Integration test (10 rounds) | No crashes, ≥ 1 success | 1× GPU | 🔲 Ready |
 | 9 | Full benchmark (1000 rounds) | `results/benchmarks/clean_arch_v1_1000r/` | 4× A100 | ✅ Done |
 | 10 | 20-layer analysis | `reports/clean_arch_v1/comparison_report.md` | No | ✅ |
 | 11 | Planner DPO | `experiment/results/planner_dpo_v1` | 1× A100 | 🔲 |
@@ -1746,9 +1746,9 @@ This is the single source of truth for all model paths. Update this section when
 - Phase 3 isolation test now uses canonicalized planner output as the runtime contract.
 - Phase 4 generator dataset build completed on the AC30 subset and was split into train/val files for Phase 5.
 - Phase 5 generator training completed successfully with `train_loss=0.322891` and a saved adapter at `experiment/results/generator_sft_v2`.
-- Phase 6 generator isolation test script is now present and ready to run against `experiment/results/generator_sft_v2`.
-- Phase 6 generator isolation test passed with `3/3` cases passing against `experiment/results/generator_sft_v2`.
-- Phase 7 runtime integration is now being implemented in `experiment/llama_3_8b_vllm.py` with separate planner and generator LoRA requests on a shared vLLM base.
-- `hpc/autored_benchmark_4gpu_vllm.sh` now forwards `--planner-path` alongside `--generator-path`.
+- Phase 6 generator isolation test script is present at `scripts/tests/test_generator_v2.py` and passes against `experiment/results/generator_sft_v2`.
+- Phase 7 runtime integration is implemented in `experiment/llama_3_8b_vllm.py` with separate planner and generator LoRA requests on a shared vLLM base.
+- `hpc/autored_benchmark_4gpu_vllm.sh` forwards `--planner-path` alongside `--generator-path`.
+- `hpc/run_phase8_smoke_vllm.sh` provides a one-command 10-round integration probe for HPC.
 - Phase 9 full benchmark completed and saved under `results/benchmarks/clean_arch_v1_1000r/`.
 - Current state: Phase 10 analysis completed using the archived benchmark summaries plus the dated detailed trace archive under `results/2026-07-13/*/run_*.json`.

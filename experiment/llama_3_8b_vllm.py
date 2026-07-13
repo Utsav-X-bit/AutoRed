@@ -2653,10 +2653,12 @@ class RedTeamingAgent:
     def _build_generator_prompt(
         self, strategy: str, previous_attack: str = "", previous_response: str = ""
     ) -> str:
-        """Build the generator prompt with strategy, history, and context.
+        """Legacy generator prompt path retained for archived compatibility.
 
-        Problem 5: History comes FIRST so Llama-2 doesn't ignore it.
-        Biggest Missing Feature: Attack result (FAILURE/PARTIAL/SUCCESS) included.
+        The active pipeline now uses Planner -> Generator via
+        _build_planner_input() + _build_generator_input(). This helper remains
+        so older archived experiments and debug paths still have a stable
+        implementation to compare against.
         """
         # Phase 4: Add strategy-specific instruction
         strategy_prompt = ATTACK_TYPE_PROMPTS.get(strategy, "")
@@ -2803,10 +2805,7 @@ class RedTeamingAgent:
         return cleaned
 
     def _select_strategy(self, scenario: DefenseScenario) -> str:
-        """#1: Select best strategy based on past performance with Weighted Sampling.
-        
-        Uses StrategyPredictor if available. Falls back to Knowledge Base.
-        """
+        """Legacy strategy selector retained for compatibility with old runs."""
         import random
 
         # Near-miss retry policy (Phase 5.2)
