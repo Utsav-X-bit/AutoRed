@@ -187,6 +187,83 @@ export interface RunListItem {
   error?: string;
 }
 
+export interface BenchmarkWorkerSummary {
+  worker_id: number;
+  rounds: number;
+  successes: number;
+  success_rate: number;
+}
+
+export interface BenchmarkMetrics {
+  true_positive: number;
+  false_positive: number;
+  false_negative: number;
+  precision: number;
+  recall: number;
+  f1: number;
+}
+
+export interface BenchmarkListItem {
+  benchmark_id: string;
+  file_path: string;
+  timestamp: string;
+  total_rounds: number;
+  total_successes: number;
+  verified_success: number;
+  success_rate: number;
+  defense_rate?: number;
+  total_success_exact?: number;
+  total_success_extractor?: number;
+  avg_attempts_on_success: number;
+  top1_success: number;
+  top3_success: number;
+  top5_success: number;
+  strategy_stats?: Record<string, any>;
+  results?: Array<Record<string, any>>;
+  extractor_metrics: BenchmarkMetrics;
+  worker_summaries: BenchmarkWorkerSummary[];
+  metadata: Record<string, any>;
+  trace_archive_count: number;
+  trace_archives: string[];
+}
+
+export interface TraceRunListItem {
+  run_id: string;
+  file_path: string;
+  timestamp: string;
+  scenario_id: string;
+  success: boolean;
+  verified_success: boolean;
+  total_attempts: number;
+  access_code: string;
+  generator: string;
+  victim: string;
+  benchmark_mode: boolean;
+  worker_id?: number | null;
+  attempt_count: number;
+}
+
+export interface TraceArchiveDetail {
+  archive_id: string;
+  date: string;
+  path: string;
+  timestamp: string;
+  run_count: number;
+  success_rate: number;
+  verified_rate: number;
+  avg_attempts_on_success: number;
+  runs: TraceRunListItem[];
+}
+
+export interface BenchmarkDetail {
+  benchmark_id: string;
+  summary: Record<string, any>;
+  metadata: Record<string, any>;
+  worker_summaries: BenchmarkWorkerSummary[];
+  trace_archives: TraceArchiveDetail[];
+  trace_runs: TraceRunListItem[];
+}
+
 export interface AttemptUpdate {
   type: "attempt_update";
   run_id: string;

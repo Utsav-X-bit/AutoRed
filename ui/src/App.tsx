@@ -11,7 +11,9 @@ function App() {
       <Route path="/runs" element={<RunLoader />} />
       <Route path="/run/:runId" element={<InvestigationPage />} />
       <Route path="/compare/:runIdA/:runIdB" element={<RunComparison />} />
-      <Route path="/benchmark" element={<BenchmarkDashboard />} />
+      <Route path="/benchmark" element={<Navigate to="/benchmarks" replace />} />
+      <Route path="/benchmarks" element={<BenchmarkDashboard />} />
+      <Route path="/benchmarks/:benchmarkId" element={<BenchmarkDashboard />} />
     </Routes>
   );
 }

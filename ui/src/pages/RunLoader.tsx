@@ -72,6 +72,12 @@ export default function RunLoader() {
           <h1 className="text-xl font-bold text-slate-900">AutoRed — Run History</h1>
           <div className="flex gap-3 items-center">
             <button
+              onClick={() => navigate('/benchmarks')}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
+            >
+              Benchmarks
+            </button>
+            <button
               onClick={() => setShowNewRun(true)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
             >

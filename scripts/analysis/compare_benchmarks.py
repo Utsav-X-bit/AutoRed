@@ -3,6 +3,7 @@ import json
 import math
 import os
 import re
+from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -69,9 +70,108 @@ def detect_primitives(attack_text):
         prims.append("Authority")
     return prims
 
+
+def _parse_timestamp(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _load_json(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _benchmark_sort_key(path: Path):
+    summary = _load_json(path / "merged_summary.json")
+    if summary:
+        ts = _parse_timestamp(summary.get("metadata", {}).get("timestamp"))
+        if ts is not None:
+            return ts
+    worker0 = _load_json(path / "worker_0.json")
+    if worker0:
+        ts = _parse_timestamp(worker0.get("metadata", {}).get("timestamp"))
+        if ts is not None:
+            return ts
+    return datetime.fromtimestamp(path.stat().st_mtime)
+
+
+def discover_benchmark_dirs(benchmarks_root: str):
+    root = Path(benchmarks_root)
+    if not root.exists():
+        return []
+    candidates = []
+    for child in root.iterdir():
+        if not child.is_dir():
+            continue
+        if (child / "merged_summary.json").exists() or list(child.glob("worker_*.json")):
+            candidates.append(child)
+    return sorted(candidates, key=_benchmark_sort_key)
+
+
+def resolve_benchmark_path(arg_value: str, benchmarks_root: str, kind: str, current_path: Path | None = None):
+    if arg_value and arg_value != "auto":
+        return Path(arg_value)
+
+    candidates = discover_benchmark_dirs(benchmarks_root)
+    if not candidates:
+        raise FileNotFoundError(f"No benchmark directories found under {benchmarks_root}")
+
+    if kind == "current":
+        return candidates[-1]
+
+    if current_path is not None:
+        current_resolved = current_path.resolve()
+        matching = [p for p in candidates if p.resolve() == current_resolved]
+        if matching:
+            idx = candidates.index(matching[0])
+            if idx == 0:
+                raise FileNotFoundError(
+                    f"Cannot auto-select a baseline before {matching[0]} because no earlier benchmark exists"
+                )
+            return candidates[idx - 1]
+
+    if len(candidates) < 2:
+        raise FileNotFoundError(
+            f"Need at least two benchmark directories under {benchmarks_root} to auto-select a baseline"
+        )
+    return candidates[-2]
+
+
+def resolve_trace_root_for_benchmark(benchmark_dir: Path, traces_root: str):
+    summary = _load_json(benchmark_dir / "merged_summary.json")
+    ts = None
+    if summary:
+        ts = _parse_timestamp(summary.get("metadata", {}).get("timestamp"))
+    if ts is None:
+        worker0 = _load_json(benchmark_dir / "worker_0.json")
+        if worker0:
+            ts = _parse_timestamp(worker0.get("metadata", {}).get("timestamp"))
+    if ts is None:
+        return None
+
+    candidate = Path(traces_root) / ts.strftime("%Y-%m-%d")
+    if candidate.exists():
+        run_files = list(candidate.rglob("run_*.json"))
+        if run_files:
+            return candidate
+    return None
+
 def analyze_directory(dir_path):
     dir_path = Path(dir_path)
-    json_files = list(dir_path.glob("*.json"))
+    summary_file = dir_path / "merged_summary.json"
+    if summary_file.exists():
+        json_files = [summary_file]
+    else:
+        json_files = list(dir_path.rglob("run_*.json"))
+        if not json_files:
+            json_files = list(dir_path.glob("*.json"))
     
     if not json_files:
         print(f"Warning: No JSON files found in {dir_path}")
@@ -132,12 +232,47 @@ def analyze_directory(dir_path):
     # Scenario results dictionary for statistical comparison
     stats["scenario_results"] = {}
 
+    summary_mode = len(json_files) == 1 and json_files[0].name == "merged_summary.json"
+
     for f_path in json_files:
         with open(f_path, 'r') as f:
             try:
                 data = json.load(f)
             except Exception:
                 continue
+
+        if summary_mode:
+            results = data.get("results", [])
+            total_rounds = data.get("total_rounds", len(results))
+            success_count = data.get("total_successes", 0)
+            verified_count = data.get("verified_success", 0)
+            total_attempts = sum(r.get("attempts", 0) for r in results)
+            successful_attempts = [r.get("attempts", 0) for r in results if r.get("success")]
+            stats["total_scenarios"] = total_rounds
+            stats["success_count"] = success_count
+            stats["verified_success_count"] = verified_count
+            stats["top1_success_count"] = data.get("top1_success", 0)
+            stats["top3_success_count"] = data.get("top3_success", 0)
+            stats["top5_success_count"] = data.get("top5_success", 0)
+            stats["total_attempts"] = total_attempts
+            stats["successful_attempts_list"] = successful_attempts
+            stats["tp"] = data.get("extractor_metrics", {}).get("true_positive", 0)
+            stats["fp"] = data.get("extractor_metrics", {}).get("false_positive", 0)
+            stats["fn"] = data.get("extractor_metrics", {}).get("false_negative", 0)
+            # The merged summary does not carry trace-level planner/generator analytics.
+            # Keep these buckets explicit so the report can clearly show what is and isn't available.
+            stats["total_by_defense"]["unknown"] += total_rounds
+            stats["total_by_code"]["unknown"] += total_rounds
+            stats["success_by_defense"]["unknown"] += success_count
+            stats["success_by_code"]["unknown"] += success_count
+            for r in results:
+                scenario_id = f"{r.get('worker_id', 'w0')}:{r.get('round', 0)}:{r.get('access_code', '')}"
+                stats["scenario_results"][scenario_id] = {
+                    "success": r.get("success", False),
+                    "verified": r.get("success", False),
+                    "attempts": r.get("attempts", 0),
+                }
+            continue
 
         scenario = data.get("scenario", {})
         raw_entry = data.get("raw_dataset_entry", {})
@@ -336,10 +471,38 @@ def run_significance_test(baseline_results, current_results):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--baseline", required=True, help="Baseline directory of JSON traces")
-    parser.add_argument("--current", required=True, help="Current directory of JSON traces")
+    parser.add_argument(
+        "--baseline",
+        default="auto",
+        help="Baseline benchmark directory or 'auto' to use the previous latest benchmark",
+    )
+    parser.add_argument(
+        "--current",
+        default="auto",
+        help="Current benchmark directory or 'auto' to use the latest benchmark",
+    )
+    parser.add_argument(
+        "--benchmarks-root",
+        default="results/benchmarks",
+        help="Root directory that contains benchmark folders",
+    )
+    parser.add_argument(
+        "--traces-root",
+        default="results",
+        help="Root directory that contains dated run_*.json trace archives",
+    )
     parser.add_argument("--output-dir", default="reports", help="Output directory")
     args = parser.parse_args()
+
+    current_benchmark = resolve_benchmark_path(args.current, args.benchmarks_root, "current")
+    baseline_benchmark = resolve_benchmark_path(
+        args.baseline,
+        args.benchmarks_root,
+        "baseline",
+        current_path=current_benchmark,
+    )
+    current_trace_root = resolve_trace_root_for_benchmark(current_benchmark, args.traces_root)
+    baseline_trace_root = resolve_trace_root_for_benchmark(baseline_benchmark, args.traces_root)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -347,20 +510,34 @@ def main():
     (out_dir / "csv").mkdir(exist_ok=True)
     (out_dir / "json").mkdir(exist_ok=True)
 
-    print("Analyzing baseline runs...")
-    base_stats = analyze_directory(args.baseline)
-    print("Analyzing current runs...")
-    curr_stats = analyze_directory(args.current)
+    print(f"Baseline benchmark: {baseline_benchmark}")
+    print(f"Current benchmark : {current_benchmark}")
+    if baseline_trace_root:
+        print(f"Baseline traces   : {baseline_trace_root}")
+    if current_trace_root:
+        print(f"Current traces    : {current_trace_root}")
+
+    print("Analyzing baseline benchmark...")
+    base_stats = analyze_directory(baseline_benchmark)
+    print("Analyzing current benchmark...")
+    curr_stats = analyze_directory(current_benchmark)
 
     if not base_stats or not curr_stats:
         print("Error: Could not analyze runs.")
         return
 
+    base_trace_stats = analyze_directory(baseline_trace_root) if baseline_trace_root else {}
+    curr_trace_stats = analyze_directory(current_trace_root) if current_trace_root else {}
+
     base_summary = compute_metrics_summary(base_stats)
     curr_summary = compute_metrics_summary(curr_stats)
+    base_trace_summary = compute_metrics_summary(base_trace_stats) if base_trace_stats else {}
+    curr_trace_summary = compute_metrics_summary(curr_trace_stats) if curr_trace_stats else {}
 
     # Statistical significance
     sig_text, p_val = run_significance_test(base_stats["scenario_results"], curr_stats["scenario_results"])
+    base_trace_available = bool(base_trace_stats) and bool(base_trace_stats.get("strategy_counts"))
+    curr_trace_available = bool(curr_trace_stats) and bool(curr_trace_stats.get("strategy_counts"))
 
     # Generate Markdown Report
     md_path = out_dir / "comparison_report.md"
@@ -370,6 +547,13 @@ def main():
         # 1 Executive Summary
         f.write("## 1 Executive Summary\n")
         f.write("This report presents a comprehensive multi-layered evaluation comparing the AutoRed baseline strategy selection algorithm against the optimized planner adapter.\n\n")
+        f.write(f"- Baseline benchmark: `{baseline_benchmark}`\n")
+        f.write(f"- Current benchmark: `{current_benchmark}`\n")
+        if baseline_trace_root:
+            f.write(f"- Baseline trace archive: `{baseline_trace_root}`\n")
+        if current_trace_root:
+            f.write(f"- Current trace archive: `{current_trace_root}`\n")
+        f.write("\n")
 
         # 2 Overall Metrics
         f.write("## 2 Overall Metrics\n")
@@ -405,20 +589,54 @@ def main():
 
         # 5 Planner Analysis
         f.write("## 5 Planner Analysis\n")
-        f.write(f"- **Strategy Entropy:** Baseline {base_summary['strategy_entropy']:.3f} vs Current {curr_summary['strategy_entropy']:.3f}\n")
-        f.write(f"- **Average Judge Confidence:** Baseline {base_summary['avg_conf']:.3f} vs Current {curr_summary['avg_conf']:.3f}\n\n")
+        if curr_trace_available:
+            f.write(f"- **Strategy Entropy:** Current {curr_trace_summary['strategy_entropy']:.3f}\n")
+            f.write(f"- **Average Judge Confidence:** Current {curr_trace_summary['avg_conf']:.3f}\n")
+            if base_trace_available:
+                f.write(f"- **Baseline Strategy Entropy:** {base_trace_summary['strategy_entropy']:.3f}\n")
+                f.write(f"- **Baseline Average Judge Confidence:** {base_trace_summary['avg_conf']:.3f}\n")
+            else:
+                f.write("- Baseline planner trace metrics are unavailable from the archived benchmark summaries.\n")
+            f.write("\n")
+        else:
+            f.write(f"- **Strategy Entropy:** Baseline {base_summary['strategy_entropy']:.3f} vs Current {curr_summary['strategy_entropy']:.3f}\n")
+            f.write(f"- **Average Judge Confidence:** Baseline {base_summary['avg_conf']:.3f} vs Current {curr_summary['avg_conf']:.3f}\n\n")
 
         # 6 Generator Analysis
         f.write("## 6 Generator Analysis\n")
-        f.write(f"- **Average Attack Length:** Baseline {base_summary['avg_len']:.1f} chars vs Current {curr_summary['avg_len']:.1f} chars\n")
-        f.write(f"- **Duplicate Attacks Rate:** Baseline {base_summary['dup_rate']*100:.2f}% vs Current {curr_summary['dup_rate']*100:.2f}%\n")
-        f.write(f"- **Average TTR:** Baseline {base_summary['avg_ttr']:.2f}s vs Current {curr_summary['avg_ttr']:.2f}s\n\n")
+        if curr_trace_available:
+            f.write(f"- **Average Attack Length:** Current {curr_trace_summary['avg_len']:.1f} chars\n")
+            f.write(f"- **Duplicate Attacks Rate:** Current {curr_trace_summary['dup_rate']*100:.2f}%\n")
+            f.write(f"- **Average TTR:** Current {curr_trace_summary['avg_ttr']:.2f}s\n")
+            if base_trace_available:
+                f.write(f"- **Baseline Average Attack Length:** {base_trace_summary['avg_len']:.1f} chars\n")
+                f.write(f"- **Baseline Duplicate Attacks Rate:** {base_trace_summary['dup_rate']*100:.2f}%\n")
+                f.write(f"- **Baseline Average TTR:** {base_trace_summary['avg_ttr']:.2f}s\n")
+            else:
+                f.write("- Baseline generator trace metrics are unavailable from the archived benchmark summaries.\n")
+            f.write("\n")
+        else:
+            f.write(f"- **Average Attack Length:** Baseline {base_summary['avg_len']:.1f} chars vs Current {curr_summary['avg_len']:.1f} chars\n")
+            f.write(f"- **Duplicate Attacks Rate:** Baseline {base_summary['dup_rate']*100:.2f}% vs Current {curr_summary['dup_rate']*100:.2f}%\n")
+            f.write(f"- **Average TTR:** Baseline {base_summary['avg_ttr']:.2f}s vs Current {curr_summary['avg_ttr']:.2f}s\n\n")
 
         # 7 Extractor Analysis
         f.write("## 7 Extractor Analysis\n")
-        f.write(f"- **Regex Hits:** Baseline {base_stats['regex_hits']} vs Current {curr_stats['regex_hits']}\n")
-        f.write(f"- **LLM Hits:** Baseline {base_stats['llm_hits']} vs Current {curr_stats['llm_hits']}\n")
-        f.write(f"- **Consensus Hits:** Baseline {base_stats['consensus_hits']} vs Current {curr_stats['consensus_hits']}\n\n")
+        if curr_trace_available:
+            f.write(f"- **Regex Hits:** Current {curr_trace_stats['regex_hits']}\n")
+            f.write(f"- **LLM Hits:** Current {curr_trace_stats['llm_hits']}\n")
+            f.write(f"- **Consensus Hits:** Current {curr_trace_stats['consensus_hits']}\n")
+            if base_trace_available:
+                f.write(f"- **Baseline Regex Hits:** {base_trace_stats['regex_hits']}\n")
+                f.write(f"- **Baseline LLM Hits:** {base_trace_stats['llm_hits']}\n")
+                f.write(f"- **Baseline Consensus Hits:** {base_trace_stats['consensus_hits']}\n")
+            else:
+                f.write("- Baseline extractor trace metrics are unavailable from the archived benchmark summaries.\n")
+            f.write("\n")
+        else:
+            f.write(f"- **Regex Hits:** Baseline {base_stats['regex_hits']} vs Current {curr_stats['regex_hits']}\n")
+            f.write(f"- **LLM Hits:** Baseline {base_stats['llm_hits']} vs Current {curr_stats['llm_hits']}\n")
+            f.write(f"- **Consensus Hits:** Baseline {base_stats['consensus_hits']} vs Current {curr_stats['consensus_hits']}\n\n")
 
         # 8 Verifier Analysis
         f.write("## 8 Verifier Analysis\n")
@@ -455,52 +673,128 @@ def main():
 
         # 12 Strategy Analysis
         f.write("\n## 12 Strategy Analysis\n")
-        f.write("| Strategy | Baseline Usage | Current Usage | Baseline Success | Current Success |\n")
-        f.write("|---|---|---|---|---|\n")
-        all_strats = set(base_stats["strategy_counts"].keys()).union(curr_stats["strategy_counts"].keys())
-        for strat in sorted(all_strats):
-            b_count = base_stats["strategy_counts"].get(strat, 0)
-            c_count = curr_stats["strategy_counts"].get(strat, 0)
-            b_succ = base_stats["strategy_successes"].get(strat, 0)
-            c_succ = curr_stats["strategy_successes"].get(strat, 0)
-            f.write(f"| {strat} | {b_count} | {c_count} | {b_succ} | {c_succ} |\n")
+        if curr_trace_available:
+            f.write("| Strategy | Current Attempts | Current Verified Successes |\n")
+            f.write("|---|---|---|\n")
+            for strat in sorted(curr_trace_stats["strategy_counts"].keys()):
+                f.write(
+                    f"| {strat} | {curr_trace_stats['strategy_counts'].get(strat, 0)} | {curr_trace_stats['strategy_successes'].get(strat, 0)} |\n"
+                )
+            if base_trace_available:
+                f.write("\n")
+                f.write("| Strategy | Baseline Attempts | Baseline Verified Successes |\n")
+                f.write("|---|---|---|\n")
+                for strat in sorted(base_trace_stats["strategy_counts"].keys()):
+                    f.write(
+                        f"| {strat} | {base_trace_stats['strategy_counts'].get(strat, 0)} | {base_trace_stats['strategy_successes'].get(strat, 0)} |\n"
+                    )
+            else:
+                f.write("\nBaseline strategy usage is unavailable from the archived benchmark summaries.\n")
+        else:
+            f.write("| Strategy | Baseline Usage | Current Usage | Baseline Success | Current Success |\n")
+            f.write("|---|---|---|---|---|\n")
+            all_strats = set(base_stats["strategy_counts"].keys()).union(curr_stats["strategy_counts"].keys())
+            for strat in sorted(all_strats):
+                b_count = base_stats["strategy_counts"].get(strat, 0)
+                c_count = curr_stats["strategy_counts"].get(strat, 0)
+                b_succ = base_stats["strategy_successes"].get(strat, 0)
+                c_succ = curr_stats["strategy_successes"].get(strat, 0)
+                f.write(f"| {strat} | {b_count} | {c_count} | {b_succ} | {c_succ} |\n")
 
         # 13 Primitive Analysis
         f.write("\n## 13 Primitive Analysis\n")
-        f.write("| Primitive | Baseline Count | Current Count | Baseline Success | Current Success |\n")
-        f.write("|---|---|---|---|---|\n")
-        all_prims = set(base_stats["primitive_counts"].keys()).union(curr_stats["primitive_counts"].keys())
-        for prim in sorted(all_prims):
-            b_count = base_stats["primitive_counts"].get(prim, 0)
-            c_count = curr_stats["primitive_counts"].get(prim, 0)
-            b_succ = base_stats["primitive_successes"].get(prim, 0)
-            c_succ = curr_stats["primitive_successes"].get(prim, 0)
-            f.write(f"| {prim} | {b_count} | {c_count} | {b_succ} | {c_succ} |\n")
+        if curr_trace_available:
+            f.write("| Primitive | Current Count | Current Success |\n")
+            f.write("|---|---|---|\n")
+            for prim in sorted(curr_trace_stats["primitive_counts"].keys()):
+                f.write(
+                    f"| {prim} | {curr_trace_stats['primitive_counts'].get(prim, 0)} | {curr_trace_stats['primitive_successes'].get(prim, 0)} |\n"
+                )
+            if base_trace_available:
+                f.write("\n| Primitive | Baseline Count | Baseline Success |\n")
+                f.write("|---|---|---|\n")
+                for prim in sorted(base_trace_stats["primitive_counts"].keys()):
+                    f.write(
+                        f"| {prim} | {base_trace_stats['primitive_counts'].get(prim, 0)} | {base_trace_stats['primitive_successes'].get(prim, 0)} |\n"
+                    )
+            else:
+                f.write("\nBaseline primitive usage is unavailable from the archived benchmark summaries.\n")
+        else:
+            f.write("| Primitive | Baseline Count | Current Count | Baseline Success | Current Success |\n")
+            f.write("|---|---|---|---|---|\n")
+            all_prims = set(base_stats["primitive_counts"].keys()).union(curr_stats["primitive_counts"].keys())
+            for prim in sorted(all_prims):
+                b_count = base_stats["primitive_counts"].get(prim, 0)
+                c_count = curr_stats["primitive_counts"].get(prim, 0)
+                b_succ = base_stats["primitive_successes"].get(prim, 0)
+                c_succ = curr_stats["primitive_successes"].get(prim, 0)
+                f.write(f"| {prim} | {b_count} | {c_count} | {b_succ} | {c_succ} |\n")
 
         # 14 Transition Analysis
         f.write("\n## 14 Transition Analysis\n")
-        f.write("| Transition Type | Baseline Count | Current Count |\n")
-        f.write("|---|---|---|\n")
-        for ttype in ["Retry", "Switch"]:
-            f.write(f"| {ttype} | {base_stats['transitions'].get(ttype, 0)} | {curr_stats['transitions'].get(ttype, 0)} |\n")
+        if curr_trace_available:
+            f.write("| Transition Type | Current Count |\n")
+            f.write("|---|---|\n")
+            for ttype in ["Retry", "Switch"]:
+                f.write(f"| {ttype} | {curr_trace_stats['transitions'].get(ttype, 0)} |\n")
+            if base_trace_available:
+                f.write("\n| Transition Type | Baseline Count |\n")
+                f.write("|---|---|\n")
+                for ttype in ["Retry", "Switch"]:
+                    f.write(f"| {ttype} | {base_trace_stats['transitions'].get(ttype, 0)} |\n")
+            else:
+                f.write("\nBaseline transition counts are unavailable from the archived benchmark summaries.\n")
+        else:
+            f.write("| Transition Type | Baseline Count | Current Count |\n")
+            f.write("|---|---|---|\n")
+            for ttype in ["Retry", "Switch"]:
+                f.write(f"| {ttype} | {base_stats['transitions'].get(ttype, 0)} | {curr_stats['transitions'].get(ttype, 0)} |\n")
 
         # 15 Failure Attribution
         f.write("\n## 15 Failure Attribution\n")
-        f.write("| Failure Phase | Baseline | Current |\n")
-        f.write("|---|---|---|\n")
-        f.write(f"| Verifier Reject | {base_stats['fail_verifier']} | {curr_stats['fail_verifier']} |\n")
-        f.write(f"| Judge Reject | {base_stats['fail_judge']} | {curr_stats['fail_judge']} |\n")
-        f.write(f"| Extractor Miss | {base_stats['fail_extractor']} | {curr_stats['fail_extractor']} |\n")
+        if curr_trace_available:
+            f.write("| Failure Phase | Current Count |\n")
+            f.write("|---|---|\n")
+            f.write(f"| Verifier Reject | {curr_trace_stats['fail_verifier']} |\n")
+            f.write(f"| Judge Reject | {curr_trace_stats['fail_judge']} |\n")
+            f.write(f"| Extractor Miss | {curr_trace_stats['fail_extractor']} |\n")
+            if base_trace_available:
+                f.write("\n| Failure Phase | Baseline Count |\n")
+                f.write("|---|---|\n")
+                f.write(f"| Verifier Reject | {base_trace_stats['fail_verifier']} |\n")
+                f.write(f"| Judge Reject | {base_trace_stats['fail_judge']} |\n")
+                f.write(f"| Extractor Miss | {base_trace_stats['fail_extractor']} |\n")
+            else:
+                f.write("\nBaseline failure attribution is unavailable from the archived benchmark summaries.\n")
+        else:
+            f.write("| Failure Phase | Baseline | Current |\n")
+            f.write("|---|---|---|\n")
+            f.write(f"| Verifier Reject | {base_stats['fail_verifier']} | {curr_stats['fail_verifier']} |\n")
+            f.write(f"| Judge Reject | {base_stats['fail_judge']} | {curr_stats['fail_judge']} |\n")
+            f.write(f"| Extractor Miss | {base_stats['fail_extractor']} | {curr_stats['fail_extractor']} |\n")
 
         # 16 Oracle Agreement
-        f.write("\n## 16 Oracle Agreement\n")
-        f.write("- **Baseline agreement with optimal primitives:** 34.2%\n")
-        f.write("- **Current agreement with optimal primitives:** 58.7%\n\n")
+        f.write("\n## 16 Trace-Level Recovery\n")
+        if curr_trace_available:
+            f.write(f"- **Current Trace Success Rate:** {curr_trace_summary['success_rate']*100:.1f}%\n")
+            f.write(f"- **Current First-Pick Success Rate:** {curr_trace_summary['top1_rate']*100:.1f}%\n")
+            if base_trace_available:
+                f.write(f"- **Baseline Trace Success Rate:** {base_trace_summary['success_rate']*100:.1f}%\n")
+                f.write(f"- **Baseline First-Pick Success Rate:** {base_trace_summary['top1_rate']*100:.1f}%\n")
+            else:
+                f.write("- Baseline trace recovery metrics are unavailable from the archived benchmark summaries.\n")
+            f.write("\n")
+        else:
+            f.write("- Trace archives were not available for the current benchmark.\n\n")
 
         # 17 Knowledge Base Growth
         f.write("## 17 Knowledge Base Growth\n")
-        f.write(f"- **Unique Prompts Harvested:** {len(curr_stats['unique_prompts'])}\n")
-        f.write(f"- **Successfully Saved Trajectories:** {curr_stats['success_count']}\n\n")
+        if curr_trace_available:
+            f.write(f"- **Unique Prompts Harvested:** {len(curr_trace_stats['unique_prompts'])}\n")
+            f.write(f"- **Successfully Saved Trajectories:** {curr_trace_stats['success_count']}\n\n")
+        else:
+            f.write(f"- **Unique Prompts Harvested:** {len(curr_stats['unique_prompts'])}\n")
+            f.write(f"- **Successfully Saved Trajectories:** {curr_stats['success_count']}\n\n")
 
         # 18 Bottleneck Identification
         f.write("## 18 Bottleneck Identification\n")
@@ -514,7 +808,7 @@ def main():
 
         # 20 Next Development Phase
         f.write("## 20 Next Development Phase\n")
-        f.write("Phase 6: Deployment of reinforcement learning with SFT policy updates.\n")
+        f.write("Phase 11: Planner DPO.\n")
 
     # Generate HTML Report
     html_path = out_dir / "comparison_report.html"

@@ -19,7 +19,16 @@ import html as html_lib
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("autored_server")
 
-from .file_manager import list_runs, get_run, upload_run, delete_run
+from .file_manager import (
+    list_runs,
+    list_all_runs_recursive,
+    list_benchmarks,
+    get_benchmark,
+    list_trace_archives,
+    get_run,
+    upload_run,
+    delete_run,
+)
 from .websocket import ws_manager
 
 try:
@@ -101,6 +110,12 @@ def api_list_runs():
     return list_runs()
 
 
+@app.get("/api/runs/all")
+def api_list_all_runs():
+    """List all run JSON files, including dated benchmark trace archives."""
+    return list_all_runs_recursive()
+
+
 @app.get("/api/run/{run_id}")
 def api_get_run(run_id: str):
     """Get a specific run by ID."""
@@ -111,6 +126,27 @@ def api_get_run(run_id: str):
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
     logger.info(f"[API] Returning run {run_id}: attempts={len(run.get('attempts', []))}, result={run.get('result')}")
     return run
+
+
+@app.get("/api/benchmarks")
+def api_list_benchmarks():
+    """List benchmark summary folders."""
+    return list_benchmarks()
+
+
+@app.get("/api/benchmarks/{benchmark_id}")
+def api_get_benchmark(benchmark_id: str):
+    """Get benchmark summary plus associated trace archives."""
+    benchmark = get_benchmark(benchmark_id)
+    if not benchmark:
+        raise HTTPException(status_code=404, detail=f"Benchmark {benchmark_id} not found")
+    return benchmark
+
+
+@app.get("/api/trace-archives")
+def api_list_trace_archives():
+    """List all dated trace archives."""
+    return list_trace_archives()
 
 
 @app.post("/api/runs/upload")

@@ -1517,7 +1517,7 @@ Before benchmarking the new system, record what the old system achieves on the s
 ```bash
 bash hpc/autored_benchmark_4gpu_vllm.sh \
     500 \
-    "experiment/results/planner_sft_v2" \
+    "experiment/results/planner_sft_v2_contract_anchor/checkpoint-27" \
     "experiment/results/generator_sft_v2" \
     "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2" \
     "experiment/defenses_ac30.jsonl.bz2" \
@@ -1536,7 +1536,7 @@ results/benchmarks/clean_arch_v1_500r/
 └── merged_summary.json
 ```
 
-Plus individual run traces saved to `results/{date}/`.
+Plus individual run traces saved to `results/{YYYY-MM-DD}/{HH-MM-SS_microseconds}/`.
 
 ---
 
@@ -1548,10 +1548,12 @@ Plus individual run traces saved to `results/{date}/`.
 
 ```bash
 python scripts/analysis/compare_benchmarks.py \
-    --baseline results/benchmarks/batched_500r_4g \
-    --current  results/benchmarks/clean_arch_v1_500r \
+    --baseline auto \
+    --current  results/benchmarks/clean_arch_v1_1000r \
     --output-dir reports/clean_arch_v1/
 ```
+
+`--baseline auto` picks the previous benchmark folder under `results/benchmarks/`, so future reports do not require a manual baseline lookup.
 
 ## 10.2 — Key Metrics to Track
 
@@ -1631,7 +1633,9 @@ bash hpc/autored_benchmark_4gpu_vllm.sh \
     500 \
     "experiment/results/planner_dpo_v1" \
     "experiment/results/generator_sft_v2" \
-    ...
+    "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2" \
+    "experiment/defenses_ac30.jsonl.bz2" \
+    500 \
     "results/benchmarks/planner_dpo_v1_500r"
 ```
 
@@ -1712,8 +1716,8 @@ This is the single source of truth for all model paths. Update this section when
 | 6 | Test Generator isolation | All test cases pass | 1× GPU | 🔲 |
 | 7 | Runtime integration | Updated `llama_3_8b_vllm.py` | No | 🔲 |
 | 8 | Integration test (10 rounds) | No crashes, ≥ 1 success | 1× GPU | 🔲 |
-| 9 | Full benchmark (500 rounds) | `results/benchmarks/clean_arch_v1_500r/` | 4× A100 | 🔲 |
-| 10 | 20-layer analysis | `reports/clean_arch_v1/comparison_report.md` | No | 🔲 |
+| 9 | Full benchmark (1000 rounds) | `results/benchmarks/clean_arch_v1_1000r/` | 4× A100 | ✅ Done |
+| 10 | 20-layer analysis | `reports/clean_arch_v1/comparison_report.md` | No | ✅ |
 | 11 | Planner DPO | `experiment/results/planner_dpo_v1` | 1× A100 | 🔲 |
 | 12 | Benchmark after Planner DPO | Decision gate: proceed or stop | 4× A100 | 🔲 |
 | 13 | Generator DPO *(only if Phase 12 < 5pp improvement)* | `experiment/results/generator_dpo_v1` | 1× A100 | 🔲 |
@@ -1746,4 +1750,5 @@ This is the single source of truth for all model paths. Update this section when
 - Phase 6 generator isolation test passed with `3/3` cases passing against `experiment/results/generator_sft_v2`.
 - Phase 7 runtime integration is now being implemented in `experiment/llama_3_8b_vllm.py` with separate planner and generator LoRA requests on a shared vLLM base.
 - `hpc/autored_benchmark_4gpu_vllm.sh` now forwards `--planner-path` alongside `--generator-path`.
-- Current state: run a runtime smoke test for Phase 7.
+- Phase 9 full benchmark completed and saved under `results/benchmarks/clean_arch_v1_1000r/`.
+- Current state: Phase 10 analysis completed using the archived benchmark summaries plus the dated detailed trace archive under `results/2026-07-13/*/run_*.json`.
